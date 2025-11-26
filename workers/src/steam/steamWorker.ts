@@ -1,9 +1,10 @@
 import { rabbitConn } from '../utils/config.js';
 import { config, redis } from '../utils/config.js';
 import { SteamTask, normalizeSteamTask } from '../utils/types/entities/tasks.js';
-import { scrapeBatch } from '../utils/fetchAPI.js';
+import { scrapeBatch } from './gameFetcher.js';
 import { Game } from '../utils/types/entities/game.js';
 import logger from '../utils/logger.js';
+import { splitIntoBatches } from '../utils/helpers.js';
 
 async function startSteamWorker() {
   const channel = await rabbitConn.createChannel();
@@ -64,15 +65,5 @@ async function startSteamWorker() {
     }
   });
 }
-
-function splitIntoBatches<T>(array: T[], batchSize: number): T[][] {
-  const batches: T[][] = [];
-  for (let i = 0; i < array.length; i += batchSize) {
-    batches.push(array.slice(i, i + batchSize));
-  }
-  return batches;
-}
-
-
 
 startSteamWorker().catch(logger.crit);

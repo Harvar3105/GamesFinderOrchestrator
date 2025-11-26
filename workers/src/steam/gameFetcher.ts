@@ -1,15 +1,15 @@
 import { v4 } from "uuid";
-import { Game } from "./types/entities/game.js";
-import { eCurrency, getECurrencyFromString } from "./types/enums/eCurrency.js";
-import { eRegion } from "./types/enums/eRegion.js";
-import { eVendor } from "./types/enums/eVendor.js";
-import { GameOffer } from "./types/entities/gameOffer.js";
-import logger from "./logger.js";
+import { Game } from "../utils/types/entities/game.js";
+import { eCurrency, getECurrencyFromString } from "../utils/types/enums/eCurrency.js";
+import { eRegion } from "../utils/types/enums/eRegion.js";
+import { eVendor } from "../utils/types/enums/eVendor.js";
+import { GameOffer } from "../utils/types/entities/gameOffer.js";
+import logger from "../utils/logger.js";
+import { fetchJson } from "../utils/offerFetcher.js";
 
 export async function fetchSteamGame(id: number, region: eRegion = eRegion.US ): Promise<Game | null> {
   const url = `https://store.steampowered.com/api/appdetails?appids=${id}&cc=${region}&l=en`;
-  const res = await fetch(url);
-  const data: any = await res.json(); //TODO: Type this properly
+  const data = await fetchJson(url);
 
   if (!data[id]?.success) return null;
   const game = data[id].data;
