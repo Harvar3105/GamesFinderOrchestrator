@@ -38,6 +38,21 @@ public class SteamController : ControllerBase
     }
   }
 
+  [HttpPost("checkExisting")]
+  public async Task<IActionResult> CheckExistingSteamIdAsync(int steamId)
+  {
+    try
+    {
+      var exists = await _steamService.CheckIfSteamIdExistsAsync(steamId);
+      return Ok(new { Exists = exists.Item1, Id = exists.Item2 });
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError(ex, $"Error checking existence of Steam ID: {steamId}");
+      return StatusCode(500, "An error occurred while processing your request.");
+    }
+  }
+
   public sealed record RequestModel
   {
     public List<int> steamIds { get; init; } = new();

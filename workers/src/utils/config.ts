@@ -18,10 +18,17 @@ if (process.env.NODE_ENV !== 'docker') {
 export const config = {
   rabbitUrl: process.env.RABBIT_URL || 'amqp://localhost',
   defaultQueue: process.env.RABBITMQ_DEFAULT_QUEUE,
+
   steamRequests: process.env.RABBITMQ_STEAM_REQUESTS_QUEUE,
   steamResults: process.env.RABBITMQ_STEAM_RESULTS_QUEUE,
   maxRequests: Number(process.env.MAX_REQUESTS) || 200,
-  cooldownMs: Number(process.env.COOLDOWN_MS) || 5 * 60 * 1000
+  cooldownMs: Number(process.env.COOLDOWN_MS) || 5 * 60 * 1000,
+
+  instantGamingRequests: process.env.RABBITMQ_IG_REQUESTS_QUEUE,
+  instantGamingResults: process.env.RABBITMQ_IG_RESULTS_QUEUE,
+
+  backendUrl: process.env.BACKEND_URL,
+  backendCheckGame: process.env.BACKEND_CHECK_GAME
 };
 
 export const redis = new Redis({

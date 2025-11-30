@@ -1,10 +1,7 @@
-using GamesFinder.Domain.Enums;
 using GamesFinder.Domain.Interfaces.Repositories;
 using GamesFinder.Orchestrator.Domain.Classes.Entities;
 using GamesFinder.Orchestrator.Repositories;
 using Microsoft.Extensions.Logging;
-using MongoDB.Bson;
-using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 
 namespace GamesFinder.DAL.Repositories;
@@ -94,5 +91,21 @@ public class GameRepository : Repository<Game>, IGameRepository<Game>
       .Find(_ => true)
       .Project(g => g.SteamID)
       .ToListAsync();
+  }
+  public async Task<(bool, string)> GetExistBySteamIdAsync(int steamId)
+  {
+    var id = await _collection
+      .Find(g => g.SteamID == steamId)
+      .Project(g => g.Id)
+      .FirstOrDefaultAsync();
+
+    if (id == Guid.Empty)
+      return (false, string.Empty);
+
+    var idString = id.ToString();
+    if (string.IsNullOrWhiteSpace(idString))
+      return (false, string.Empty);
+
+    return (true, idString);
   }
 }

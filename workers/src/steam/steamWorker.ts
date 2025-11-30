@@ -24,7 +24,7 @@ async function startSteamWorker() {
       logger.error('❌Invalid JSON from queue:', msg.content.toString());
       channel.nack(msg, false, false);
       return;
-}
+    }
 
 
     if (await redis.exists(task.redisResultKey)) {

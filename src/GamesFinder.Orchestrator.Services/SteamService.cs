@@ -13,7 +13,12 @@ public class SteamService : GamesWithOffersService, ISteamService
   {
     _steamScrapingPublisher = steamScrapingPublisher;
   }
-  
+
+  public async Task<(bool, string)> CheckIfSteamIdExistsAsync(int steamId)
+  {
+    return await _gameRepository.GetExistBySteamIdAsync(steamId);
+  }
+
   public async Task<IEnumerable<int>> GetAllGamesSteamIdsAsync()
   {
     return await _gameRepository.GetAllSteamIdsAsync();

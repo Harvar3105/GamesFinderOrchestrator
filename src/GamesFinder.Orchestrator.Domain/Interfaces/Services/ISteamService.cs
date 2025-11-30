@@ -8,4 +8,6 @@ public interface ISteamService : IGamesWithOffersService<Game>
   Task<long> ScrapIdsAsync(IEnumerable<int> gamesIds, bool updateExisting = false);
   Task<IEnumerable<int>> GetAllGamesSteamIdsAsync();
   Task<long> UpdateSteamOffersAsync(IEnumerable<int> gamesIds);
+
+  Task<(bool, string)> CheckIfSteamIdExistsAsync(int steamId);
 }

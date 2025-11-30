@@ -34,11 +34,11 @@ export async function fetchSteamGame(id: number, region: eRegion = eRegion.US ):
         createdAt: new Date().toUTCString(),
         updatedAt: new Date().toUTCString(),
         gameId: gameId,
-        vendorsGameId: gameId.toString(),
+        vendorsGameId: id.toString(),
         vendor: eVendor.Steam,
         vendorsUrl: vendorsUrl,
         available: true,
-        price: {[currency]: currentAmount} as Record<eCurrency, number>,
+        price: {currency: currency, price: currentAmount},
       } as GameOffer]
     } catch (e) {
       logger.error(`❌Error parsing price for game ID ${id}:`, e);

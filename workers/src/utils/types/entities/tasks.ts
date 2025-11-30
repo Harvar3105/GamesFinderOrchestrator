@@ -1,12 +1,20 @@
+import { eCurrency } from "../enums/eCurrency.js";
+
 export interface Task {
   taskId: string;
   createdAt: string;
+  updateExisting: boolean;
+  redisResultKey: string;
 }
 
 export interface SteamTask extends Task {
   gameIds: number[];
-  updateExisting: boolean;
-  redisResultKey: string;
+}
+
+export interface InstantGamingTask extends Task {
+  gameIds: number[];
+  proxy?: string;
+  currency?: eCurrency;
 }
 
 export function normalizeSteamTask(raw: any): SteamTask {
