@@ -84,12 +84,19 @@ builder.Services.AddSingleton(new SteamOptions(
 	domainName: builder.Configuration.GetValue<string>("SteamApi:Name")!,
 	apiKey: builder.Configuration.GetValue<string>("SteamApi:Key")!
 ));
+builder.Services.AddSingleton(new WorkersOptions(
+	instantGamingWorkerCount: builder.Configuration.GetValue<int>("Workers:InstantGamingWorkerCount")!,
+	instantGamingSkipFirstIds: builder.Configuration.GetValue<int>("Workers:InstantGamingSkipFirstIds")!
+));
+
 builder.Services.AddSingleton(new RabbitMqConfig(
 	hostName: builder.Configuration.GetValue<string>("RabbitMQ:HostName")!,
 	port: builder.Configuration.GetValue<int>("RabbitMQ:Port"),
 	defaultQueue: builder.Configuration.GetValue<string>("RabbitMQ:DefaultQueue")!,
 	steamRequestsQueue: builder.Configuration.GetValue<string>("RabbitMQ:SteamRequestsQueue")!,
 	steamResultsQueue: builder.Configuration.GetValue<string>("RabbitMQ:SteamResultsQueue")!,
+	instantGamingRequestsQueue: builder.Configuration.GetValue<string>("RabbitMQ:InstantGamingRequestsQueue")!,
+	instantGamingResultsQueue: builder.Configuration.GetValue<string>("RabbitMQ:InstantGamingResultsQueue")!,
 	userName: builder.Configuration.GetValue<string>("RabbitMQ:Username")!,
 	password: builder.Configuration.GetValue<string>("RabbitMQ:Password")!
 ));

@@ -9,4 +9,5 @@ public interface IGameOfferRepository<TEntity> : IRepository<TEntity> where TEnt
 	Task<Dictionary<Guid, List<TEntity>>?> GetByGameIdsAsync(IEnumerable<Guid> gameIds);
 	Task<ICollection<TEntity>?> GetByVendorAsync(EVendor vendor);
 	Task<TEntity?> GetByVandorsIdAsync(string vendorsGameId);
+	Task<Guid?> GetOfferIdByVandorsIdAsync(string vendorsGameId);
 }

@@ -54,4 +54,13 @@ public class GameOfferRepository : Repository<GameOffer>, IGameOfferRepository<G
       .Find(offer => offer.Vendor == vendor)
       .ToListAsync();
   }
+
+  public async Task<Guid?> GetOfferIdByVandorsIdAsync(string vendorsGameId)
+  {
+    var id = await _collection
+      .Find(g => g.VendorsGameId.Equals(vendorsGameId, StringComparison.OrdinalIgnoreCase))
+      .Project(offer => offer.Id)
+      .FirstOrDefaultAsync();
+    return id == Guid.Empty ? null : id;
+  }
 }

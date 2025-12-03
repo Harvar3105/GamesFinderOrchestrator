@@ -26,3 +26,15 @@ export function normalizeSteamTask(raw: any): SteamTask {
     createdAt: raw.CreatedAt ?? raw.createdAt
   };
 }
+
+export function normalizeInstantGamingTask(raw: any): InstantGamingTask {
+  return {
+    taskId: raw.TaskId ?? raw.taskId,
+    gameIds: raw.GameIds ?? raw.gameIds,
+    updateExisting: raw.UpdateExisting ?? raw.updateExisting,
+    redisResultKey: raw.RedisResultKey ?? raw.redisResultKey,
+    createdAt: raw.CreatedAt ?? raw.createdAt,
+    proxy: raw.Proxy ?? raw.proxy,
+    currency: raw.Currency ?? raw.currency
+  };
+}

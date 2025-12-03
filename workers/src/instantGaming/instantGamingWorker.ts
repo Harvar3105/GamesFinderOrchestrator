@@ -31,8 +31,9 @@ async function startInstantGamingWorker() {
 
     try {
       const list = [];
-      //TODO: Separate to different batches and work in paralel?
+      // TODO: Separate to different batches and work in paralel?
       for (const gameId of task.gameIds) {
+        // TODO: add ignore existing option
         var offer = await fetchInstantGamingOffer(gameId, task.currency, task.proxy)
         if (offer) list.push(offer);
       }

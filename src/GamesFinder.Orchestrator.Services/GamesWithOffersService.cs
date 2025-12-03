@@ -4,7 +4,7 @@ using GamesFinder.Orchestrator.Domain.Interfaces.Services;
 
 namespace GamesFinder.Orchestrator.Services;
 
-public class GamesWithOffersService(IGameRepository<Game> gameRepository, IGameOfferRepository<GameOffer> gameOfferRepository) : IGamesWithOffersService<Game>
+public class GamesWithOffersService(IGameRepository<Game> gameRepository, IGameOfferRepository<GameOffer> gameOfferRepository) : IGamesWithOffersService<Entity>
 {
   protected readonly IGameRepository<Game> _gameRepository = gameRepository;
   protected readonly IGameOfferRepository<GameOffer> _gameOfferRepository = gameOfferRepository;
@@ -93,20 +93,40 @@ public class GamesWithOffersService(IGameRepository<Game> gameRepository, IGameO
     return games;
   }
 
-  public async Task<bool> SaveAsync(Game entity)
+  public async Task<bool> SaveAsync(Entity entity)
   {
-    var offers = await _gameOfferRepository.SaveManyAsync(entity.Offers);
-    if (!offers) return false;
-    var game = await _gameRepository.SaveAsync(entity);
-    return game;
+    if (entity is Game game)
+    {
+      var offers = await _gameOfferRepository.SaveManyAsync(game.Offers);
+      if (!offers) return false;
+      var returnGame = await _gameRepository.SaveAsync(game);
+      return returnGame;
+    }
+    else if (entity is GameOffer offer)
+    {
+      await _gameOfferRepository.SaveAsync(offer);
+      return true;
+    }
+    else return false;
   }
 
-  public async Task<bool> SaveManyAsync(IEnumerable<Game> entities)
+  public async Task<bool> SaveManyAsync(IEnumerable<Entity> entities)
   {
-    var offers = await _gameOfferRepository.SaveManyAsync(entities.SelectMany(e => e.Offers));
-    if (!offers) return false;
-    var games = await _gameRepository.SaveManyAsync(entities);
-    return games;
+    if (entities.All(e => e is Game))
+    {
+      var games = entities.Cast<Game>();
+      var offers = await _gameOfferRepository.SaveManyAsync(games.SelectMany(e => e.Offers));
+      if (!offers) return false;
+      var savedGames = await _gameRepository.SaveManyAsync(games);
+      return savedGames;
+    }
+    else if (entities.All(e => e is GameOffer))
+    {
+      var offers = entities.Cast<GameOffer>();
+      var savedOffers =  await _gameOfferRepository.SaveManyAsync(offers);
+      return savedOffers;
+    }
+    else return false;
   }
 
   public async Task<bool> SaveOrUpdateAsync(Game entity)
