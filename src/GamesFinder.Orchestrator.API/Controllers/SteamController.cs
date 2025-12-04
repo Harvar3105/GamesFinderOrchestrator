@@ -9,9 +9,9 @@ namespace GamesFinder.Orchestrator.API.Controllers;
 public class SteamController : ControllerBase
 {
   private readonly ILogger<SteamController> _logger;
-  private readonly ISteamService _steamService;
+  private readonly IGamesService _steamService;
 
-  public SteamController(ILogger<SteamController> logger, ISteamService steamService)
+  public SteamController(ILogger<SteamController> logger, IGamesService steamService)
   {
     _logger = logger;
     _steamService = steamService;

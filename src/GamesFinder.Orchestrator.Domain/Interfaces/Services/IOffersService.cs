@@ -3,7 +3,7 @@ using GamesFinder.Orchestrator.Domain.Classes.Entities;
 
 namespace GamesFinder.Orchestrator.Domain.Interfaces.Services;
 
-public interface IInstantGamingService : IGamesWithOffersService<GameOffer>
+public interface IOffersService : IService<GameOffer>
 {
   Task ScrapIdsAsync(IEnumerable<int> gamesIds, bool updateExisting = false);
   Task ScrapRangeAsync(int minId, int maxId, bool updateExisting = false);

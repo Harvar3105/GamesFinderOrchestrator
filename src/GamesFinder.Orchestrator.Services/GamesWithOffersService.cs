@@ -4,7 +4,7 @@ using GamesFinder.Orchestrator.Domain.Interfaces.Services;
 
 namespace GamesFinder.Orchestrator.Services;
 
-public class GamesWithOffersService(IGameRepository<Game> gameRepository, IGameOfferRepository<GameOffer> gameOfferRepository) : IGamesWithOffersService<Entity>
+public class GamesWithOffersService(IGameRepository<Game> gameRepository, IGameOfferRepository<GameOffer> gameOfferRepository) : IService<Entity>
 {
   protected readonly IGameRepository<Game> _gameRepository = gameRepository;
   protected readonly IGameOfferRepository<GameOffer> _gameOfferRepository = gameOfferRepository;

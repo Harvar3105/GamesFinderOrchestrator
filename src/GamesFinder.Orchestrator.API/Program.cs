@@ -121,7 +121,7 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 builder.Services.AddScoped<IGameRepository<Game>, GameRepository>();
 builder.Services.AddScoped<IGameOfferRepository<GameOffer>, GameOfferRepository>();
 // builder.Services.AddSingleton<IGamesWithOffersService<Game>, GamesWithOffersService>();
-builder.Services.AddScoped<ISteamService, SteamService>();
+builder.Services.AddScoped<IGamesService, SteamService>();
 builder.Services.AddSingleton<RedisCacheDB>();
 builder.Services.AddSingleton<IBrockerPublisher, RabbitMqPublisher>();
 builder.Services.AddSingleton<SteamWorkerPublisher>();

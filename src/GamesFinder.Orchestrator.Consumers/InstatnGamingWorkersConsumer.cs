@@ -54,7 +54,7 @@ public class InstatnGamingWorkersConsumer : BackgroundService, IBrockerConsumer
     consumer.ReceivedAsync += async (_, ea) =>
     {
       var scope = _serviceProvider.CreateScope();
-      IInstantGamingService InstantGamingService = scope.ServiceProvider.GetRequiredService<IInstantGamingService>();
+      IOffersService InstantGamingService = scope.ServiceProvider.GetRequiredService<IOffersService>();
 
 
       var message = Encoding.UTF8.GetString(ea.Body.ToArray());

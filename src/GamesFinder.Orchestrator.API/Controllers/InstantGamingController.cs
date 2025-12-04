@@ -9,9 +9,9 @@ namespace GamesFinder.Orchestrator.API.Controllers;
 public class InstantGamingController : ControllerBase
 {
   private readonly ILogger<InstantGamingController> _logger;
-  private readonly IInstantGamingService _instantGamingService;
+  private readonly IOffersService _instantGamingService;
 
-  public InstantGamingController(ILogger<InstantGamingController> logger, IInstantGamingService instantGamingService)
+  public InstantGamingController(ILogger<InstantGamingController> logger, IOffersService instantGamingService)
   {
     _logger = logger;
     _instantGamingService = instantGamingService;

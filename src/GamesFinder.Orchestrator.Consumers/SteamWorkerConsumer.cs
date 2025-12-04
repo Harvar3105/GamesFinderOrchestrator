@@ -54,7 +54,7 @@ public class SteamWorkerConsumer : BackgroundService, IBrockerConsumer
     consumer.ReceivedAsync += async (_, ea) =>
     {
       var scope = _serviceProvider.CreateScope();
-      ISteamService steamService = scope.ServiceProvider.GetRequiredService<ISteamService>();
+      IGamesService steamService = scope.ServiceProvider.GetRequiredService<IGamesService>();
 
 
       var message = Encoding.UTF8.GetString(ea.Body.ToArray());

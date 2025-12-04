@@ -7,7 +7,7 @@ using GamesFinder.Orchestrator.Publisher;
 
 namespace GamesFinder.Orchestrator.Services;
 
-public class InstantGamingService : GamesWithOffersService, IInstantGamingService
+public class InstantGamingService : GamesWithOffersService, IOffersService
 {
   private readonly InstantGamingWorkersPublisher _instantGamingScrapingPublisher;
   private readonly WorkersOptions _workersOptions;
