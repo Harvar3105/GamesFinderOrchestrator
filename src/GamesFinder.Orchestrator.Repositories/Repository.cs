@@ -117,7 +117,7 @@ public abstract class Repository<T> : IRepository<T> where T : Entity
     return await _collection.CountDocumentsAsync(_ => true);
   }
   
-  public async Task<ICollection<T>> GetPagedAsync(int page, int pageSize)
+  public async Task<ICollection<T>?> GetPagedAsync(int page, int pageSize)
   {
     return await _collection
       .Find(_ => true)

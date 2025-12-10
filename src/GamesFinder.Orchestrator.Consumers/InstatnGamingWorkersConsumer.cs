@@ -10,6 +10,7 @@ using System.Text;
 using System.Text.Json;
 using GamesFinder.Orchestrator.Domain.Classes.Entities;
 using Microsoft.Extensions.DependencyInjection;
+using GamesFinder.Orchestrator.Domain.Interfaces.DomainServices;
 
 
 namespace GamesFinder.Orchestrator.Consumers;

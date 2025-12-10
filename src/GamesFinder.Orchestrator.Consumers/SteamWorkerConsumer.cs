@@ -1,6 +1,4 @@
-﻿using System.ComponentModel;
-using GamesFinder.Orchestrator.Domain.Interfaces.Infrastructure;
-using GamesFinder.Orchestrator.Domain.Interfaces.Services;
+﻿using GamesFinder.Orchestrator.Domain.Interfaces.Infrastructure;
 using GamesFinder.Orchestrator.Publisher.RabbitMQ;
 using GamesFinder.Orchestrator.Publisher.Redis;
 using Microsoft.Extensions.Logging;
@@ -11,6 +9,7 @@ using System.Text;
 using System.Text.Json;
 using GamesFinder.Orchestrator.Domain.Classes.Entities;
 using Microsoft.Extensions.DependencyInjection;
+using GamesFinder.Orchestrator.Domain.Interfaces.DomainServices;
 
 namespace GamesFinder.Orchestrator.Consumers;
 

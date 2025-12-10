@@ -1,12 +1,11 @@
 using GamesFinder.Domain.Interfaces.Repositories;
 using GamesFinder.Orchestrator.Domain.Classes.Entities;
-using GamesFinder.Orchestrator.Repositories;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 
-namespace GamesFinder.DAL.Repositories;
+namespace GamesFinder.Orchestrator.Repositories.Repositories;
 
-public class GameRepository : Repository<Game>
+public class GameRepository : Repository<Game>, IGameRepository
 {
   public GameRepository(IMongoDatabase database, ILogger<GameRepository> logger) : base(database, "games", logger)
   {

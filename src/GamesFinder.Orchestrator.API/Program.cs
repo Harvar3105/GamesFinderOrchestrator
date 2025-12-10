@@ -12,10 +12,6 @@ using GamesFinder.Orchestrator.Domain.Enums;
 using GamesFinder.Orchestrator.Domain.Classes;
 using GamesFinder.Domain.Interfaces.Repositories;
 using GamesFinder.Orchestrator.Repositories.Repositories;
-using GamesFinder.DAL.Repositories;
-using GamesFinder.Orchestrator.Domain.Interfaces.Services;
-using GamesFinder.Orchestrator.Services;
-using GamesFinder.Orchestrator.Domain.Classes.Entities;
 using GamesFinder.Orchestrator.Publisher.RabbitMQ;
 using GamesFinder.Orchestrator.Domain.Interfaces.Infrastructure;
 using GamesFinder.Orchestrator.Publisher.Redis;
@@ -23,6 +19,10 @@ using StackExchange.Redis;
 using GamesFinder.Orchestrator.Publisher;
 using GamesFinder.Domain.Enums;
 using GamesFinder.Orchestrator.Consumers;
+using GamesFinder.Orchestrator.Services.DomainServices;
+using GamesFinder.Orchestrator.Domain.Interfaces.DomainServices;
+using GamesFinder.Orchestrator.Domain.Interfaces.Services.ApplicationServices;
+using GamesFinder.Orchestrator.Services.ApplicationServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -118,10 +118,14 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 	return ConnectionMultiplexer.Connect(configurationOptions);
 });
 
-builder.Services.AddScoped<IGameRepository<Game>, GameRepository>();
-builder.Services.AddScoped<IGameOfferRepository<GameOffer>, GameOfferRepository>();
-// builder.Services.AddSingleton<IGamesWithOffersService<Game>, GamesWithOffersService>();
-builder.Services.AddScoped<IGamesService, SteamService>();
+builder.Services.AddScoped<IGameRepository, GameRepository>();
+builder.Services.AddScoped<IGameOfferRepository, GameOfferRepository>();
+builder.Services.AddScoped<IGamesService, GamesService>();
+builder.Services.AddScoped<IOffersService, GamesOffersService>();
+builder.Services.AddScoped<GamesWithOffersService>();
+builder.Services.AddScoped<ISteamService, SteamService>();
+builder.Services.AddScoped<IInstantGamingService, InstantGamingService>();
+
 builder.Services.AddSingleton<RedisCacheDB>();
 builder.Services.AddSingleton<IBrockerPublisher, RabbitMqPublisher>();
 builder.Services.AddSingleton<SteamWorkerPublisher>();
