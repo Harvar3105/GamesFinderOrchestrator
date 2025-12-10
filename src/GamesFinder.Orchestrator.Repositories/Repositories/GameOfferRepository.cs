@@ -7,10 +7,24 @@ using MongoDB.Driver;
 
 namespace GamesFinder.Orchestrator.Repositories.Repositories;
 
-public class GameOfferRepository : Repository<GameOffer>, IGameOfferRepository<GameOffer>
+public class GameOfferRepository : Repository<GameOffer>, IGameOfferRepository
 {
   public GameOfferRepository(IMongoDatabase database, ILogger<Repository<GameOffer>> logger) : base(database, "game_offers", logger)
   {
+  }
+
+  public async Task<long> DeleteByGameIdAsync(Guid gameId)
+  {
+    return await _collection
+      .DeleteManyAsync(offer => offer.GameId == gameId)
+      .ContinueWith(task => task.Result.DeletedCount);
+  }
+
+  public async Task<bool> ExistsByVendorsIdAsync(string vendorsId)
+  {
+    return await _collection
+      .Find(offer => offer.VendorsGameId.Equals(vendorsId, StringComparison.OrdinalIgnoreCase))
+      .AnyAsync();
   }
 
   public async Task<ICollection<GameOffer>?> GetByGameIdAsync(Guid gameId)

@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace GamesFinder.Orchestrator.Publisher;
 
-public class InstantGamingWorkersPublisher
+public class InstantGamingWorkersPublisher : IPublisher
 {
   private readonly IBrockerPublisher _publisher;
   private readonly ILogger<SteamWorkerPublisher> _logger;
@@ -19,7 +19,7 @@ public class InstantGamingWorkersPublisher
     _config = config;
   }
 
-  public async Task PublishInstantGamingScrapeTaskAsync(List<int> vendorsIds, bool updateExisting = false)
+  public async Task PublishIdsScrapeTaskAsync(List<dynamic> vendorsIds, bool updateExisting = false)
   {
     if (vendorsIds == null || vendorsIds.Count == 0)
     {
@@ -54,7 +54,7 @@ public class InstantGamingWorkersPublisher
   private class InstantGamingScrapeTask
   {
     public Guid TaskId { get; set; } = Guid.NewGuid();
-    public List<int> GameIds { get; set; } = new();
+    public List<dynamic> GameIds { get; set; } = new();
     public bool UpdateExisting { get; set; } = false;
     public string RedisResultKey { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

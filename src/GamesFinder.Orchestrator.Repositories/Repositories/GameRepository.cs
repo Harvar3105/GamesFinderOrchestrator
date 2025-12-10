@@ -6,7 +6,7 @@ using MongoDB.Driver;
 
 namespace GamesFinder.DAL.Repositories;
 
-public class GameRepository : Repository<Game>, IGameRepository<Game>
+public class GameRepository : Repository<Game>
 {
   public GameRepository(IMongoDatabase database, ILogger<GameRepository> logger) : base(database, "games", logger)
   {

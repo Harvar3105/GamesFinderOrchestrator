@@ -3,7 +3,7 @@ using GamesFinder.Orchestrator.Domain.Classes.Entities;
 
 namespace GamesFinder.Domain.Interfaces.Repositories;
 
-public interface IGameRepository<TEntity> : IRepository<TEntity> where TEntity : Game
+public interface IGameRepository : IRepository<Game>
 {
 	Task<Game?> GetBySteamId(int steamId);
 	Task<Game?> GetByAppNameAsync(string appName);

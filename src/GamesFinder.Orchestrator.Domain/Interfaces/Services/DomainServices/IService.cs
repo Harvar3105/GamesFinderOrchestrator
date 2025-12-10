@@ -1,7 +1,7 @@
 using System;
 using GamesFinder.Orchestrator.Domain.Classes.Entities;
 
-namespace GamesFinder.Orchestrator.Domain.Interfaces.Services;
+namespace GamesFinder.Orchestrator.Domain.Interfaces.DomainServices;
 
 public interface IService<TEntity> where TEntity : Entity
 {
