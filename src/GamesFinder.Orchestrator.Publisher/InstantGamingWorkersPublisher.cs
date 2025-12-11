@@ -58,7 +58,7 @@ public class InstantGamingWorkersPublisher : IPublisher
     public bool UpdateExisting { get; set; } = false;
     public string RedisResultKey { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public string? Proxy {get; set;} = null;
+    public string? Proxy {get; set;} = null; // TODO: If found Proxy in future for workers
     public ECurrency Currency { get; set; } = ECurrency.EUR;
   }
 }
