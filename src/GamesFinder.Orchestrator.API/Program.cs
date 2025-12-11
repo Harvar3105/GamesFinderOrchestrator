@@ -129,6 +129,7 @@ builder.Services.AddScoped<IInstantGamingService, InstantGamingService>();
 builder.Services.AddSingleton<RedisCacheDB>();
 builder.Services.AddSingleton<IBrockerPublisher, RabbitMqPublisher>();
 builder.Services.AddSingleton<SteamWorkerPublisher>();
+builder.Services.AddSingleton<InstantGamingWorkersPublisher>();
 
 builder.Services.AddHostedService<SteamWorkerConsumer>();
 
