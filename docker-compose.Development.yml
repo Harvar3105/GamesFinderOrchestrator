@@ -52,6 +52,26 @@ services:
     restart: unless-stopped
     networks:
       - shared-network
+  
+  instantgaming-worker:
+    image: node:20-alpine
+    container_name: instantgaming-worker
+    env_file:
+      - ./.env
+    environment:
+      - NODE_ENV=docker
+    volumes:
+      - ./workers:/app:cached
+    working_dir: /app
+    command: sh -c "npm ci && npm run build && npm run instantgaming"
+    depends_on:
+      - rabbitmq
+      - redis
+    restart: unless-stopped
+    networks:
+      - shared-network
+    deploy:
+      replicas: 5
 
   # -----------------------------
   # Backend / API

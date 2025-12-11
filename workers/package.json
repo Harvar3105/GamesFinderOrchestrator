@@ -6,7 +6,8 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
-    "steam": "ts-node dist/steam/steamWorker.js"
+    "steam": "ts-node dist/steam/steamWorker.js",
+    "instantgaming": "ts-node dist/instantGaming/instantGamingWorker.js"
   },
   "dependencies": {
     "@types/amqplib": "^0.10.7",
