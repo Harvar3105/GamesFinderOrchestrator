@@ -1,4 +1,4 @@
-using GamesFinder.Orchestrator.Domain.Interfaces.Services;
+using GamesFinder.Orchestrator.Domain.Interfaces.Services.ApplicationServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,9 +9,9 @@ namespace GamesFinder.Orchestrator.API.Controllers;
 public class InstantGamingController : ControllerBase
 {
   private readonly ILogger<InstantGamingController> _logger;
-  private readonly IOffersService _instantGamingService;
+  private readonly IInstantGamingService _instantGamingService;
 
-  public InstantGamingController(ILogger<InstantGamingController> logger, IOffersService instantGamingService)
+  public InstantGamingController(ILogger<InstantGamingController> logger, IInstantGamingService instantGamingService)
   {
     _logger = logger;
     _instantGamingService = instantGamingService;
@@ -31,7 +31,7 @@ public class InstantGamingController : ControllerBase
     {
       if (isExistingScrap)
       {
-        await _instantGamingService.ScrapIdsAsync(model.InstantGamingIds, model.UpdateExisting);
+        await _instantGamingService.PublishIdsScrapeTaskAsync(model.InstantGamingIds, model.UpdateExisting);
       } 
       else
       {
@@ -39,7 +39,7 @@ public class InstantGamingController : ControllerBase
         {
           return BadRequest("MaxIdCount must be provided for new scraping tasks.");
         }
-        await _instantGamingService.ScrapUpToMaxIdAsync(model.MaxIdCount.Value, model.UpdateExisting);
+        await _instantGamingService.PublishUpToMaxIdScrapeTaskAsync(model.MaxIdCount.Value, model.UpdateExisting);
       }
       return Ok(new { Message = $"Scraping task initiated." });
     }
@@ -52,7 +52,7 @@ public class InstantGamingController : ControllerBase
 
   public sealed record RequestModel
   {
-    public List<int> InstantGamingIds { get; init; } = new();
+    public List<dynamic> InstantGamingIds { get; init; } = new();
     public int? MaxIdCount { get; init; } = null;
     public bool UpdateExisting { get; init; } = false;
   }

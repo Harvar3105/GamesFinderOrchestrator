@@ -1,4 +1,5 @@
-using GamesFinder.Orchestrator.Domain.Interfaces.Services;
+using GamesFinder.Orchestrator.Domain.Interfaces.DomainServices;
+using GamesFinder.Orchestrator.Domain.Interfaces.Services.ApplicationServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,12 +10,14 @@ namespace GamesFinder.Orchestrator.API.Controllers;
 public class SteamController : ControllerBase
 {
   private readonly ILogger<SteamController> _logger;
-  private readonly IGamesService _steamService;
+  private readonly ISteamService _steamService;
+  private readonly IGamesService _gamesService;
 
-  public SteamController(ILogger<SteamController> logger, IGamesService steamService)
+  public SteamController(ILogger<SteamController> logger, ISteamService steamService, IGamesService gamesService)
   {
     _logger = logger;
     _steamService = steamService;
+    _gamesService = gamesService;
   }
 
   [HttpPost("scrap")]
@@ -28,8 +31,8 @@ public class SteamController : ControllerBase
 
     try
     {
-      var processedCount = await _steamService.ScrapIdsAsync(model.steamIds, model.updateExisting);
-      return Ok(new { Message = $"Scraping task initiated for {processedCount} Steam IDs. Estimated time: {MathF.Ceiling(model.steamIds.Count / 200)} minutes" });
+      await _steamService.PublishIdsScrapeTaskAsync(model.steamIds, model.updateExisting);
+      return Ok(new { Message = $"Scraping task initiated for {model.steamIds.Count} Steam IDs. Estimated time: {MathF.Ceiling(model.steamIds.Count / 200)} minutes" });
     }
     catch (Exception ex)
     {
@@ -39,12 +42,17 @@ public class SteamController : ControllerBase
   }
 
   [HttpPost("checkExisting")]
-  public async Task<IActionResult> CheckExistingSteamIdAsync(int steamId)
+  public async Task<IActionResult> CheckExistingSteamIdAsync(int steamId, bool getId = false)
   {
     try
     {
-      var exists = await _steamService.CheckIfSteamIdExistsAsync(steamId);
-      return Ok(new { Exists = exists.Item1, Id = exists.Item2 });
+      var exists = await _gamesService.CheckIfSteamIdExistsAsync(steamId);
+      if (getId && exists)
+      {
+        var game = await _gamesService.GetBySteamIdAsync(steamId);
+        return Ok(new { Exists = true, GameId = game!.Id });
+      }
+      return Ok(new {Exists = exists});
     }
     catch (Exception ex)
     {
@@ -55,7 +63,7 @@ public class SteamController : ControllerBase
 
   public sealed record RequestModel
   {
-    public List<int> steamIds { get; init; } = new();
+    public List<dynamic> steamIds { get; init; } = new();
     public bool updateExisting { get; init; } = false;
   }
 }
