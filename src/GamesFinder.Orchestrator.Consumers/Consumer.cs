@@ -19,7 +19,7 @@ public abstract class Consumer<TResult> : BackgroundService, IBrockerConsumer
   private readonly Lazy<Task<IConnection>> _lazyConnection;
   private IChannel? _channel;
 
-  protected abstract string QueueName { get; }
+  protected abstract string QueueName {get;}
   protected abstract Task SaveToDatabaseAsync(IServiceScope scope, List<TResult> items);
 
   protected Consumer(

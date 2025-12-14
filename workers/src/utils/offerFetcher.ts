@@ -1,4 +1,3 @@
-import { GameOffer } from "./types/entities/gameOffer.js";
 import { HttpsProxyAgent } from "https-proxy-agent";
 
 export async function fetchJson(url: string, proxy?: string): Promise<any | null> {

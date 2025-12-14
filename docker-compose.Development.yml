@@ -36,7 +36,10 @@ services:
   # Workers
   # -----------------------------
   steam-worker:
-    image: node:20-alpine
+    image: node:20
+    build:
+      context: ./workers
+      dockerfile: Dockerfile
     container_name: steam-worker
     env_file:
       - ./.env
@@ -45,17 +48,19 @@ services:
     volumes:
       - ./workers:/app:cached
     working_dir: /app
-    command: sh -c "npm ci && npm run build && npm run steam"
+    command: ["npm", "run", "steam"]
     depends_on:
       - rabbitmq
       - redis
-    restart: unless-stopped
+    restart: unless-stopped #For some reason fails at first start, loads on second
     networks:
       - shared-network
   
   instantgaming-worker:
-    image: node:20-alpine
-    # container_name: instantgaming-worker
+    image: node:20
+    build:
+      context: ./workers
+      dockerfile: Dockerfile
     env_file:
       - ./.env
     environment:
@@ -63,11 +68,11 @@ services:
     volumes:
       - ./workers:/app:cached
     working_dir: /app
-    command: sh -c "npm ci && npm run build && npm run instantgaming"
+    command: ["npm", "run", "instantgaming"]
     depends_on:
       - rabbitmq
       - redis
-    restart: unless-stopped
+    restart: unless-stopped #For some reason fails at first start, loads on second
     networks:
       - shared-network
     deploy:
@@ -92,6 +97,7 @@ services:
       - rabbitmq
       - redis
       - steam-worker
-    restart: unless-stopped
+      - instantgaming-worker
+    restart: unless-stopped # Will fail  until workers are ready. They fail at first start, loads on second so backend also needs restart
     networks:
       - shared-network

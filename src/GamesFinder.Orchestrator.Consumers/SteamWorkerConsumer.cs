@@ -9,14 +9,13 @@ namespace GamesFinder.Orchestrator.Consumers;
 
 public class SteamWorkerConsumer : Consumer<Game>
 {
-  protected override string QueueName => "steam-scraper-results";
-
+  protected override string QueueName { get; }
   public SteamWorkerConsumer(
     RabbitMqConfig config,
     IServiceProvider serviceProvider,
     ILogger<SteamWorkerConsumer> logger,
     RedisCacheDB redis)
-    : base(config, serviceProvider, logger, redis) { }
+    : base(config, serviceProvider, logger, redis) { QueueName = config.SteamResultsQueue; }
 
   protected override async Task SaveToDatabaseAsync(IServiceScope scope, List<Game> items)
   {

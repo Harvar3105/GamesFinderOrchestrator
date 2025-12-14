@@ -10,14 +10,14 @@ namespace GamesFinder.Orchestrator.Consumers;
 
 public class InstantGamingWorkersConsumer : Consumer<GameOffer>
 {
-  protected override string QueueName => "instant-gaming-results";
+  protected override string QueueName { get; }
 
   public InstantGamingWorkersConsumer(
     RabbitMqConfig config,
     IServiceProvider serviceProvider,
     ILogger<InstantGamingWorkersConsumer> logger,
     RedisCacheDB redis)
-    : base(config, serviceProvider, logger, redis) { }
+    : base(config, serviceProvider, logger, redis) { QueueName = config.InstantGamingResultsQueue; }
 
   protected override async Task SaveToDatabaseAsync(IServiceScope scope, List<GameOffer> items)
   {
