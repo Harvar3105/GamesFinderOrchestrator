@@ -31,7 +31,10 @@ builder.Logging.AddConsole();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+	options.CustomSchemaIds(type => type.ToString());
+});
 
 builder.Services.AddOpenApi();
 
