@@ -19,7 +19,7 @@ public class InstantGamingWorkersPublisher : IPublisher
     _config = config;
   }
 
-  public async Task PublishIdsScrapeTaskAsync(List<dynamic> vendorsIds, bool updateExisting = false)
+  public async Task PublishIdsScrapeTaskAsync(List<string> vendorsIds, bool updateExisting = false)
   {
     if (vendorsIds == null || vendorsIds.Count == 0)
     {
@@ -54,7 +54,7 @@ public class InstantGamingWorkersPublisher : IPublisher
   private class InstantGamingScrapeTask
   {
     public Guid TaskId { get; set; } = Guid.NewGuid();
-    public List<dynamic> GameIds { get; set; } = new();
+    public List<string> GameIds { get; set; } = new();
     public bool UpdateExisting { get; set; } = false;
     public string RedisResultKey { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

@@ -17,7 +17,7 @@ public class SteamWorkerPublisher : IPublisher
     _config = config;
   }
 
-  public async Task PublishIdsScrapeTaskAsync(List<dynamic> steamIds, bool updateExisting = false)
+  public async Task PublishIdsScrapeTaskAsync(List<string> steamIds, bool updateExisting = false)
   {
     if (steamIds == null || steamIds.Count == 0)
     {
@@ -53,7 +53,7 @@ public class SteamWorkerPublisher : IPublisher
   private class SteamScrapeTask
   { 
     public Guid TaskId { get; set; } = Guid.NewGuid();
-    public List<dynamic> GameIds { get; set; } = new();
+    public List<string> GameIds { get; set; } = new();
     public bool UpdateExisting { get; set; } = false;
     public string RedisResultKey { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

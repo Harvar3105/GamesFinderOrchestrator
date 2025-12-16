@@ -22,7 +22,7 @@ public class SteamController : ControllerBase
 
   [HttpPost("scrap")]
   [Authorize(Policy = "DevPolicy")]
-  public async Task<IActionResult> ScrapSteamIdsAsync([FromBody] RequestModel model)
+  public async Task<IActionResult> ScrapSteamIdsAsync([FromBody] SteamRequestModel model)
   {
     if (model.steamIds == null || model.steamIds.Count == 0)
     {
@@ -61,9 +61,9 @@ public class SteamController : ControllerBase
     }
   }
 
-  public sealed record RequestModel
+  public sealed record SteamRequestModel
   {
-    public List<dynamic> steamIds { get; init; } = new();
+    public List<string> steamIds { get; init; } = new();
     public bool updateExisting { get; init; } = false;
   }
 }

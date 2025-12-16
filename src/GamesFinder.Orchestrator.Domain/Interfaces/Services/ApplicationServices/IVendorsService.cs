@@ -6,5 +6,5 @@ namespace GamesFinder.Orchestrator.Domain.Interfaces.Services.ApplicationService
 public interface IVendorsService
 {
   // protected IOffersService _offersService { get; } //FIXME: Games or gameoffers ???
-  protected Task BatchPublishAsync(IEnumerable<dynamic> ids, bool updateExisting = false, int workersCount = 1); //TODO: Consider dynamic or string
+  protected Task BatchPublishAsync(IEnumerable<string> ids, bool updateExisting = false, int workersCount = 1);
 }

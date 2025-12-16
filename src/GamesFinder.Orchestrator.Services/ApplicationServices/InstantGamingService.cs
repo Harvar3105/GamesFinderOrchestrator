@@ -14,7 +14,7 @@ public class InstantGamingService : VendorsService, IInstantGamingService
     _workersOptions = workersOptions;
   }
 
-  public async Task PublishIdsScrapeTaskAsync(List<dynamic> steamIds, bool updateExisting = false)
+  public async Task PublishIdsScrapeTaskAsync(List<string> steamIds, bool updateExisting = false)
   {
     var ids = steamIds.Where(id => int.Parse(id) > _workersOptions.InstantGamingSkipFirstIds);
     await BatchPublishAsync(steamIds, updateExisting, _workersOptions.InstantGamingWorkerCount);
@@ -23,11 +23,11 @@ public class InstantGamingService : VendorsService, IInstantGamingService
   public async Task PublishRangeScrapeTaskAsync(int minId, int maxId, bool updateExisting = false)
   {
     if (minId < _workersOptions.InstantGamingSkipFirstIds) minId = _workersOptions.InstantGamingSkipFirstIds;
-    await BatchPublishAsync(Enumerable.Range(minId, maxId - minId + 1).Cast<dynamic>(), updateExisting);
+    await BatchPublishAsync(Enumerable.Range(minId, maxId - minId + 1).Select(id => id.ToString()), updateExisting);
   }
 
   public async Task PublishUpToMaxIdScrapeTaskAsync(int maxId, bool updateExisting = false)
   {
-    await BatchPublishAsync(Enumerable.Range(_workersOptions.InstantGamingSkipFirstIds, maxId).Cast<dynamic>(),updateExisting);
+    await BatchPublishAsync(Enumerable.Range(_workersOptions.InstantGamingSkipFirstIds, maxId).Select(id => id.ToString()), updateExisting);
   }
 }

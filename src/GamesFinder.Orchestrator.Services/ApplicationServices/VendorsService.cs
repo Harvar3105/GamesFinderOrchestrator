@@ -11,7 +11,7 @@ public abstract class VendorsService : IVendorsService
     _publisher = publisher;
   }
 
-  public async Task BatchPublishAsync(IEnumerable<dynamic> ids, bool updateExisting = false, int workersCount = 1)
+  public async Task BatchPublishAsync(IEnumerable<string> ids, bool updateExisting = false, int workersCount = 1)
   {
     var asList = ids.ToList();
     var batchSize = asList.Count / workersCount;

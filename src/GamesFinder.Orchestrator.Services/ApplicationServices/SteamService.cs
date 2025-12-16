@@ -10,7 +10,7 @@ public class SteamService : VendorsService, ISteamService
   {
   }
 
-  public async Task PublishIdsScrapeTaskAsync(List<dynamic> steamIds, bool updateExisting = false)
+  public async Task PublishIdsScrapeTaskAsync(List<string> steamIds, bool updateExisting = false)
   {
     await BatchPublishAsync(steamIds, updateExisting, 1);
   }

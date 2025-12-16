@@ -2,5 +2,5 @@ namespace GamesFinder.Orchestrator.Domain.Interfaces.Services.ApplicationService
 
 public interface ISteamService : IVendorsService
 {
-  Task PublishIdsScrapeTaskAsync(List<dynamic> steamIds, bool updateExisting = false);
+  Task PublishIdsScrapeTaskAsync(List<string> steamIds, bool updateExisting = false);
 }

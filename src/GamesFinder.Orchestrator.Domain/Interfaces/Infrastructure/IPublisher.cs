@@ -2,5 +2,5 @@ namespace GamesFinder.Orchestrator.Domain.Interfaces.Infrastructure;
 
 public interface IPublisher
 {
-  Task PublishIdsScrapeTaskAsync(List<dynamic> vendorsIds, bool updateExisting = false);
+  Task PublishIdsScrapeTaskAsync(List<string> vendorsIds, bool updateExisting = false);
 }

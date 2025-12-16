@@ -19,7 +19,7 @@ public class InstantGamingController : ControllerBase
 
   [HttpPost("scrap")]
   [Authorize(Policy = "DevPolicy")]
-  public async Task<IActionResult> ScrapInstantGamingIdsAsync([FromBody] RequestModel model)
+  public async Task<IActionResult> ScrapInstantGamingIdsAsync([FromBody] InstantGamingRequestModel model)
   {
     if (model.MaxIdCount == null && model.InstantGamingIds.Count == 0)
     {
@@ -50,9 +50,9 @@ public class InstantGamingController : ControllerBase
     }
   }
 
-  public sealed record RequestModel
+  public sealed record InstantGamingRequestModel
   {
-    public List<dynamic> InstantGamingIds { get; init; } = new();
+    public List<string> InstantGamingIds { get; init; } = new();
     public int? MaxIdCount { get; init; } = null;
     public bool UpdateExisting { get; init; } = false;
   }
