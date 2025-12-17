@@ -19,6 +19,8 @@ export async function fetchInstantGamingOffer(id: number, currency?: eCurrency, 
 
   const offerId = v4();  
 
+  var priceElement = findPriceElement(data);
+
   var gameOffer: GameOffer = {
     id: offerId,
     createdAt: new Date().toUTCString(),
@@ -28,7 +30,8 @@ export async function fetchInstantGamingOffer(id: number, currency?: eCurrency, 
     vendor: eVendor.InstatnGaming,
     vendorsUrl: url,
     available: findNoStockElement(data) ? false : true,
-    price: findPriceElement(data)
+    amount: priceElement?.price ?? null,
+    currency: priceElement?.currency ?? null
   }
 
   return gameOffer;

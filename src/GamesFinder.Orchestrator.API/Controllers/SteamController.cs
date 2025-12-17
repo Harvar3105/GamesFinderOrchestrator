@@ -63,7 +63,7 @@ public class SteamController : ControllerBase
 
   public sealed record SteamRequestModel
   {
-    public List<string> steamIds { get; init; } = new();
+    public List<long> steamIds { get; init; } = new();
     public bool updateExisting { get; init; } = false;
   }
 }

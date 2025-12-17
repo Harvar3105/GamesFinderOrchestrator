@@ -19,7 +19,22 @@ public class SteamWorkerConsumer : Consumer<Game>
 
   protected override async Task SaveToDatabaseAsync(IServiceScope scope, List<Game> items)
   {
-    var service = scope.ServiceProvider.GetRequiredService<IGamesService>();
-    await service.SaveManyAsync(items);
+    var gamesService = scope.ServiceProvider.GetRequiredService<IGamesService>();
+    var success = await gamesService.SaveManyAsync(items);
+    if (!success)
+    {
+      _logger.LogError("Could not save games!");
+      return;
+    }
+
+    var offers = items.SelectMany(g => g.Offers).ToList();
+    if (offers.Count() == 0)
+    {
+      _logger.LogInformation("No offers found for games.");
+      return;
+    }
+
+    var offersService = scope.ServiceProvider.GetRequiredService<IOffersService>();
+    await offersService.SaveManyAsync(offers);
   }
 }

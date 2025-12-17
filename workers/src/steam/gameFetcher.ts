@@ -16,17 +16,18 @@ export async function fetchSteamGame(id: number, region: eRegion = eRegion.US ):
 
   const gameId = v4();
   const isReleased = !game.release_date.coming_soon;
-  let initialPrice = null;
   let offers = null;
 
   const vendorsUrl = `https://store.steampowered.com/app/${id}`
 
+  let currency: eCurrency | null = null;
+  let initialAmount: number | null = null;
+
   if (isReleased){
     try {
       // Might depend on region but due to steam api poor typization we do it like this
-      const currency = getECurrencyFromString(game.price_overview?.currency || 'USD')!; 
-      const initialAmount = Number((game.price_overview?.initial / 100).toFixed(2));
-      initialPrice = {[currency]: initialAmount} as Record<eCurrency, number>;
+      currency = getECurrencyFromString(game.price_overview?.currency || 'null')!; 
+      initialAmount = Number((game.price_overview?.initial / 100).toFixed(2));
 
       const currentAmount = Number((game.price_overview?.final / 100).toFixed(2));
       offers = [{
@@ -38,7 +39,8 @@ export async function fetchSteamGame(id: number, region: eRegion = eRegion.US ):
         vendor: eVendor.Steam,
         vendorsUrl: vendorsUrl,
         available: true,
-        price: {currency: currency, price: currentAmount},
+        amount: currentAmount,
+        currency: currency
       } as GameOffer]
     } catch (e) {
       logger.error(`❌Error parsing price for game ID ${id}:`, e);
@@ -56,7 +58,8 @@ export async function fetchSteamGame(id: number, region: eRegion = eRegion.US ):
     isDLC: game.type === 'dlc',
     description: game.short_description || null,
     headerImage: game.header_image || null,
-    initialPrices: initialPrice,
+    initialPrice: initialAmount,
+    initialCurrency: currency,
     offers: offers,
     isReleased: isReleased,
   };

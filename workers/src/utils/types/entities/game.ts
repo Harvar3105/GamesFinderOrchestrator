@@ -12,5 +12,6 @@ export interface Game extends Entity {
   headerImage: string | null;
   offers: GameOffer[] | null;
   isReleased: boolean;
-  initialPrices: Record<eCurrency, number> | null;
+  initialPrice: number | null;
+  initialCurrency: eCurrency | null;
 }

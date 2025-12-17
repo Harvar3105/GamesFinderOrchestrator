@@ -14,7 +14,7 @@ namespace GamesFinder.Orchestrator.Consumers;
 public abstract class Consumer<TResult> : BackgroundService, IBrockerConsumer
 {
   private readonly IServiceProvider _serviceProvider;
-  private readonly ILogger _logger;
+  protected readonly ILogger _logger;
   private readonly RedisCacheDB _redis;
   private readonly Lazy<Task<IConnection>> _lazyConnection;
   private IChannel? _channel;

@@ -32,7 +32,9 @@ public class Game(
   public List<GameOffer> Offers { get; set; } = new();
   [BsonElement("is_released")]
   public bool IsReleased { get; set; }
-  [BsonElement("initial_prices")]
-  public Dictionary<ECurrency, decimal> InitialPrices { get; set; } = new();
+  [BsonElement("initial_price")]
+  public decimal? InitialPrice {get; set;}
+  [BsonElement("initial_currency")]
+  public ECurrency? InitialCurrency {get; set;}
 
 }
