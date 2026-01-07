@@ -5,7 +5,8 @@ import { scrapeBatch } from './gameFetcher.js';
 import { Game } from '../utils/types/entities/game.js';
 import logger from '../utils/logger.js';
 import { splitIntoBatches } from '../utils/helpers.js';
-import { createOrchestratorListener } from '../utils/orchestratorListener.js';
+import { clearRedisKeyIfExists, createOrchestratorListener } from '../utils/orchestratorListener.js';
+import { parseTask, TaskKind } from '../utils/taskParser.js';
 
 async function startSteamWorker() {
   const channel = await rabbitConn.createChannel();
@@ -17,20 +18,10 @@ async function startSteamWorker() {
       async (msg) => {
       if (!msg) return;
 
-      let task: SteamTask;
-      try {
-        task = normalizeSteamTask(JSON.parse(msg.content.toString()));
-      } catch (err) {
-        logger.error('❌Invalid JSON from queue:', msg.content.toString());
-        channel.nack(msg, false, false);
-        return;
-      }
+      let task: SteamTask | null = parseTask(msg, TaskKind.Steam, channel);
+      if (!task) return;
 
-
-      if (await redis.exists(task.redisResultKey)) {
-        await redis.del(task.redisResultKey);
-        logger.warn(`⚠️Cleared existing Redis key from previous request: ${task.redisResultKey}`);
-      }
+      await clearRedisKeyIfExists(task.redisResultKey);
       
       var batches = splitIntoBatches(task.gameIds, config.maxRequests);
 

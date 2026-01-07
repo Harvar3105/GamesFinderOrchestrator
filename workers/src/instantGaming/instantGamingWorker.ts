@@ -1,7 +1,8 @@
 import { rabbitConn } from "../utils/config.js";
 import { config, redis } from "../utils/config.js";
 import logger from "../utils/logger.js";
-import { createOrchestratorListener } from "../utils/orchestratorListener.js";
+import { clearRedisKeyIfExists, createOrchestratorListener } from "../utils/orchestratorListener.js";
+import { parseTask, TaskKind } from "../utils/taskParser.js";
 import { InstantGamingTask } from "../utils/types/entities/tasks.js";
 import { fetchInstantGamingOffer } from "./instantGamingFetcher.js";
 
@@ -14,19 +15,10 @@ async function startInstantGamingWorker() {
     async (msg) => {
       if (!msg) return;
 
-      let task: InstantGamingTask;
-      try {
-        task = JSON.parse(msg.content.toString()) as InstantGamingTask;
-      } catch (err) {
-        logger.error('❌Invalid JSON from queue:', msg?.content?.toString());
-        channel.nack(msg, false, false);
-        return;
-      }
+      let task: InstantGamingTask | null = parseTask(msg, TaskKind.InstantGaming, channel);
+      if (!task) return;
 
-      if (await redis.exists(task.redisResultKey)) {
-        await redis.del(task.redisResultKey);
-        logger.warn(`⚠️Cleared existing Redis key from previous request: ${task.redisResultKey}`);
-      }
+      await clearRedisKeyIfExists(task.redisResultKey);
 
       try {
         const list = [];
