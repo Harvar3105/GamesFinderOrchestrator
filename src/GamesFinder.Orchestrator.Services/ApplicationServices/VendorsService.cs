@@ -13,6 +13,12 @@ public abstract class VendorsService : IVendorsService
 
   public async Task BatchPublishAsync(IEnumerable<string> ids, bool updateExisting = false, int workersCount = 1)
   {
+    if (ids.Count() == 0)
+    {
+      await _publisher.PublishIdsScrapeTaskAsync(ids.ToList(), updateExisting);
+      return;
+    }
+
     var asList = ids.ToList();
     var batchSize = asList.Count / workersCount;
     for (int i = 0; i < asList.Count; i += batchSize)

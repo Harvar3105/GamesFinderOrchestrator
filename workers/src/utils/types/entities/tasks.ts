@@ -35,6 +35,6 @@ export function normalizeInstantGamingTask(raw: any): InstantGamingTask {
     redisResultKey: raw.RedisResultKey ?? raw.redisResultKey,
     createdAt: raw.CreatedAt ?? raw.createdAt,
     proxy: raw.Proxy ?? raw.proxy,
-    currency: raw.Currency ?? raw.currency
+    currency: raw.Currency ?? raw.currency,
   };
 }

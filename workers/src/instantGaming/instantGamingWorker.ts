@@ -31,6 +31,7 @@ async function startInstantGamingWorker() {
 
     try {
       const list = [];
+
       // TODO: Separate to different batches and work in paralel?
       for (const gameId of task.gameIds) {
         // TODO: add ignore existing option

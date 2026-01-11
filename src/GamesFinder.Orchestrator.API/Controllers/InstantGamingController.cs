@@ -17,30 +17,18 @@ public class InstantGamingController : ControllerBase
     _instantGamingService = instantGamingService;
   }
 
-  [HttpPost("scrap")]
+  [HttpPost("scrapIds")]
   [Authorize(Policy = "DevPolicy")]
   public async Task<IActionResult> ScrapInstantGamingIdsAsync([FromBody] InstantGamingRequestModel model)
   {
-    if (model.MaxIdCount == null && model.InstantGamingIds.Count == 0)
+    if (model.InstantGamingIds.Count == 0)
     {
       return BadRequest("Task cannot be empty.");
     }
 
-    bool isExistingScrap = model.InstantGamingIds.Count > 0;
     try
     {
-      if (isExistingScrap)
-      {
-        await _instantGamingService.PublishIdsScrapeTaskAsync(model.InstantGamingIds, model.UpdateExisting);
-      } 
-      else
-      {
-        if (model.MaxIdCount == null)
-        {
-          return BadRequest("MaxIdCount must be provided for new scraping tasks.");
-        }
-        await _instantGamingService.PublishUpToMaxIdScrapeTaskAsync(model.MaxIdCount.Value, model.UpdateExisting);
-      }
+      await _instantGamingService.PublishIdsScrapeTaskAsync(model.InstantGamingIds, model.UpdateExisting);
       return Ok(new { Message = $"Scraping task initiated." });
     }
     catch (Exception ex)
@@ -50,10 +38,54 @@ public class InstantGamingController : ControllerBase
     }
   }
 
+  [HttpPost("scrapRange")]
+  [Authorize(Policy = "DevPolicy")]
+  public async Task<IActionResult> ScrapInstantGamingRangeAsync([FromBody] InstantGamingRequestModel model)
+  {
+    if (model.MinimumId == null || model.MaximumId == null)
+    {
+      return BadRequest("MinimumId and MaximumId must be provided for range scraping.");
+    }
+
+    try
+    {
+      await _instantGamingService.PublishRangeScrapeTaskAsync(model.MinimumId.Value, model.MaximumId.Value, model.UpdateExisting);
+      return Ok(new { Message = $"Range scraping task initiated from ID {model.MinimumId} to {model.MaximumId}." });
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError(ex, "Error initiating range scraping task for Instant Gaming IDs.");
+      return StatusCode(500, "An error occurred while processing your request.");
+    }
+  }
+
+  [HttpPost("scrapUpTo")]
+  [Authorize(Policy = "DevPolicy")]
+  public async Task<IActionResult> ScrapInstantGamingMaxCountAsync([FromBody] InstantGamingRequestModel model)
+  {
+    if (model.MaxIdCount == null || model.MaxIdCount <= 10)
+    {
+      return BadRequest("MaxIdCount must be provided for max count scraping.");
+    }
+
+    try
+    {
+      await _instantGamingService.PublishUpToMaxIdScrapeTaskAsync(model.MaxIdCount.Value, model.UpdateExisting);
+      return Ok(new { Message = $"Max count scraping task initiated for {model.MaxIdCount} IDs." });
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError(ex, "Error initiating max count scraping task for Instant Gaming IDs.");
+      return StatusCode(500, "An error occurred while processing your request.");
+    }
+  }
+
   public sealed record InstantGamingRequestModel
   {
     public List<string> InstantGamingIds { get; init; } = new();
     public int? MaxIdCount { get; init; } = null;
+    public int? MinimumId { get; init; } = null;
+    public int? MaximumId { get; init; } = null;
     public bool UpdateExisting { get; init; } = false;
   }
 }

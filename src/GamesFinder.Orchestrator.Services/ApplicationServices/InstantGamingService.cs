@@ -14,10 +14,10 @@ public class InstantGamingService : VendorsService, IInstantGamingService
     _workersOptions = workersOptions;
   }
 
-  public async Task PublishIdsScrapeTaskAsync(List<string> steamIds, bool updateExisting = false)
+  public async Task PublishIdsScrapeTaskAsync(List<string> vendorsIds, bool updateExisting = false)
   {
-    var ids = steamIds.Where(id => int.Parse(id) > _workersOptions.InstantGamingSkipFirstIds);
-    await BatchPublishAsync(steamIds, updateExisting, _workersOptions.InstantGamingWorkerCount);
+    var ids = vendorsIds.Where(id => int.Parse(id) > _workersOptions.InstantGamingSkipFirstIds);
+    await BatchPublishAsync(vendorsIds, updateExisting, _workersOptions.InstantGamingWorkerCount);
   }
 
   public async Task PublishRangeScrapeTaskAsync(int minId, int maxId, bool updateExisting = false)
