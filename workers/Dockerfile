@@ -1,4 +1,4 @@
-FROM node:20 AS builder
+FROM node:25-alpine AS builder
 
 WORKDIR /app
 
@@ -13,7 +13,7 @@ COPY src ./src
 RUN npm run build
 
 
-FROM node:20
+FROM node:25-alpine
 
 WORKDIR /app
 

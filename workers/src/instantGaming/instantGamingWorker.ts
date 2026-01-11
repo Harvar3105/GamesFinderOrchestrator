@@ -1,63 +1,54 @@
 import { rabbitConn } from "../utils/config.js";
 import { config, redis } from "../utils/config.js";
 import logger from "../utils/logger.js";
+import { clearRedisKeyIfExists, createOrchestratorListener } from "../utils/orchestratorListener.js";
+import { parseTask, TaskKind } from "../utils/taskParser.js";
 import { InstantGamingTask } from "../utils/types/entities/tasks.js";
 import { fetchInstantGamingOffer } from "./instantGamingFetcher.js";
 
 async function startInstantGamingWorker() {
   const channel = await rabbitConn.createChannel();
+  createOrchestratorListener(
+    channel,
+    config.instantGamingRequests!,
+    config.instantGamingResults!,
+    async (msg) => {
+      if (!msg) return;
 
-  await channel.assertQueue(config.instantGamingRequests!, { durable: true });
-  logger.info(`✅InstantGaming worker listening on queue "instantGamingQueue"...`);
-  await channel.assertQueue(config.instantGamingResults!, { durable: true });
-  logger.info(`✅InstantGaming worker will publish results to "instantGamingResults"...`);
+      let task: InstantGamingTask | null = parseTask(msg, TaskKind.InstantGaming, channel);
+      if (!task) return;
 
-  await channel.consume("instantGamingQueue", async (msg) => {
-    if (!msg) return;
+      await clearRedisKeyIfExists(task.redisResultKey);
 
-    let task: InstantGamingTask;
-    try {
-      task = JSON.parse(msg.content.toString()) as InstantGamingTask;
-    } catch (err) {
-      logger.error('❌Invalid JSON from queue:', msg?.content?.toString());
-      channel.nack(msg, false, false);
-      return;
-    }
+      try {
+        const list = [];
+        // TODO: Separate to different batches and work in paralel?
+        for (const gameId of task.gameIds) {
+          // TODO: add ignore existing option
+          var offer = await fetchInstantGamingOffer(gameId, task.currency, task.proxy)
+          if (offer) list.push(offer);
+        }
 
-    if (await redis.exists(task.redisResultKey)) {
-      await redis.del(task.redisResultKey);
-      logger.warn(`⚠️Cleared existing Redis key from previous request: ${task.redisResultKey}`);
-    }
+        await redis.rpush(task.redisResultKey, ...list.map(r => JSON.stringify(r)));
+        logger.info(`ℹ️Just added ${list.length} gameOffers to redis from InstantGaming.}`);
 
-    try {
-      const list = [];
+        await channel.sendToQueue(
+          config.instantGamingResults!,
+          Buffer.from(JSON.stringify({
+            taskId: task.taskId,
+            redisResultKey: task.redisResultKey,
+          })),
+          { persistent: true }
+        );
 
-      // TODO: Separate to different batches and work in paralel?
-      for (const gameId of task.gameIds) {
-        // TODO: add ignore existing option
-        var offer = await fetchInstantGamingOffer(gameId, task.currency, task.proxy)
-        if (offer) list.push(offer);
+        channel.ack(msg);
+        logger.info(`✅InstantGaming task ${task.taskId} done, created ${list.length} offers.`);
+      } catch (err) {
+        logger.error('❌Error processing instantGaming task:', err);
+        channel.nack(msg, false, true);
       }
-
-      await redis.rpush(task.redisResultKey, ...list.map(r => JSON.stringify(r)));
-      logger.info(`ℹ️Just added ${list.length} gameOffers to redis from InstantGaming.}`);
-
-      await channel.sendToQueue(
-        config.instantGamingResults!,
-        Buffer.from(JSON.stringify({
-          taskId: task.taskId,
-          redisResultKey: task.redisResultKey,
-        })),
-        { persistent: true }
-      );
-
-      channel.ack(msg);
-      logger.info(`✅InstantGaming task ${task.taskId} done, created ${list.length} offers.`);
-    } catch (err) {
-      logger.error('❌Error processing instantGaming task:', err);
-      channel.nack(msg, false, true);
     }
-  });
+  )
 }
 
 startInstantGamingWorker().catch(logger.crit);
