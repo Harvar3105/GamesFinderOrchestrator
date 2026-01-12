@@ -1,4 +1,5 @@
 using System;
+using GamesFinder.Orchestrator.Domain.Classes.Tasks.InstantGaming;
 using GamesFinder.Orchestrator.Domain.Enums;
 using GamesFinder.Orchestrator.Domain.Interfaces.Infrastructure;
 using GamesFinder.Orchestrator.Publisher.RabbitMQ;
@@ -6,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace GamesFinder.Orchestrator.Publisher;
 
-public class InstantGamingWorkersPublisher : IPublisher
+public class InstantGamingWorkersPublisher : IInstantGamingPublisher
 {
   private readonly IBrockerPublisher _publisher;
   private readonly ILogger<SteamWorkerPublisher> _logger;
@@ -29,10 +30,10 @@ public class InstantGamingWorkersPublisher : IPublisher
 
     var redisKey = $"instantgaming:scrape:result:{Guid.NewGuid()}";
 
-    var task = new InstantGamingScrapeTask
+    var task = new InstantGamingScrapeIdsTask
     {
       GameIds = vendorsIds,
-      UpdateExisting = updateExisting,
+      UpdateExistingDeals = updateExisting,
       RedisResultKey = redisKey
     };
 
@@ -51,14 +52,68 @@ public class InstantGamingWorkersPublisher : IPublisher
     }
   }
 
-  private class InstantGamingScrapeTask
+  public async Task PublishRangeScrapeTaskAsync(int startId, int endId, bool updateExistingDeals = false)
   {
-    public Guid TaskId { get; set; } = Guid.NewGuid();
-    public List<string> GameIds { get; set; } = new();
-    public bool UpdateExisting { get; set; } = false;
-    public string RedisResultKey { get; set; } = string.Empty;
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public string? Proxy {get; set;} = null; // TODO: If found Proxy in future for workers
-    public ECurrency Currency { get; set; } = ECurrency.EUR;
+    if (startId < 0 || endId < 0 || endId <= startId)
+    {
+      _logger.LogWarning("Invalid range for Instant Gaming scrape task: StartId={StartId}, EndId={EndId}", startId, endId);
+      throw new ArgumentException("Invalid range for Instant Gaming scrape task.");
+    }
+
+    var redisKey = $"instantgaming:scrape:result:{Guid.NewGuid()}";
+
+    var task = new InstantGamingScrapeRangeTask
+    {
+      StartId = startId,
+      EndId = endId,
+      UpdateExistingDeals = updateExistingDeals,
+      RedisResultKey = redisKey
+    };
+
+    try
+    {
+      _logger.LogInformation($"Task publishing for Instant Gaming: From {task.StartId} to {task.EndId}, RedisKey: {redisKey}");
+
+      await _publisher.PublishAsync(task, _config.InstantGamingRequestsQueue);
+
+      _logger.LogInformation($"Task published✅. ID's range: {startId} - {endId}");
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError(ex, "Error publishing InstantGamingScrapeTask (RedisKey: {RedisKey})", redisKey);
+      throw;
+    }
+  }
+
+  public async Task PublishUpToScrapeTaskAsync(int upToId, bool updateExistingDeals = false)
+  {
+    if (upToId < 0)
+    {
+      _logger.LogWarning("Invalid upToId for Instant Gaming scrape task: UpToId={UpToId}", upToId);
+      throw new ArgumentException("Invalid upToId for Instant Gaming scrape task.");
+    }
+
+    var redisKey = $"instantgaming:scrape:result:{Guid.NewGuid()}";
+
+    var task = new InstantGamingScrapeUpToTask
+    {
+      UpToId = upToId,
+      UpdateExistingDeals = updateExistingDeals,
+      RedisResultKey = redisKey
+    };
+
+    try
+    {
+      _logger.LogInformation($"Task publishing for Instant Gaming: Up to {upToId} Ids, RedisKey: {redisKey}");
+
+      await _publisher.PublishAsync(task, _config.InstantGamingRequestsQueue);
+
+      _logger.LogInformation($"Task published✅. Up to {upToId} Ids");
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError(ex, "Error publishing InstantGamingScrapeTask (RedisKey: {RedisKey})", redisKey);
+      throw;
+    }
   }
 }

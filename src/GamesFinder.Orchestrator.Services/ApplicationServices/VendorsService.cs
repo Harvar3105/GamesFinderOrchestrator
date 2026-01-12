@@ -3,10 +3,11 @@ using GamesFinder.Orchestrator.Domain.Interfaces.Services.ApplicationServices;
 
 namespace GamesFinder.Orchestrator.Services.ApplicationServices;
 
-public abstract class VendorsService : IVendorsService
+public abstract class VendorsService <TPublisher> : IVendorsService
+  where TPublisher : class, IPublisher
 {
-  protected IPublisher _publisher;
-  public VendorsService(IPublisher publisher)
+  protected TPublisher _publisher;
+  public VendorsService(TPublisher publisher)
   {
     _publisher = publisher;
   }

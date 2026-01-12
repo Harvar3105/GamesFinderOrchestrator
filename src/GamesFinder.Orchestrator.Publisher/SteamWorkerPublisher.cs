@@ -1,3 +1,4 @@
+using GamesFinder.Orchestrator.Domain.Classes.Tasks;
 using GamesFinder.Orchestrator.Domain.Interfaces.Infrastructure;
 using GamesFinder.Orchestrator.Publisher.RabbitMQ;
 using Microsoft.Extensions.Logging;
@@ -30,7 +31,8 @@ public class SteamWorkerPublisher : IPublisher
     var task = new SteamScrapeTask
     {
       GameIds = steamIds,
-      UpdateExisting = updateExisting,
+      UpdateExistingDeals = updateExisting,
+      UpdateExistingGames = updateExisting,
       RedisResultKey = redisKey
     };
 
@@ -47,15 +49,5 @@ public class SteamWorkerPublisher : IPublisher
       _logger.LogError(ex, "Error publishing SteamScrapeTask (RedisKey: {RedisKey})", redisKey);
       throw;
     }
-  }
-  
-
-  private class SteamScrapeTask
-  { 
-    public Guid TaskId { get; set; } = Guid.NewGuid();
-    public List<string> GameIds { get; set; } = new();
-    public bool UpdateExisting { get; set; } = false;
-    public string RedisResultKey { get; set; } = string.Empty;
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
   }
 }

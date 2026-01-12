@@ -4,7 +4,7 @@ using GamesFinder.Orchestrator.Publisher;
 
 namespace GamesFinder.Orchestrator.Services.ApplicationServices;
 
-public class SteamService : VendorsService, ISteamService
+public class SteamService : VendorsService<SteamWorkerPublisher>, ISteamService
 {
   public SteamService(SteamWorkerPublisher publisher) : base(publisher)
   {
