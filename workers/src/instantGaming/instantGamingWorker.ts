@@ -3,7 +3,7 @@ import { config, redis } from "../utils/config.js";
 import logger from "../utils/logger.js";
 import { clearRedisKeyIfExists, createOrchestratorListener } from "../utils/orchestratorListener.js";
 import { parseTask, TaskKind } from "../utils/taskParser.js";
-import { InstantGamingTask } from "../utils/types/entities/tasks.js";
+import { InstantGamingScrapeIdsTask, InstantGamingTask } from "../utils/types/entities/tasks.js";
 import { fetchInstantGamingOffer } from "./instantGamingFetcher.js";
 
 async function startInstantGamingWorker() {
@@ -15,7 +15,7 @@ async function startInstantGamingWorker() {
     async (msg) => {
       if (!msg) return;
 
-      let task: InstantGamingTask | null = parseTask(msg, TaskKind.InstantGaming, channel);
+      let task: InstantGamingTask | null = parseTask(msg, TaskKind.InstantGaming, channel) as InstantGamingTask; // We know it wont be Steam type
       if (!task) return;
 
       await clearRedisKeyIfExists(task.redisResultKey);
@@ -23,7 +23,8 @@ async function startInstantGamingWorker() {
       try {
         const list = [];
         // TODO: Separate to different batches and work in paralel?
-        for (const gameId of task.gameIds) {
+        // TODO: Handle other task types
+        for (const gameId of (task as InstantGamingScrapeIdsTask).gameIds) {
           // TODO: add ignore existing option
           var offer = await fetchInstantGamingOffer(gameId, task.currency, task.proxy)
           if (offer) list.push(offer);
