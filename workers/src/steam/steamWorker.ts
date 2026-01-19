@@ -18,7 +18,7 @@ async function startSteamWorker() {
       async (msg) => {
       if (!msg) return;
 
-      let task: SteamTask | null = parseTask(msg, TaskKind.Steam, channel);
+      let task: SteamTask | null = parseTask(msg, TaskKind.Steam, channel) as SteamTask | null;
       if (!task) return;
 
       await clearRedisKeyIfExists(task.redisResultKey);
