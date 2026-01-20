@@ -1,3 +1,4 @@
+using GamesFinder.Orchestrator.API.Controllers.Contracts.Steam;
 using GamesFinder.Orchestrator.Domain.Interfaces.DomainServices;
 using GamesFinder.Orchestrator.Domain.Interfaces.Services.ApplicationServices;
 using Microsoft.AspNetCore.Authorization;
@@ -24,11 +25,6 @@ public class SteamController : ControllerBase
   [Authorize(Policy = "DevPolicy")]
   public async Task<IActionResult> ScrapSteamIdsAsync([FromBody] SteamRequestModel model)
   {
-    if (model.steamIds == null || model.steamIds.Count == 0)
-    {
-      return BadRequest("Steam ID list cannot be empty.");
-    }
-
     try
     {
       await _steamService.PublishIdsScrapeTaskAsync(model.steamIds, model.updateExisting);
@@ -59,11 +55,5 @@ public class SteamController : ControllerBase
       _logger.LogError(ex, $"Error checking existence of Steam ID: {steamId}");
       return StatusCode(500, "An error occurred while processing your request.");
     }
-  }
-
-  public sealed record SteamRequestModel
-  {
-    public List<long> steamIds { get; init; } = new();
-    public bool updateExisting { get; init; } = false;
   }
 }
