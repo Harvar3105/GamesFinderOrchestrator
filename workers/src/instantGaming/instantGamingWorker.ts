@@ -3,7 +3,8 @@ import { config, redis } from "../utils/config.js";
 import logger from "../utils/logger.js";
 import { clearRedisKeyIfExists, createOrchestratorListener } from "../utils/orchestratorListener.js";
 import { parseTask, TaskKind } from "../utils/taskParser.js";
-import { InstantGamingScrapeIdsTask, InstantGamingTask } from "../utils/types/entities/tasks.js";
+import { InstantGamingScrapeIdsTask, InstantGamingScrapeRangeTask, InstantGamingTask } from "../utils/types/entities/tasks.js";
+import { eInstantGamingTaskType } from "../utils/types/enums/eInstantGamingTaskType.js";
 import { fetchInstantGamingOffer } from "./instantGamingFetcher.js";
 
 async function startInstantGamingWorker() {
@@ -22,12 +23,26 @@ async function startInstantGamingWorker() {
 
       try {
         const list = [];
-        // TODO: Separate to different batches and work in paralel?
-        // TODO: Handle other task types
-        for (const gameId of (task as InstantGamingScrapeIdsTask).gameIds) {
-          // TODO: add ignore existing option
-          var offer = await fetchInstantGamingOffer(gameId, task.currency, task.proxy)
-          if (offer) list.push(offer);
+        switch (task.type) {
+          case eInstantGamingTaskType.SCRAPE_IDS:
+            for (const gameId of (task as InstantGamingScrapeIdsTask).gameIds) {
+              // TODO: add ignore existing option
+              var offer = await fetchInstantGamingOffer(gameId, task.currency, task.proxy)
+              if (offer) list.push(offer);
+            }
+            break;
+          case eInstantGamingTaskType.SCRAPE_RANGE:
+            for (let gameId = (task as InstantGamingScrapeRangeTask).startId; gameId <= (task as InstantGamingScrapeRangeTask).endId; gameId++) {
+              var offer = await fetchInstantGamingOffer(gameId, task.currency, task.proxy)
+              if (offer) list.push(offer);
+            }
+            break;
+          case eInstantGamingTaskType.SCRAPE_UP_TO:
+            for (let gameId = ++(config.instantGamingSkipFirst as number); gameId <= (task as any).upToId; gameId++) {
+              var offer = await fetchInstantGamingOffer(gameId, task.currency, task.proxy)
+              if (offer) list.push(offer);
+            }
+            break;
         }
 
         await redis.rpush(task.redisResultKey, ...list.map(r => JSON.stringify(r)));

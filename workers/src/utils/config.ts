@@ -26,9 +26,11 @@ export const config = {
 
   instantGamingRequests: process.env.RABBITMQ_IG_REQUESTS_QUEUE,
   instantGamingResults: process.env.RABBITMQ_IG_RESULTS_QUEUE,
+  instantGamingSkipFirst: process.env.INSTANT_GAMING_SKIP_FIRST || 10,
 
   backendUrl: process.env.BACKEND_URL,
-  backendCheckGame: process.env.BACKEND_CHECK_GAME
+  backendCheckGame: process.env.BACKEND_CHECK_GAME,
+  backendTimeoutMs: Number(process.env.BACKEND_TIMEOUT_MS) || 5000,
 };
 
 export const redis = new Redis({
