@@ -15,13 +15,14 @@ export async function fetchJson(url: string, proxy?: string, method?: string): P
     timeout: config.backendTimeoutMs
   };
   try {
+    logger.info(`Options are: \t${JSON.stringify(options)}`);
     const res = await fetch(url, options);
     if (!res.ok) return null;
     const data = await res.json();
     if (data === undefined || data.error) return null;
     return data;
   } catch (err) {
-    logger.error(`❌Error fetching JSON from ${url}:`, err);
+    logger.error(`❌Error fetching JSON from ${url}`, err);
     return null;
   }
 }
@@ -43,7 +44,8 @@ export async function fetchHTML(url: string, proxy?: string): Promise<string | n
 
     if (!res.ok) return null;
     return await res.text();
-  } catch {
+  } catch (err) {
+    logger.error(`❌Error fetching HTML from ${url}`, err);
     return null;
   }
 }

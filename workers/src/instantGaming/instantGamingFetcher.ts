@@ -49,6 +49,6 @@ export async function fetchInstantGamingOffer(id: number, currency?: eCurrency, 
 async function getGameId(steamId: number): Promise<string | null> {
   const url = config.backendUrl! + config.backendCheckGame! + `?steamId=${steamId}`;
   const data = await fetchJson(url, undefined, 'POST');
-  if (data && data.id) return data.id;
-  return null;
+  if (!data) return null;
+  return data.exists ?? null;
 }
