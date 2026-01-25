@@ -14,19 +14,21 @@
   "dependencies": {
     "amqplib": "^0.10.9",
     "dotenv": "^17.2.3",
+    "https-proxy-agent": "^7.0.6",
     "ioredis": "^5.8.1",
+    "jsdom": "^27.4.0",
     "node-fetch": "^3.3.2",
     "uuid": "^13.0.0",
-    "winston": "^3.18.3",
-    "https-proxy-agent": "^7.0.6"
+    "winston": "^3.18.3"
   },
   "devDependencies": {
-    "ts-node": "^10.9.2",
-    "typescript": "^5.9.3",
     "@types/amqplib": "^0.10.7",
+    "@types/jsdom": "^27.0.0",
     "@types/node": "^24.7.2",
     "@types/node-fetch": "^2.6.13",
-    "@types/winston": "^2.4.4"
+    "@types/winston": "^2.4.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
   },
   "keywords": [],
   "author": "",
