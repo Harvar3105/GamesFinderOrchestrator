@@ -11,6 +11,11 @@ services:
   rabbitmq:
     image: "rabbitmq:3-management"
     container_name: rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -29,6 +34,11 @@ services:
     ports:
       - "6379:6379"
     command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - shared-network
 
@@ -36,7 +46,6 @@ services:
   # Workers
   # -----------------------------
   steam-worker:
-    image: "node:25-alpine"
     build:
       context: ./workers
       dockerfile: Dockerfile
@@ -47,17 +56,19 @@ services:
       - NODE_ENV=docker
     volumes:
       - ./workers:/app:cached
+      - /app/node_modules
     working_dir: /app
     command: ["npm", "run", "steam"]
     depends_on:
-      - rabbitmq
-      - redis
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: unless-stopped #For some reason fails at first start, loads on second
     networks:
       - shared-network
   
   instantgaming-worker:
-    image: "node:25-alpine"
     build:
       context: ./workers
       dockerfile: Dockerfile
@@ -67,11 +78,14 @@ services:
       - NODE_ENV=docker
     volumes:
       - ./workers:/app:cached
+      - /app/node_modules
     working_dir: /app
     command: ["npm", "run", "instantgaming"]
     depends_on:
-      - rabbitmq
-      - redis
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: unless-stopped #For some reason fails at first start, loads on second
     networks:
       - shared-network
@@ -94,10 +108,10 @@ services:
     volumes:
       - ./src/GamesFinder.Orchestrator.API:/app/src/GamesFinder.Orchestrator.API:cached
     depends_on:
-      - rabbitmq
-      - redis
-      - steam-worker
-      - instantgaming-worker
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: unless-stopped # Will fail  until workers are ready. They fail at first start, loads on second so backend also needs restart
     networks:
       - shared-network
