@@ -7,7 +7,9 @@
   "scripts": {
     "build": "tsc",
     "steam": "node dist/steam/steamWorker.js",
+    "steam:watch": "tsx watch dist/steam/steamWorker.js",
     "instantgaming": "node dist/instantGaming/instantGamingWorker.js",
+    "instantgaming:watch": "tsx watch dist/instantGaming/instantGamingWorker.js",
     "dev:steam": "ts-node src/steam/steamWorker.ts",
     "dev:instantgaming": "ts-node src/instantGaming/instantGamingWorker.ts"
   },
