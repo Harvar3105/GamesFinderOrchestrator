@@ -58,7 +58,7 @@ services:
       - ./workers:/app:cached
       - /app/node_modules
     working_dir: /app
-    command: ["npm", "run", "steam"]
+    command: ["npm", "run", "steam:watch"]
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -80,7 +80,7 @@ services:
       - ./workers:/app:cached
       - /app/node_modules
     working_dir: /app
-    command: ["npm", "run", "instantgaming"]
+    command: ["npm", "run", "instantgaming:watch"]
     depends_on:
       rabbitmq:
         condition: service_healthy
