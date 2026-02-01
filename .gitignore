@@ -59,3 +59,4 @@ appsettings.Production.json
 .env
 node_modules/
 dist/
+definitions.json
