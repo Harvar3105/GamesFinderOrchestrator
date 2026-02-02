@@ -132,6 +132,7 @@ builder.Services.AddSingleton<SteamWorkerPublisher>();
 builder.Services.AddSingleton<InstantGamingWorkersPublisher>();
 
 builder.Services.AddHostedService<SteamWorkerConsumer>();
+builder.Services.AddHostedService<InstantGamingWorkersConsumer>();
 
 
 BsonSerializer.RegisterSerializer(typeof(ECurrency), new EnumSerializer<ECurrency>(BsonType.String));
