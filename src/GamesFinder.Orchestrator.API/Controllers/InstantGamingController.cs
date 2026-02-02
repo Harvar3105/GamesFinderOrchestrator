@@ -22,6 +22,7 @@ public class InstantGamingController : ControllerBase
   [Authorize(Policy = "DevPolicy")]
   public async Task<IActionResult> ScrapInstantGamingIdsAsync([FromBody] InstantGamingScrapIdsRequest model)
   {
+    _logger.LogInformation("Received request to scrap Instant Gaming IDs: {Ids}", string.Join(", ", model.InstantGamingIds));
     try
     {
       await _instantGamingService.PublishIdsScrapeTaskAsync(model.InstantGamingIds, model.UpdateExisting);

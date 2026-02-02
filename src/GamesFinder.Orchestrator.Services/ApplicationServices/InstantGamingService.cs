@@ -18,7 +18,7 @@ public class InstantGamingService : VendorsService<IInstantGamingPublisher>, IIn
   public async Task PublishIdsScrapeTaskAsync(List<string> vendorsIds, bool updateExisting = false)
   {
     var ids = vendorsIds.Where(id => int.Parse(id) > _workersOptions.InstantGamingSkipFirstIds);
-    await BatchPublishAsync(vendorsIds, updateExisting, _workersOptions.InstantGamingWorkerCount);
+    await BatchPublishAsync(ids, updateExisting, _workersOptions.InstantGamingWorkerCount);
   }
 
   public async Task PublishRangeScrapeTaskAsync(int minId, int maxId, bool updateExisting = false)

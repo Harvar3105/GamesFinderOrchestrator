@@ -16,8 +16,12 @@ public abstract class VendorsService <TPublisher> : IVendorsService
   {
     if (ids.Count() == 0)
     {
-      await _publisher.PublishIdsScrapeTaskAsync(ids.ToList(), updateExisting);
-      return;
+      throw new Exception("No IDs to process after applying filters.");
+    }
+
+    if (ids.Count() < workersCount)
+    {
+      workersCount = ids.Count();
     }
 
     var asList = ids.ToList();
