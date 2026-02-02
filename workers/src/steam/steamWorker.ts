@@ -4,7 +4,7 @@ import { SteamTask, normalizeSteamTask } from '../utils/types/entities/tasks.js'
 import { scrapeBatch } from './gameFetcher.js';
 import { Game } from '../utils/types/entities/game.js';
 import logger from '../utils/logger.js';
-import { splitIntoBatches } from '../utils/helpers.js';
+import { splitIntoBatches } from '../utils/instantGaminghHelpers.js';
 import { clearRedisKeyIfExists, createOrchestratorListener } from '../utils/orchestratorListener.js';
 import { parseTask, TaskKind } from '../utils/taskParser.js';
 

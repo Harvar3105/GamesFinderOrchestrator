@@ -13,3 +13,9 @@ export function getECurrencyFromString(str: string): eCurrency | null {
       return null;
   }
 }
+
+export function getECurrencyBySymbol(text: string): eCurrency | null {
+  if (text.includes('$')) return eCurrency.USD;
+  if (text.includes('€')) return eCurrency.EUR;
+  return null;
+}
