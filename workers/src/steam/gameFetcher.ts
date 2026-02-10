@@ -5,11 +5,19 @@ import { eRegion } from "../utils/types/enums/eRegion.js";
 import { eVendor } from "../utils/types/enums/eVendor.js";
 import { GameOffer } from "../utils/types/entities/gameOffer.js";
 import logger from "../utils/logger.js";
-import { fetchJson } from "../utils/offerFetcher.js";
+import { fetchJson, HttpStatusError } from "../utils/offerFetcher.js";
 
-export async function fetchSteamGame(id: number, region: eRegion = eRegion.US ): Promise<Game | null> {
+export async function fetchSteamGame(id: number, region: eRegion = eRegion.US ): Promise<Game | null | HttpStatusError> {
   const url = `https://store.steampowered.com/api/appdetails?appids=${id}&cc=${region}&l=en`;
-  const data = await fetchJson(url);
+  
+  let data;
+  try {
+    data = await fetchJson(url);
+  } catch (err) {
+    if (err instanceof HttpStatusError) return err;
+    return null;
+  }
+  
 
   if (!data[id]?.success) return null;
   const game = data[id].data;
@@ -65,15 +73,37 @@ export async function fetchSteamGame(id: number, region: eRegion = eRegion.US ):
   };
 }
 
-export async function scrapeBatch(ids: number[], region?: eRegion): Promise<Game[]> {
-  const results: Game[] = [];
+export async function scrapeBatch(ids: number[], region?: eRegion): Promise<scrapeResult> {
+  let result = new scrapeResult([]);
 
-  results.push(
-    ...(await Promise.all(
-      ids.map(id => fetchSteamGame(id, region))
-    ))
-    .filter(g => g !== null) as Game[]
-  );
+  for (let i = 0; i < ids.length; i++) {
+    const id = ids[i];
+    try {
+      const res = await fetchSteamGame(id, region);
 
-  return results;
+      if (res instanceof HttpStatusError) {
+        logger.error(`Stopping batch: received HTTP ${res.status} for Steam id ${id}`, res.body ?? res.message);
+        result.err = res;
+        result.unprocessedIds = ids.slice(i);
+        return result;
+      }
+
+      if (res !== null) result.res.push(res);
+    } catch (err) {
+      logger.error(`Unexpected error while fetching game ${id}:`, err);
+    }
+  }
+
+  return result;
+}
+export class scrapeResult {
+  res: Game[];
+  err?: HttpStatusError;
+  unprocessedIds?: number[];
+
+  constructor(res: Game[], err?: HttpStatusError, unprocessedIds?: number[]) {
+    this.res = res;
+    this.err = err;
+    this.unprocessedIds = unprocessedIds;
+  }
 }
