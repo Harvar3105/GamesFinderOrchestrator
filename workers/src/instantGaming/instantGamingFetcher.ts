@@ -1,5 +1,5 @@
 import { v4 } from "uuid";
-import { fetchHTML, fetchJson, parseHtmlToDocument } from "../utils/offerFetcher.js";
+import { fetchHTML, fetchJson, HttpStatusError, parseHtmlToDocument } from "../utils/offerFetcher.js";
 import { GameOffer } from "../utils/types/entities/gameOffer.js";
 import { eCurrency } from "../utils/types/enums/eCurrency.js";
 import { getCanonicalIGurl, getFirstSteamIdFromMediaSourceIG } from "../utils/instantGaminghHelpers.js";
@@ -8,10 +8,16 @@ import { eVendor } from "../utils/types/enums/eVendor.js";
 import { findNoStockElementIG, findPriceElementIG } from "../utils/instantGaminghHelpers.js";
 import logger from "../utils/logger.js";
 
-export async function fetchInstantGamingOffer(id: number, currency?: eCurrency, proxy?: string): Promise<GameOffer | null> {
+export async function fetchInstantGamingOffer(id: number, currency?: eCurrency, proxy?: string): Promise<GameOffer | null | HttpStatusError> {
   const url = `https://www.instant-gaming.com/${id}-/?currency=${currency?.toString().toUpperCase() || 'EUR'}`;
-  const data = await fetchHTML(url, proxy);
-  if (!data) return null;
+  
+  let data;
+  try {
+    data = await fetchJson(url);
+  } catch (err) {
+    if (err instanceof HttpStatusError) return err;
+    return null;
+  }
 
   const steamId = getFirstSteamIdFromMediaSourceIG(data)
   if (!steamId) {

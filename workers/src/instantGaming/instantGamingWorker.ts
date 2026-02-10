@@ -1,6 +1,7 @@
 import { rabbitConn } from "../utils/config.js";
 import { config, redis } from "../utils/config.js";
 import logger from "../utils/logger.js";
+import { HttpStatusError } from "../utils/offerFetcher.js";
 import { clearRedisKeyIfExists, createOrchestratorListener } from "../utils/orchestratorListener.js";
 import { parseTask, TaskKind } from "../utils/taskParser.js";
 import { InstantGamingScrapeIdsTask, InstantGamingScrapeRangeTask, InstantGamingTask } from "../utils/types/entities/tasks.js";
@@ -28,18 +29,32 @@ async function startInstantGamingWorker() {
             for (const gameId of (task as InstantGamingScrapeIdsTask).gameIds) {
               // TODO: add ignore existing option
               var offer = await fetchInstantGamingOffer(gameId, task.currency, task.proxy)
+              if (offer instanceof HttpStatusError) {
+                logger.error(`Stopping processing of task ${task.taskId} due to error: HTTP ${offer.status} ${offer.message}`, offer.body ?? '');
+                break;
+              }
               if (offer) list.push(offer);
             }
             break;
           case eInstantGamingTaskType.SCRAPE_RANGE:
             for (let gameId = (task as InstantGamingScrapeRangeTask).startId; gameId <= (task as InstantGamingScrapeRangeTask).endId; gameId++) {
               var offer = await fetchInstantGamingOffer(gameId, task.currency, task.proxy)
+              if (offer instanceof HttpStatusError) {
+                logger.error(`Stopping processing of task ${task.taskId} due to error: HTTP ${offer.status} ${offer.message}`, offer.body ?? '');
+                logger.warn(`Reached gameId ${gameId} in range ${(task as InstantGamingScrapeRangeTask).startId} - ${(task as InstantGamingScrapeRangeTask).endId}, stopping further requests to avoid more errors.`);
+                break;
+              }
               if (offer) list.push(offer);
             }
             break;
           case eInstantGamingTaskType.SCRAPE_UP_TO:
             for (let gameId = ++(config.instantGamingSkipFirst as number); gameId <= (task as any).upToId; gameId++) {
               var offer = await fetchInstantGamingOffer(gameId, task.currency, task.proxy)
+              if (offer instanceof HttpStatusError) {
+                logger.error(`Stopping processing of task ${task.taskId} due to error: HTTP ${offer.status} ${offer.message}`, offer.body ?? '');
+                logger.warn(`Reached gameId ${gameId} while scraping up to ${(task as any).upToId}, stopping further requests to avoid more errors.`);
+                break;
+              }
               if (offer) list.push(offer);
             }
             break;
