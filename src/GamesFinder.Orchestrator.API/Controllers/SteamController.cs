@@ -13,12 +13,14 @@ public class SteamController : ControllerBase
   private readonly ILogger<SteamController> _logger;
   private readonly ISteamService _steamService;
   private readonly IGamesService _gamesService;
+  private readonly IOffersService _offersService;
 
-  public SteamController(ILogger<SteamController> logger, ISteamService steamService, IGamesService gamesService)
+  public SteamController(ILogger<SteamController> logger, ISteamService steamService, IGamesService gamesService, IOffersService offersService)
   {
     _logger = logger;
     _steamService = steamService;
     _gamesService = gamesService;
+    _offersService = offersService;
   }
 
   [HttpPost("scrap")]
@@ -37,7 +39,7 @@ public class SteamController : ControllerBase
     }
   }
 
-  [HttpPost("checkExisting")]
+  [HttpPost("checkGameExists")]
   public async Task<IActionResult> CheckExistingSteamIdAsync(int steamId, bool getId = false)
   {
     try
@@ -53,6 +55,21 @@ public class SteamController : ControllerBase
     catch (Exception ex)
     {
       _logger.LogError(ex, $"Error checking existence of Steam ID: {steamId}");
+      return StatusCode(500, "An error occurred while processing your request.");
+    }
+  }
+
+  [HttpPost("checkGameOfferExists")]
+  public async Task<IActionResult> CheckExistingGameOfferAsync(int steamId)
+  {
+    try
+    {
+      var exists = await _offersService.CheckExistsByVendorsIdAsync(steamId.ToString());
+      return Ok(new { Exists = exists });
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError(ex, $"Error checking existence of game offer for Steam ID: {steamId}");
       return StatusCode(500, "An error occurred while processing your request.");
     }
   }
