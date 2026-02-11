@@ -4,12 +4,13 @@ import { eInstantGamingTaskType } from "../enums/eInstantGamingTaskType.js";
 export interface Task {
   taskId: string;
   createdAt: string;
-  updateExisting: boolean;
+  updateExistingDeals: boolean;
   redisResultKey: string;
 }
 
 export interface SteamTask extends Task {
   gameIds: number[];
+  updateExistingGames: boolean;
 }
 
 export interface InstantGamingTask extends Task {
@@ -35,7 +36,7 @@ function normalizeBaseTask(raw: any): Task {
   return {
     taskId: raw.TaskId ?? raw.taskId,
     createdAt: raw.CreatedAt ?? raw.createdAt,
-    updateExisting: raw.UpdateExisting ?? raw.updateExisting,
+    updateExistingDeals: raw.UpdateExisting ?? raw.updateExisting,
     redisResultKey: raw.RedisResultKey ?? raw.redisResultKey
   }
 }
@@ -54,6 +55,7 @@ export function getInstantGamingTaskType(raw: any): eInstantGamingTaskType | nul
 export function normalizeSteamTask(raw: any): SteamTask {
   return {
     ...normalizeBaseTask(raw),
+    updateExistingGames: raw.UpdateExistingGames ?? raw.updateExistingGames,
     gameIds: raw.GameIds ?? raw.gameIds
   };
 }

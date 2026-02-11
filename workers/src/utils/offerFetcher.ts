@@ -19,11 +19,11 @@ export async function fetchJson(url: string, proxy?: string, method?: string): P
   const options = proxy ? {
     method: method ?? 'GET',
     agent: new HttpsProxyAgent(proxy),
-    timeout: config.backendTimeoutMs
+    signal: AbortSignal.timeout(config.backendTimeoutMs)
   }
   : {
     method: method ?? 'GET',
-    timeout: config.backendTimeoutMs
+    signal: AbortSignal.timeout(config.backendTimeoutMs)
   };
   try {
     const res = await fetch(url, options);

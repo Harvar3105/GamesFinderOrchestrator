@@ -5,9 +5,11 @@ import { scrapeBatch, scrapeResult } from './gameFetcher.js';
 import { Game } from '../utils/types/entities/game.js';
 import logger from '../utils/logger.js';
 import { splitIntoBatches } from '../utils/instantGaminghHelpers.js';
-import { clearRedisKeyIfExists, createOrchestratorListener } from '../utils/orchestratorListener.js';
+import { clearRedisKeyIfExists, clearRedisSteamKeys, createOrchestratorListener } from '../utils/orchestratorListener.js';
 import { parseTask, TaskKind } from '../utils/taskParser.js';
 import { HttpStatusError } from '../utils/offerFetcher.js';
+import { GameOffer } from '../utils/types/entities/gameOffer.js';
+import { ChainableCommander } from 'ioredis';
 
 async function startSteamWorker() {
   const channel = await rabbitConn.createChannel();
@@ -22,34 +24,35 @@ async function startSteamWorker() {
       let task: SteamTask | null = parseTask(msg, TaskKind.Steam, channel) as SteamTask | null;
       if (!task) return;
 
-      await clearRedisKeyIfExists(task.redisResultKey);
+      await clearRedisSteamKeys(task.redisResultKey);
       
-      var batches;
+      var queue;
       task.gameIds.length > config.maxRequests 
-        ? batches = splitIntoBatches(task.gameIds, config.maxRequests)
-        : batches = [task.gameIds];
+        ? queue = splitIntoBatches(task.gameIds, config.maxRequests)
+        : queue = [task.gameIds];
 
-      logger.info(`🚀Starting task ${task.taskId} with ${task.gameIds.length} game IDs, split into ${batches.length} batches.`);
+      logger.info(`🚀Starting task ${task.taskId} with ${task.gameIds.length} game IDs, split into ${queue.length} batches.`);
 
       try {
         let total = 0;
-        for (const batch of batches) {
+        while (queue.length > 0) {
+          const batch = queue.shift()!;
+          const multi = redis.multi();
           logger.info(`Processing batch of ${batch.length} game IDs for task ${task.taskId}...`);
-          const result: scrapeResult = await scrapeBatch(batch);
+          const result: scrapeResult = await scrapeBatch(batch, task.updateExistingGames, task.updateExistingDeals);
+          total += batch.length;
 
           if (result.err && result.unprocessedIds) {
             logger.error(`Stopping batch processing due to error: HTTP ${result.err.status} ${result.err.message}`, result.err.body ?? '');
-            batches.push(result.unprocessedIds);
+            total -= result.unprocessedIds.length;
+            await saveDataToRedis(task.redisResultKey, result, multi);
+            queue.push(result.unprocessedIds);
             await new Promise(res => setTimeout(res, config.cooldownMs));
             continue;
           }
-          
-          if (result.res.length > 0) {
-            total += result.res.length;
 
-            await redis.rpush(task.redisResultKey, ...result.res.map(r => JSON.stringify(r)));
-            logger.info(`ℹ️Just added ${result.res.length} games to redis, total so far: ${total}`);
-          }
+          await saveDataToRedis(task.redisResultKey, result, multi);
+          logger.info(`ℹ️Just added ${result.games.length} games to redis, scraped ${total} ids so far.`);
 
           if (total % config.maxRequests === 0) await new Promise(res => setTimeout(res, config.cooldownMs));
         }
@@ -70,6 +73,23 @@ async function startSteamWorker() {
       }
     }
   )
+}
+
+async function saveDataToRedis(redisKey: string, result: scrapeResult, multi: ChainableCommander) {
+  if (result.games.length > 0) {
+    multi.rpush(
+      `${redisKey}:games`,
+      ...result.games.map(g => JSON.stringify(g))
+    );
+  }
+
+  if (result.offers.length > 0) {
+    multi.rpush(
+      `${redisKey}:offers`,
+      ...result.offers.map(o => JSON.stringify(o))
+    );
+  }
+  await multi.exec();
 }
 
 startSteamWorker().catch(logger.crit);

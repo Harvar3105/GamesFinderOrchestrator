@@ -16,6 +16,13 @@ export async function createOrchestratorListener(
   await channel.consume(requestsQueue, processTask);
 }
 
+export async function clearRedisSteamKeys(redisKey: string) {
+  await clearRedisKeyIfExists(redisKey);
+  await clearRedisKeyIfExists(`${redisKey}:games`);
+  await clearRedisKeyIfExists(`${redisKey}:offers`);
+  await clearRedisKeyIfExists(`${redisKey}:meta`);
+}
+
 export async function clearRedisKeyIfExists(key: string) {
   if (await redis.exists(key)) {
     await redis.del(key);
