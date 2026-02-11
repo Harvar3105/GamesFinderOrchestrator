@@ -29,16 +29,19 @@ async function startSteamWorker() {
         ? batches = splitIntoBatches(task.gameIds, config.maxRequests)
         : batches = [task.gameIds];
 
+      logger.info(`🚀Starting task ${task.taskId} with ${task.gameIds.length} game IDs, split into ${batches.length} batches.`);
+
       try {
         let total = 0;
         for (const batch of batches) {
+          logger.info(`Processing batch of ${batch.length} game IDs for task ${task.taskId}...`);
           const result: scrapeResult = await scrapeBatch(batch);
 
           if (result.err && result.unprocessedIds) {
             logger.error(`Stopping batch processing due to error: HTTP ${result.err.status} ${result.err.message}`, result.err.body ?? '');
             batches.push(result.unprocessedIds);
             await new Promise(res => setTimeout(res, config.cooldownMs));
-            break;
+            continue;
           }
           
           if (result.res.length > 0) {

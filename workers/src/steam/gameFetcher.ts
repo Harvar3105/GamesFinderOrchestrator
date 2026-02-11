@@ -82,7 +82,7 @@ export async function scrapeBatch(ids: number[], region?: eRegion): Promise<scra
       const res = await fetchSteamGame(id, region);
 
       if (res instanceof HttpStatusError) {
-        logger.error(`Stopping batch: received HTTP ${res.status} for Steam id ${id}`, res.body ?? res.message);
+        logger.error(`⚠️Stopping batch: received HTTP ${res.status} for Steam id ${id}`);
         result.err = res;
         result.unprocessedIds = ids.slice(i);
         return result;
