@@ -15,9 +15,9 @@ public abstract class Consumer<TResult> : BackgroundService, IBrockerConsumer
 {
   private readonly IServiceProvider _serviceProvider;
   protected readonly ILogger _logger;
-  private readonly RedisCacheDB _redis;
+  protected readonly RedisCacheDB _redis;
   private readonly Lazy<Task<IConnection>> _lazyConnection;
-  private IChannel? _channel;
+  protected IChannel? _channel;
 
   protected abstract string QueueName {get;}
   protected abstract Task SaveToDatabaseAsync(IServiceScope scope, List<TResult> items);
@@ -68,7 +68,7 @@ public abstract class Consumer<TResult> : BackgroundService, IBrockerConsumer
 
         if (!await TrySave(scope, items, ea.DeliveryTag)) return;
 
-        await _redis.ClearKey(notification.RedisResultKey);
+        await ClearRedisKeyAsync(notification.RedisResultKey);
 
         await _channel.BasicAckAsync(ea.DeliveryTag, false);
       }
@@ -98,7 +98,7 @@ public abstract class Consumer<TResult> : BackgroundService, IBrockerConsumer
     }
   }
 
-  private async Task<List<TResult>?> GetItemsFromRedisAsync(ulong deliveryTag, string redisKey)
+  protected virtual async Task<List<TResult>?> GetItemsFromRedisAsync(ulong deliveryTag, string redisKey)
   {
     List<TResult>? items;
     try
@@ -119,6 +119,11 @@ public abstract class Consumer<TResult> : BackgroundService, IBrockerConsumer
       return null;
     }
     return items;
+  }
+
+  protected virtual async Task ClearRedisKeyAsync(string redisKey)
+  {
+    await _redis.ClearKey(redisKey);
   }
 
   private async Task<RedisResultNotification?> GetRedisResultNotificationAsync(BasicDeliverEventArgs ea)
