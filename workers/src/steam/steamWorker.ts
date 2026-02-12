@@ -26,6 +26,7 @@ async function startSteamWorker() {
 
       await clearRedisSteamKeys(task.redisResultKey);
       
+      // TODO: Consider scraping not in batches but one by one with a cooldown after 429 response
       var queue;
       task.gameIds.length > config.maxRequests 
         ? queue = splitIntoBatches(task.gameIds, config.maxRequests)

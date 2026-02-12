@@ -6,7 +6,7 @@ import { eVendor } from "../utils/types/enums/eVendor.js";
 import { GameOffer } from "../utils/types/entities/gameOffer.js";
 import logger from "../utils/logger.js";
 import { fetchJson, HttpStatusError } from "../utils/offerFetcher.js";
-import { checkGameExists, checkSteamOfferExists } from "../backendUtils.js";
+import { checkGameExists, checkSteamOfferExists, getGameIdBySteamIdAsync } from "../backendUtils.js";
 
 export async function fetchSteamGame(id: number, updateGame: boolean, updateDeal: boolean, region: eRegion = eRegion.US ): Promise<Game | GameOffer | null | HttpStatusError> {
   const url = `https://store.steampowered.com/api/appdetails?appids=${id}&cc=${region}&l=en`;
@@ -26,7 +26,9 @@ export async function fetchSteamGame(id: number, updateGame: boolean, updateDeal
 
   const game = data[id].data;
 
-  const gameId = v4();
+  const gameId = gameExists ? await getGameIdBySteamIdAsync(id) : v4();
+  if (!gameId) return null;
+
   const isReleased = !game.release_date.coming_soon;
   let offers = null;
 
@@ -35,6 +37,7 @@ export async function fetchSteamGame(id: number, updateGame: boolean, updateDeal
   let currency: eCurrency | null = null;
   let initialAmount: number | null = null;
 
+  // TODO: Add not released games as a preorder
   if (isReleased && (!offerExists || (offerExists && updateDeal))) {
     try {
       // Might depend on region but due to steam api poor typization we do it like this
