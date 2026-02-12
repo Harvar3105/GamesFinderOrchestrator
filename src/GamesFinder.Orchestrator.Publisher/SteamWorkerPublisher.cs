@@ -18,35 +18,19 @@ public class SteamWorkerPublisher : IPublisher
     _config = config;
   }
 
-  public async Task PublishIdsScrapeTaskAsync(List<string> steamIds, bool updateExisting = false)
+  public async Task PublishIdsScrapeTaskAsync(ScrapeTask task)
   {
-    if (steamIds == null || steamIds.Count == 0)
-    {
-      _logger.LogWarning("Steam ID list cannot be empty.");
-      throw new ArgumentException("Steam ID list cannot be empty.");
-    }
-
-    var redisKey = $"steam:scrape:result:{Guid.NewGuid()}";
-
-    var task = new SteamScrapeTask
-    {
-      GameIds = steamIds,
-      UpdateExistingDeals = updateExisting,
-      UpdateExistingGames = updateExisting,
-      RedisResultKey = redisKey
-    };
+    if (task is not SteamScrapeTask steamTask) throw new ArgumentException("Invalid task type. Expected SteamScrapeTask.", nameof(task));
 
     try
     {
-      _logger.LogInformation("Task publishing for Steam: {Count} ID, RedisKey: {RedisKey}", steamIds.Count, redisKey);
-
       await _publisher.PublishAsync(task, _config.SteamRequestsQueue);
 
-      _logger.LogInformation("Task published✅. ID's count: {Count}", steamIds.Count);
+      _logger.LogInformation($"✅Task published. ID's count: {steamTask.GameIds.Count()}, RedisKey: {steamTask.RedisResultKey}");
     }
     catch (Exception ex)
     {
-      _logger.LogError(ex, "Error publishing SteamScrapeTask (RedisKey: {RedisKey})", redisKey);
+      _logger.LogError(ex, $"💥Error publishing SteamScrapeTask (RedisKey: {task.RedisResultKey}).");
       throw;
     }
   }

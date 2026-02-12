@@ -1,5 +1,7 @@
+using GamesFinder.Orchestrator.Domain.Classes.Tasks;
 using GamesFinder.Orchestrator.Domain.Interfaces.Infrastructure;
 using GamesFinder.Orchestrator.Domain.Interfaces.Services.ApplicationServices;
+using Microsoft.Extensions.Logging;
 
 namespace GamesFinder.Orchestrator.Services.ApplicationServices;
 
@@ -7,29 +9,25 @@ public abstract class VendorsService <TPublisher> : IVendorsService
   where TPublisher : class, IPublisher
 {
   protected TPublisher _publisher;
-  public VendorsService(TPublisher publisher)
+  protected readonly ILogger _logger;
+  public VendorsService(TPublisher publisher, ILogger logger)
   {
     _publisher = publisher;
+    _logger = logger;
   }
 
-  public async Task BatchPublishAsync(IEnumerable<string> ids, bool updateExisting = false, int workersCount = 1)
+  public abstract string TaskRedisKeyPrefix  {get;}
+
+  public virtual async Task BatchPublishAsync(ScrapeTask task)
   {
-    if (ids.Count() == 0)
-    {
-      throw new Exception("No IDs to process after applying filters.");
-    }
+    await _publisher.PublishIdsScrapeTaskAsync(task);
+  }
 
-    if (ids.Count() < workersCount)
-    {
-      workersCount = ids.Count();
-    }
-
-    var asList = ids.ToList();
-    var batchSize = asList.Count / workersCount;
-    for (int i = 0; i < asList.Count; i += batchSize)
-    {
-      var batch = asList.GetRange(i, Math.Min(batchSize, asList.Count - i));
-      await _publisher.PublishIdsScrapeTaskAsync(batch, updateExisting);
-    }
+  public int GetBatchSize(int totalItems, int workersCount = 1)
+  {
+    if (totalItems == 0) { throw new Exception("No items to process."); }
+    if (workersCount <= 0) { throw new Exception("Workers count must be greater than zero."); }
+    
+    return (int)Math.Ceiling((double)totalItems / workersCount);
   }
 }

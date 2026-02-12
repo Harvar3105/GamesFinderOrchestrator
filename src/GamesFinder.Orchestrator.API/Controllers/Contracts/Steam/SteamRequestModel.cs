@@ -7,5 +7,6 @@ public sealed record SteamRequestModel
     [Required]
     [MinLength(1)]
     public List<long> steamIds { get; init; } = new();
-    public bool updateExisting { get; init; } = false;
+    public bool updateExistingGames { get; init; } = false;
+    public bool updateExistingOffers { get; init; } = false;
   }

@@ -1,17 +1,38 @@
 
+using GamesFinder.Orchestrator.Domain.Classes.Tasks;
 using GamesFinder.Orchestrator.Domain.Interfaces.Services.ApplicationServices;
 using GamesFinder.Orchestrator.Publisher;
+using Microsoft.Extensions.Logging;
 
 namespace GamesFinder.Orchestrator.Services.ApplicationServices;
 
 public class SteamService : VendorsService<SteamWorkerPublisher>, ISteamService
 {
-  public SteamService(SteamWorkerPublisher publisher) : base(publisher)
+  public SteamService(SteamWorkerPublisher publisher, ILogger<SteamService> logger) : base(publisher, logger)
   {
   }
 
-  public async Task PublishIdsScrapeTaskAsync(List<long> steamIds, bool updateExisting = false)
+  public override string TaskRedisKeyPrefix => $"steam:scrape:result:{Guid.NewGuid()}";
+
+  public async Task PublishIdsScrapeTaskAsync(List<long> steamIds, bool updateExistingGames = false, bool updateExistingOffers = false)
   {
-    await BatchPublishAsync(steamIds.Select(id => id.ToString()), updateExisting, 1);
+    var ids = steamIds.Select(id => id.ToString());
+    if (ids == null || ids.Count() == 0)
+    {
+      _logger.LogWarning("Steam ID list cannot be empty.");
+      throw new ArgumentException("Steam ID list cannot be empty.");
+    }
+
+    var batchSize = GetBatchSize(ids.Count(), 1);
+    for (int i = 0; i < ids.Count(); i += batchSize)
+    {
+      var task = new SteamScrapeTask {
+        GameIds = ids.Skip(i).Take(batchSize).ToList(),
+        UpdateExistingDeals = updateExistingGames,
+        UpdateExistingGames = updateExistingOffers,
+        RedisResultKey = TaskRedisKeyPrefix
+      };
+      await BatchPublishAsync(task);
+    }
   }
 }

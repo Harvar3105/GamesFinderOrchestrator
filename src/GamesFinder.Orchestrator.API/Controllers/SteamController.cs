@@ -29,8 +29,8 @@ public class SteamController : ControllerBase
   {
     try
     {
-      await _steamService.PublishIdsScrapeTaskAsync(model.steamIds, model.updateExisting);
-      return Ok(new { Message = $"Scraping task initiated for {model.steamIds.Count} Steam IDs. Estimated time: {MathF.Ceiling(model.steamIds.Count / 200)} minutes" });
+      await _steamService.PublishIdsScrapeTaskAsync(model.steamIds, model.updateExistingGames, model.updateExistingOffers);
+      return Ok(new { Message = $"✅Scraping task initiated for {model.steamIds.Count} Steam IDs. Take a break, process will take some time 😎" });
     }
     catch (Exception ex)
     {
