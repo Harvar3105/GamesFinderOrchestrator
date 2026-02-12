@@ -70,6 +70,21 @@ public class InstantGamingController : ControllerBase
     }
   }
 
+  [HttpGet("checkGameOfferExists")]
+  public async Task<IActionResult> CheckExistingInstantGamingOfferAsync(string vendorId)
+  {
+    try
+    {
+      var exists = await _offersService.CheckExistsByVendorsIdAsync(vendorId);
+      return Ok(new { Exists = exists });
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError(ex, $"Error checking existence of game offer for Steam ID: {vendorId}");
+      return StatusCode(500, "An error occurred while processing your request.");
+    }
+  }
+
   [HttpGet("getOfferId")]
   public async Task<IActionResult> GetOfferIdByGameIdAsync(string? gameId, string? vendorId)
   {

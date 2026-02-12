@@ -6,7 +6,7 @@ import { eVendor } from "../utils/types/enums/eVendor.js";
 import { GameOffer } from "../utils/types/entities/gameOffer.js";
 import logger from "../utils/logger.js";
 import { fetchJson, HttpStatusError } from "../utils/offerFetcher.js";
-import { checkGameExists, checkSteamOfferExists, getGameIdBySteamIdAsync } from "../backendUtils.js";
+import { checkGameExists, checkSteamOfferExists, getGameIdBySteamIdAsync, getSteamOfferId } from "../backendUtils.js";
 
 export async function fetchSteamGame(id: number, updateGame: boolean, updateDeal: boolean, region: eRegion = eRegion.US ): Promise<Game | GameOffer | null | HttpStatusError> {
   const url = `https://store.steampowered.com/api/appdetails?appids=${id}&cc=${region}&l=en`;
@@ -26,8 +26,13 @@ export async function fetchSteamGame(id: number, updateGame: boolean, updateDeal
 
   const game = data[id].data;
 
-  const gameId = gameExists ? await getGameIdBySteamIdAsync(id) : v4();
-  if (!gameId) return null;
+  let gameId;
+  if (gameExists) gameId = await getGameIdBySteamIdAsync(id);
+  else gameId = v4();
+
+  let offerId;
+  if (offerExists) offerId = await getSteamOfferId({gameId: gameId!})?? await getSteamOfferId({vendorId: id.toString()});
+  else offerId = v4();
 
   const isReleased = !game.release_date.coming_soon;
   let offers = null;
@@ -46,7 +51,7 @@ export async function fetchSteamGame(id: number, updateGame: boolean, updateDeal
 
       const currentAmount = Number((game.price_overview?.final / 100).toFixed(2));
       offers = [{
-        id: v4(),
+        id: offerId,
         createdAt: new Date().toUTCString(),
         updatedAt: new Date().toUTCString(),
         gameId: gameId,
@@ -64,7 +69,7 @@ export async function fetchSteamGame(id: number, updateGame: boolean, updateDeal
 
   if (!gameExists || (gameExists && updateGame)) {
     return {
-    id: gameId,
+    id: gameId!,
     createdAt: new Date().toUTCString(),
     updatedAt: new Date().toUTCString(),
     name: game.name,

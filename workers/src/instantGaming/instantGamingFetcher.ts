@@ -7,6 +7,7 @@ import { config } from "../utils/config.js";
 import { eVendor } from "../utils/types/enums/eVendor.js";
 import { findNoStockElementIG, findPriceElementIG } from "../utils/instantGaminghHelpers.js";
 import logger from "../utils/logger.js";
+import { checkIgOfferExists, getIgOfferId } from "../backendUtils.js";
 
 export async function fetchInstantGamingOffer(id: number, currency?: eCurrency, proxy?: string): Promise<GameOffer | null | HttpStatusError> {
   const url = `https://www.instant-gaming.com/${id}-/?currency=${currency?.toString().toUpperCase() || 'EUR'}`;
@@ -31,14 +32,17 @@ export async function fetchInstantGamingOffer(id: number, currency?: eCurrency, 
     return null;
   }
 
-  const offerId = v4();
+  let offerExists = await checkIgOfferExists(id.toString());
+  let offerId;
+  if (offerExists) offerId = await getIgOfferId({gameId: gameId!})?? await getIgOfferId({vendorId: id.toString()});
+  else offerId = v4();
 
   const doc = parseHtmlToDocument(data);
   var priceElement = findPriceElementIG(doc);
   const canonicalUrl = getCanonicalIGurl(doc) ?? url;
 
   var gameOffer: GameOffer = {
-    id: offerId,
+    id: offerId!,
     createdAt: new Date().toUTCString(),
     updatedAt: new Date().toUTCString(),
     gameId: gameId,

@@ -31,6 +31,9 @@ export const config = {
   backendUrl: process.env.BACKEND_URL,
   backendCheckGame: process.env.BACKEND_CHECK_GAME,
   backendCheckSteamOffer: process.env.BACKEND_CHECK_STEAM_OFFER,
+  backendCheckIgOffer: process.env.BACKEND_CHECK_IG_OFFER,
+  backendGetIgOfferId: process.env.BACKEND_GET_IG_OFFER_ID,
+  backendGetSteamOfferId: process.env.BACKEND_GET_STEAM_OFFER_ID,
   backendGetGameId: process.env.BACKEND_GET_GAME_ID,
   backendTimeoutMs: Number(process.env.BACKEND_TIMEOUT_MS) || 5000,
 };

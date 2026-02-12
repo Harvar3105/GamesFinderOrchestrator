@@ -68,7 +68,7 @@ public class SteamController : ControllerBase
       bool exists = await _gamesService.CheckIfSteamIdExistsAsync(steamId);
       if (exists) {
         var gameId = await _gamesService.GetIdBySteamIdAsync(steamId);
-        return Ok(new {id = gameId});
+        return Ok(new {Id = gameId});
       }
       else {
         return NotFound(new { Message = $"Game with Steam ID {steamId} not found." });
