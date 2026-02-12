@@ -1,8 +1,10 @@
 
+using System.Text.Json.Nodes;
 using GamesFinder.Orchestrator.Domain.Classes.Tasks;
 using GamesFinder.Orchestrator.Domain.Interfaces.Services.ApplicationServices;
 using GamesFinder.Orchestrator.Publisher;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace GamesFinder.Orchestrator.Services.ApplicationServices;
 
