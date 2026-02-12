@@ -23,8 +23,6 @@ async function startSteamWorker() {
 
       let task: SteamTask | null = parseTask(msg, TaskKind.Steam, channel) as SteamTask | null;
       if (!task) return;
-
-      await clearRedisSteamKeys(task.redisResultKey);
       
       // TODO: Consider scraping not in batches but one by one with a cooldown after 429 response
       var queue;

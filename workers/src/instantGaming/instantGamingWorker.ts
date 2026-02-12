@@ -20,8 +20,6 @@ async function startInstantGamingWorker() {
       let task: InstantGamingTask | null = parseTask(msg, TaskKind.InstantGaming, channel) as InstantGamingTask | null; // We know it wont be Steam type
       if (!task) return;
 
-      await clearRedisKeyIfExists(task.redisResultKey);
-
       try {
         const list = [];
         switch (task.type) {
