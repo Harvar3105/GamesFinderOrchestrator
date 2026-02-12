@@ -25,4 +25,9 @@ public class GamesService : Service<Game, IGameRepository>, IGamesService
   {
     return _repository.GetBySteamId(steamId);
   }
+
+  public Task<string?> GetIdBySteamIdAsync(int steamId)
+  {
+    return _repository.GetIdBySteamIdAsync(steamId);
+  }
 }

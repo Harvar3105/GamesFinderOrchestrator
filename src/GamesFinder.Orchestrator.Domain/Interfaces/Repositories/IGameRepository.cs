@@ -7,6 +7,7 @@ public interface IGameRepository : IRepository<Game>
 {
 	Task<Game?> GetBySteamId(int steamId);
 	Task<Game?> GetByAppNameAsync(string appName);
+	Task<string?> GetIdBySteamIdAsync(int steamId);
 	Task<List<(int, bool)>> ExistBySteamIdMany(List<int> steamIds);
 	Task<bool> ExistsBySteamIdAsync(int steamId);
 	Task<(bool, string)> GetExistBySteamIdAsync(int steamId);

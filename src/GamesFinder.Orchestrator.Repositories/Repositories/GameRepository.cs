@@ -107,4 +107,14 @@ public class GameRepository : Repository<Game>, IGameRepository
 
     return (true, idString);
   }
+
+  public async Task<string?> GetIdBySteamIdAsync(int steamId)
+  {
+    var id = await _collection
+      .Find(g => g.SteamID == steamId)
+      .Project(g => g.Id)
+      .FirstOrDefaultAsync();
+    if (id != Guid.Empty) return id.ToString();
+    else return null;
+  }
 }

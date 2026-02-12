@@ -11,4 +11,5 @@ public interface IGamesService : IService<Game>
 
   Task<bool> CheckIfSteamIdExistsAsync(int steamId);
   Task<Game?> GetBySteamIdAsync(int steamId);
+  Task<string?> GetIdBySteamIdAsync(int steamId);
 }

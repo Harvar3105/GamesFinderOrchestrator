@@ -59,6 +59,26 @@ public class SteamController : ControllerBase
     }
   }
 
+  [HttpPost("getGameIdBySteamId")]
+  public async Task<IActionResult> GetGameIdBySteamIdAsync(int steamId)
+  {
+    try
+    {
+      bool exists = await _gamesService.CheckIfSteamIdExistsAsync(steamId);
+      if (exists) {
+        var gameId = await _gamesService.GetIdBySteamIdAsync(steamId);
+        return Ok(new {id = gameId});
+      }
+      else {
+        return NotFound(new { Message = $"Game with Steam ID {steamId} not found." });
+      }
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError(ex, $"Error checking existence of Steam ID: {steamId}"); return StatusCode(500, "An error occurred while processing your request.");
+    }
+  }
+
   [HttpPost("checkGameOfferExists")]
   public async Task<IActionResult> CheckExistingGameOfferAsync(int steamId)
   {
