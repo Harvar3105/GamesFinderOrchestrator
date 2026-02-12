@@ -12,4 +12,6 @@ public interface IGameOfferRepository : IRepository<GameOffer>
 	Task<Guid?> GetOfferIdByVandorsIdAsync(string vendorsGameId);
 	Task<bool> ExistsByVendorsIdAsync(string vendorsId);
 	Task<long> DeleteByGameIdAsync(Guid gameId);
+	Task<Guid?> GetIdByGameIdAsync(Guid gameId, EVendor vendor);
+	Task<Guid?> GetIdByVendorsGameIdAsync(string vendorsGameId, EVendor vendor);
 }

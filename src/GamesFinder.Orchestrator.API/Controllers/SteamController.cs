@@ -1,3 +1,4 @@
+using GamesFinder.Domain.Enums;
 using GamesFinder.Orchestrator.API.Controllers.Contracts.Steam;
 using GamesFinder.Orchestrator.Domain.Interfaces.DomainServices;
 using GamesFinder.Orchestrator.Domain.Interfaces.Services.ApplicationServices;
@@ -39,7 +40,7 @@ public class SteamController : ControllerBase
     }
   }
 
-  [HttpPost("checkGameExists")]
+  [HttpGet("checkGameExists")]
   public async Task<IActionResult> CheckExistingSteamIdAsync(int steamId, bool getGame = false)
   {
     try
@@ -59,7 +60,7 @@ public class SteamController : ControllerBase
     }
   }
 
-  [HttpPost("getGameIdBySteamId")]
+  [HttpGet("getGameIdBySteamId")]
   public async Task<IActionResult> GetGameIdBySteamIdAsync(int steamId)
   {
     try
@@ -79,7 +80,7 @@ public class SteamController : ControllerBase
     }
   }
 
-  [HttpPost("checkGameOfferExists")]
+  [HttpGet("checkGameOfferExists")]
   public async Task<IActionResult> CheckExistingGameOfferAsync(int steamId)
   {
     try
@@ -90,6 +91,36 @@ public class SteamController : ControllerBase
     catch (Exception ex)
     {
       _logger.LogError(ex, $"Error checking existence of game offer for Steam ID: {steamId}");
+      return StatusCode(500, "An error occurred while processing your request.");
+    }
+  }
+
+  [HttpGet("getOfferId")]
+  public async Task<IActionResult> GetOfferId(string? gameId, int? steamId)
+  {
+    if ((string.IsNullOrEmpty(gameId) && steamId == null) ||
+    (!string.IsNullOrEmpty(gameId) && steamId != null))
+    {
+      return BadRequest("⚠️Provide either gameId or steamId, but not both.");
+    }
+
+    try
+    {
+      if (!string.IsNullOrEmpty(gameId))
+      {
+        bool success = Guid.TryParse(gameId, out Guid parsedGameId);
+        if (!success) return BadRequest("⚠️Invalid gameId format. Must be a valid GUID.");
+        var id = _offersService.GetIdByGameIdAsync(parsedGameId, EVendor.Steam);
+        return Ok(new { OfferId = id });
+      }
+      else
+      {
+        var id = await _offersService.GetIdByVendorsGameIdAsync(steamId!.ToString()!, EVendor.Steam);
+        return Ok(new { OfferId = id });
+      }
+    } catch (Exception ex)
+    {
+      _logger.LogError(ex, $"Error retrieving offer ID for gameId: {gameId} or steamId: {steamId}");
       return StatusCode(500, "An error occurred while processing your request.");
     }
   }

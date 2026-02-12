@@ -12,4 +12,6 @@ public interface IOffersService : IService<GameOffer>
   Task<bool> CheckExistsByVendorsIdAsync(string vendorsId);
   Task<long> DeleteByGameIdAsync(Guid gameId);
   Task<IEnumerable<GameOffer>> GetOffersByGameIdAsync(Guid gameId);
+  Task<Guid?> GetIdByGameIdAsync(Guid gameId, EVendor vendor);
+	Task<Guid?> GetIdByVendorsGameIdAsync(string vendorsGameId, EVendor vendor);
 }

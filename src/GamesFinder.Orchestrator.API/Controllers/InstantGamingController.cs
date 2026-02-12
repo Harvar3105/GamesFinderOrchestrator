@@ -2,6 +2,7 @@ using GamesFinder.Orchestrator.Domain.Interfaces.Services.ApplicationServices;
 using Microsoft.AspNetCore.Authorization;
 using GamesFinder.Orchestrator.API.Controllers.Contracts.InstantGaming;
 using Microsoft.AspNetCore.Mvc;
+using GamesFinder.Orchestrator.Domain.Interfaces.DomainServices;
 
 namespace GamesFinder.Orchestrator.API.Controllers;
 
@@ -11,11 +12,13 @@ public class InstantGamingController : ControllerBase
 {
   private readonly ILogger<InstantGamingController> _logger;
   private readonly IInstantGamingService _instantGamingService;
+  private readonly IOffersService _offersService;
 
-  public InstantGamingController(ILogger<InstantGamingController> logger, IInstantGamingService instantGamingService)
+  public InstantGamingController(ILogger<InstantGamingController> logger, IInstantGamingService instantGamingService, IOffersService offersService)
   {
     _logger = logger;
     _instantGamingService = instantGamingService;
+    _offersService = offersService;
   }
 
   [HttpPost("scrapIds")]
@@ -63,6 +66,36 @@ public class InstantGamingController : ControllerBase
     catch (Exception ex)
     {
       _logger.LogError(ex, "Error initiating max count scraping task for Instant Gaming IDs.");
+      return StatusCode(500, "An error occurred while processing your request.");
+    }
+  }
+
+  [HttpGet("getOfferId")]
+  public async Task<IActionResult> GetOfferIdByGameIdAsync(string? gameId, string? vendorId)
+  {
+    if ((string.IsNullOrEmpty(gameId) && vendorId == null) ||
+    (!string.IsNullOrEmpty(gameId) && vendorId != null))
+    {
+      return BadRequest("⚠️Provide either gameId or steamId, but not both.");
+    }
+
+    try
+    {
+      if (!string.IsNullOrEmpty(gameId))
+      {
+        bool success = Guid.TryParse(gameId, out Guid parsedGameId);
+        if (!success) return BadRequest("⚠️Invalid gameId format. Must be a valid GUID.");
+        var id = _offersService.GetIdByGameIdAsync(parsedGameId, GamesFinder.Domain.Enums.EVendor.InstantGaming);
+        return Ok(new { OfferId = id });
+      }
+      else
+      {
+        var id = await _offersService.GetIdByVendorsGameIdAsync(vendorId!, GamesFinder.Domain.Enums.EVendor.InstantGaming);
+        return Ok(new { OfferId = id });
+      }
+    } catch (Exception ex)
+    {
+      _logger.LogError(ex, $"Error retrieving offer ID for gameId: {gameId} or steamId: {vendorId}");
       return StatusCode(500, "An error occurred while processing your request.");
     }
   }

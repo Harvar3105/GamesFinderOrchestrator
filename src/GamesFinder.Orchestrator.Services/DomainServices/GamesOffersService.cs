@@ -1,3 +1,4 @@
+using GamesFinder.Domain.Enums;
 using GamesFinder.Domain.Interfaces.Repositories;
 using GamesFinder.Orchestrator.Domain.Classes.Entities;
 using GamesFinder.Orchestrator.Domain.Interfaces.DomainServices;
@@ -19,6 +20,16 @@ public class GamesOffersService : Service<GameOffer, IGameOfferRepository>, IOff
   public Task<long> DeleteByGameIdAsync(Guid gameId)
   {
     return _repository.DeleteByGameIdAsync(gameId);
+  }
+
+  public Task<Guid?> GetIdByGameIdAsync(Guid gameId, EVendor vendor)
+  {
+    return _repository.GetIdByGameIdAsync(gameId, vendor);
+  }
+
+  public Task<Guid?> GetIdByVendorsGameIdAsync(string vendorsGameId, EVendor vendor)
+  {
+    return _repository.GetIdByVendorsGameIdAsync(vendorsGameId, vendor);
   }
 
   public async Task<IEnumerable<GameOffer>> GetOffersByGameIdAsync(Guid gameId)
