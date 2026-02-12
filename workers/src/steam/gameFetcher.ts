@@ -10,6 +10,19 @@ import { checkGameExists, checkSteamOfferExists, getGameIdBySteamIdAsync, getSte
 
 export async function fetchSteamGame(id: number, updateGame: boolean, updateDeal: boolean, region: eRegion = eRegion.US ): Promise<Game | GameOffer | null | HttpStatusError> {
   const url = `https://store.steampowered.com/api/appdetails?appids=${id}&cc=${region}&l=en`;
+
+  let offerExists = await checkSteamOfferExists(id);
+  let gameExists = await checkGameExists(id);
+
+  let gameId;
+  if (gameExists) gameId = await getGameIdBySteamIdAsync(id);
+  else gameId = v4();
+
+  let offerId;
+  if (offerExists) offerId = await getSteamOfferId({gameId: gameId!})?? await getSteamOfferId({vendorId: id.toString()});
+  else offerId = v4();
+
+  if (gameExists && offerExists && !updateGame && !updateDeal) return new HttpStatusError(0, "");
   
   let data;
   try {
@@ -21,18 +34,13 @@ export async function fetchSteamGame(id: number, updateGame: boolean, updateDeal
 
   if (!data[id]?.success) return null;
 
-  let offerExists = await checkSteamOfferExists(id);
-  let gameExists = await checkGameExists(id);
+  
 
   const game = data[id].data;
 
-  let gameId;
-  if (gameExists) gameId = await getGameIdBySteamIdAsync(id);
-  else gameId = v4();
+  
 
-  let offerId;
-  if (offerExists) offerId = await getSteamOfferId({gameId: gameId!})?? await getSteamOfferId({vendorId: id.toString()});
-  else offerId = v4();
+  
 
   const isReleased = !game.release_date.coming_soon;
   let offers = null;
@@ -97,6 +105,11 @@ export async function scrapeBatch(ids: number[], updateGames: boolean = true, up
       const res = await fetchSteamGame(id, updateGames, updateDeals, region);
 
       if (res instanceof HttpStatusError) {
+        if (res.status === 0){
+          result.skippedIds ++;
+          continue;
+        }
+
         logger.error(`⚠️Stopping batch: received HTTP ${res.status} for Steam id ${id}`);
         result.err = res;
         result.unprocessedIds = ids.slice(i);
@@ -123,6 +136,7 @@ export class scrapeResult {
   offers: GameOffer[] = [];
   err?: HttpStatusError;
   unprocessedIds?: number[];
+  skippedIds: number = 0;
 
   constructor(err?: HttpStatusError, unprocessedIds?: number[]) {
     this.err = err;
