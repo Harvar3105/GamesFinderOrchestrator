@@ -25,6 +25,8 @@ public class SteamService : VendorsService<SteamWorkerPublisher>, ISteamService
       throw new ArgumentException("Steam ID list cannot be empty.");
     }
 
+    if (!updateExistingGames && !updateExistingOffers) steamIds = await RemoveExisting(steamIds);
+
     var batchSize = GetBatchSize(ids.Count(), 1);
     for (int i = 0; i < ids.Count(); i += batchSize)
     {
@@ -36,5 +38,10 @@ public class SteamService : VendorsService<SteamWorkerPublisher>, ISteamService
       };
       await BatchPublishAsync(task);
     }
+  }
+
+  private async Task<List<long>> RemoveExisting(List<long> steamIds)
+  {
+    throw new Exception("Not implemented yet!");
   }
 }

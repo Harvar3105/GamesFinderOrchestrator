@@ -60,3 +60,4 @@ appsettings.Production.json
 node_modules/
 dist/
 definitions.json
+.vscode/

@@ -99,7 +99,7 @@ services:
   gamesfinder-api:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     container_name: backend
     command: ["dotnet", "watch", "run", "--urls", "http://0.0.0.0:8080"]
     ports:
@@ -110,12 +110,11 @@ services:
     env_file:
       - ./.env
     volumes:
-      - ./src/GamesFinder.Orchestrator.API:/app/src/GamesFinder.Orchestrator.API:cached
+      - ./src:/app/src
     depends_on:
       rabbitmq:
         condition: service_healthy
       redis:
         condition: service_healthy
-    # restart: unless-stopped # Will fail  until workers are ready. They fail at first start, loads on second so backend also needs restart
     networks:
       - shared-network
