@@ -6,7 +6,7 @@ namespace GamesFinder.Orchestrator.Domain.Classes.Entities;
 
 public class Game(
   string name,
-  int steamID,
+  long steamID,
   List<GameOffer>? initialOffers = null,
   string? description = null,
   string? steamUrl = null,
@@ -19,9 +19,9 @@ public class Game(
   [BsonElement("steam_url")]
   public string? SteamURL { get; set; } = steamUrl;
   [BsonElement("steam_id")]
-  public int SteamID { get; set; } = steamID;
+  public long SteamID { get; set; } = steamID;
   [BsonElement("in_packages")]
-	public List<int> InPackages { get; set; } = new();
+	public List<long> InPackages { get; set; } = new();
 	[BsonElement("isDLC")]
 	public bool IsDLC { get; set; }
   [BsonElement("description")]

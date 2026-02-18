@@ -12,7 +12,7 @@ public class GameRepository : Repository<Game>, IGameRepository
     
   }
 
-  public async Task<Game?> GetBySteamIdAsync(int steamId)
+  public async Task<Game?> GetBySteamIdAsync(long steamId)
   {
     try
     {
@@ -65,7 +65,7 @@ public class GameRepository : Repository<Game>, IGameRepository
     }
   }
 
-  public async Task<List<(int, bool)>> ExistBySteamIdMany(List<int> steamIds)
+  public async Task<List<(long, bool)>> ExistBySteamIdMany(List<long> steamIds)
   {
     var filter = Builders<Game>.Filter.In(g => g.SteamID, steamIds);
     var existingIds = await _collection
@@ -78,20 +78,20 @@ public class GameRepository : Repository<Game>, IGameRepository
         .ToList();
   }
 
-  public async Task<bool> ExistsBySteamIdAsync(int steamId)
+  public async Task<bool> ExistsBySteamIdAsync(long steamId)
   {
     var filter = Builders<Game>.Filter.Eq(g => g.SteamID, steamId);
     return await _collection.Find(filter).AnyAsync();
   }
 
-  public async Task<IEnumerable<int>> GetAllSteamIdsAsync()
+  public async Task<IEnumerable<long>> GetAllSteamIdsAsync()
   {
     return await _collection
       .Find(_ => true)
       .Project(g => g.SteamID)
       .ToListAsync();
   }
-  public async Task<(bool, string)> GetExistBySteamIdAsync(int steamId)
+  public async Task<(bool, string)> GetExistBySteamIdAsync(long steamId)
   {
     var id = await _collection
       .Find(g => g.SteamID == steamId)
@@ -108,7 +108,7 @@ public class GameRepository : Repository<Game>, IGameRepository
     return (true, idString);
   }
 
-  public async Task<Guid?> GetIdBySteamIdAsync(int steamId)
+  public async Task<Guid?> GetIdBySteamIdAsync(long steamId)
   {
     var id = await _collection
       .Find(g => g.SteamID == steamId)

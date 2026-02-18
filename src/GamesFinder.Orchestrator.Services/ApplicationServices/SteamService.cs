@@ -1,5 +1,6 @@
 
 using System.Text.Json.Nodes;
+using GamesFinder.Domain.Interfaces.Repositories;
 using GamesFinder.Orchestrator.Domain.Classes.Tasks;
 using GamesFinder.Orchestrator.Domain.Interfaces.Infrastructure;
 using GamesFinder.Orchestrator.Domain.Interfaces.Services.ApplicationServices;
@@ -11,8 +12,10 @@ namespace GamesFinder.Orchestrator.Services.ApplicationServices;
 
 public class SteamService : VendorsService<SteamScrapeTask>, ISteamService
 {
-  public SteamService(PublisherFactory factory, ILogger<SteamService> logger) : base(factory.Create<SteamScrapeTask>(), logger)
+  private readonly IGameRepository _gameRepo;
+  public SteamService(PublisherFactory factory, IGameRepository gameRepository, ILogger<SteamService> logger) : base(factory.Create<SteamScrapeTask>(), logger)
   {
+    _gameRepo = gameRepository;
   }
 
   public override string TaskRedisKeyPrefix => $"steam:scrape:result:{Guid.NewGuid()}";
@@ -43,6 +46,7 @@ public class SteamService : VendorsService<SteamScrapeTask>, ISteamService
 
   private async Task<List<long>> RemoveExisting(List<long> steamIds)
   {
-    throw new Exception("Not implemented yet!");
+    var existingIds = await _gameRepo.ExistBySteamIdMany(steamIds);
+    return existingIds.Where(r => r.Item2).Select(r => r.Item1).ToList();
   }
 }

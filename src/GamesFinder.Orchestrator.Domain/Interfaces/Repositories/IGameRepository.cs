@@ -5,11 +5,11 @@ namespace GamesFinder.Domain.Interfaces.Repositories;
 
 public interface IGameRepository : IRepository<Game>
 {
-	Task<Game?> GetBySteamIdAsync(int steamId);
+	Task<Game?> GetBySteamIdAsync(long steamId);
 	Task<Game?> GetByAppNameAsync(string appName);
-	Task<Guid?> GetIdBySteamIdAsync(int steamId);
-	Task<List<(int, bool)>> ExistBySteamIdMany(List<int> steamIds);
-	Task<bool> ExistsBySteamIdAsync(int steamId);
+	Task<Guid?> GetIdBySteamIdAsync(long steamId);
+	Task<List<(long, bool)>> ExistBySteamIdMany(List<long> steamIds);
+	Task<bool> ExistsBySteamIdAsync(long steamId);
 	Task<bool> ExistsByAppNameAsync(string appName);
-	Task<IEnumerable<int>> GetAllSteamIdsAsync();
+	Task<IEnumerable<long>> GetAllSteamIdsAsync();
 }
