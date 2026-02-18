@@ -1,4 +1,15 @@
-FROM mcr.microsoft.com/dotnet/sdk:10.0
-
+# 1. Build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /app
-EXPOSE 8080
+
+COPY GamesFinder.sln ./
+COPY .env ./
+COPY src/. ./src/
+
+# Restore dependencies
+RUN dotnet restore
+
+# Open ports
+EXPOSE 5000
+EXPOSE 5001
+

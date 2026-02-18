@@ -123,7 +123,6 @@ builder.Services.AddScoped<IGameOfferRepository, GameOfferRepository>();
 builder.Services.AddScoped<IGamesWithOffersService, GamesWithOffersService>();
 builder.Services.AddScoped<ISteamService, SteamService>();
 builder.Services.AddScoped<IInstantGamingService, InstantGamingService>();
-builder.Services.AddScoped<ILoggerFactory, LoggerFactory>();
 
 builder.Services.AddSingleton<RedisCacheDB>();
 builder.Services.AddSingleton<IBrockerPublisher, RabbitMqPublisher>();
