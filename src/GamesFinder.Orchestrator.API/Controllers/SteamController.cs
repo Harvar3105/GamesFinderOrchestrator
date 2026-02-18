@@ -1,6 +1,6 @@
 using GamesFinder.Domain.Enums;
+using GamesFinder.Domain.Interfaces.Repositories;
 using GamesFinder.Orchestrator.API.Controllers.Contracts.Steam;
-using GamesFinder.Orchestrator.Domain.Interfaces.DomainServices;
 using GamesFinder.Orchestrator.Domain.Interfaces.Services.ApplicationServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,15 +13,15 @@ public class SteamController : ControllerBase
 {
   private readonly ILogger<SteamController> _logger;
   private readonly ISteamService _steamService;
-  private readonly IGamesService _gamesService;
-  private readonly IOffersService _offersService;
+  private readonly IGameRepository _gamesRepo;
+  private readonly IGameOfferRepository _offersRepo;
 
-  public SteamController(ILogger<SteamController> logger, ISteamService steamService, IGamesService gamesService, IOffersService offersService)
+  public SteamController(ILogger<SteamController> logger, ISteamService steamService, IGameRepository gamesRepository, IGameOfferRepository offersRepository)
   {
     _logger = logger;
     _steamService = steamService;
-    _gamesService = gamesService;
-    _offersService = offersService;
+    _gamesRepo = gamesRepository;
+    _offersRepo = offersRepository;
   }
 
   [HttpPost("scrap")]
@@ -45,10 +45,10 @@ public class SteamController : ControllerBase
   {
     try
     {
-      var exists = await _gamesService.CheckIfSteamIdExistsAsync(steamId);
+      var exists = await _gamesRepo.ExistsBySteamIdAsync(steamId);
       if (getGame && exists)
       {
-        var game = await _gamesService.GetBySteamIdAsync(steamId);
+        var game = await _gamesRepo.GetBySteamIdAsync(steamId);
         return Ok(new { Exists = true, Game = game!.Id });
       }
       return Ok(new {Exists = exists});
@@ -65,9 +65,9 @@ public class SteamController : ControllerBase
   {
     try
     {
-      bool exists = await _gamesService.CheckIfSteamIdExistsAsync(steamId);
+      bool exists = await _gamesRepo.ExistsBySteamIdAsync(steamId);
       if (exists) {
-        var gameId = await _gamesService.GetIdBySteamIdAsync(steamId);
+        var gameId = await _gamesRepo.GetIdBySteamIdAsync(steamId);
         return Ok(new {Id = gameId});
       }
       else {
@@ -85,7 +85,7 @@ public class SteamController : ControllerBase
   {
     try
     {
-      var exists = await _offersService.CheckExistsByVendorsIdAsync(steamId.ToString());
+      var exists = await _offersRepo.ExistsByVendorsIdAsync(steamId.ToString());
       return Ok(new { Exists = exists });
     }
     catch (Exception ex)
@@ -110,12 +110,12 @@ public class SteamController : ControllerBase
       {
         bool success = Guid.TryParse(gameId, out Guid parsedGameId);
         if (!success) return BadRequest("⚠️Invalid gameId format. Must be a valid GUID.");
-        var id = _offersService.GetIdByGameIdAsync(parsedGameId, EVendor.Steam);
+        var id = _offersRepo.GetIdByGameIdAsync(parsedGameId, EVendor.Steam);
         return Ok(new { OfferId = id });
       }
       else
       {
-        var id = await _offersService.GetIdByVendorsGameIdAsync(steamId!.ToString()!, EVendor.Steam);
+        var id = await _offersRepo.GetIdByVendorsGameIdAsync(steamId!.ToString()!, EVendor.Steam);
         return Ok(new { OfferId = id });
       }
     } catch (Exception ex)

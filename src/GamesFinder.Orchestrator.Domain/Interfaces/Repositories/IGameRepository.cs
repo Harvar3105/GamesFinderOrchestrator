@@ -5,7 +5,7 @@ namespace GamesFinder.Domain.Interfaces.Repositories;
 
 public interface IGameRepository : IRepository<Game>
 {
-	Task<Game?> GetBySteamId(int steamId);
+	Task<Game?> GetBySteamIdAsync(int steamId);
 	Task<Game?> GetByAppNameAsync(string appName);
 	Task<string?> GetIdBySteamIdAsync(int steamId);
 	Task<List<(int, bool)>> ExistBySteamIdMany(List<int> steamIds);

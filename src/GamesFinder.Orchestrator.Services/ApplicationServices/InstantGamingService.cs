@@ -8,11 +8,11 @@ using Microsoft.Extensions.Logging;
 
 namespace GamesFinder.Orchestrator.Services.ApplicationServices;
 
-public class InstantGamingService : VendorsService<InstantGamingWorkersPublisher>, IInstantGamingService
+public class InstantGamingService : VendorsService<InstantGamingScrapeTask>, IInstantGamingService
 {
   private readonly WorkersOptions _workersOptions;
-  public InstantGamingService(InstantGamingWorkersPublisher publisher, WorkersOptions workersOptions, ILogger<InstantGamingService> logger)
-    : base(publisher, logger)
+  public InstantGamingService(PublisherFactory factory, WorkersOptions workersOptions, ILogger<InstantGamingService> logger)
+    : base(factory.Create<InstantGamingScrapeTask>(), logger)
   {
     _workersOptions = workersOptions;
   }

@@ -12,7 +12,7 @@ public class GameRepository : Repository<Game>, IGameRepository
     
   }
 
-  public async Task<Game?> GetBySteamId(int steamId)
+  public async Task<Game?> GetBySteamIdAsync(int steamId)
   {
     try
     {

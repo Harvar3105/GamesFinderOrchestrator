@@ -4,32 +4,32 @@ using GamesFinder.Orchestrator.Domain.Interfaces.DomainServices;
 
 namespace GamesFinder.Orchestrator.Services.DomainServices;
 
-public class GamesWithOffersService
+public class GamesWithOffersService : IGamesWithOffersService
 {
-  private readonly IGamesService _gamesService;
-  private readonly IOffersService _offersService;
+  private readonly IGameRepository _gamesRepo;
+  private readonly IGameOfferRepository _offersRepo;
 
-  public GamesWithOffersService(IGamesService gamesService, IOffersService offersService)
+  public GamesWithOffersService(IGameRepository gamesRepository, IGameOfferRepository offersRepository)
   {
-    _gamesService = gamesService;
-    _offersService = offersService;
+    _gamesRepo = gamesRepository;
+    _offersRepo = offersRepository;
   }
 
   public async Task<(bool, long)> DeleteAsync(Guid id)
   {
-    var isGameDeleted = await _gamesService.DeleteAsync(id);
+    var isGameDeleted = await _gamesRepo.DeleteAsync(id);
     if (!isGameDeleted) return (false, 0);
-    var offers = await _offersService.DeleteByGameIdAsync(id);
+    var offers = await _offersRepo.DeleteByGameIdAsync(id);
     return (isGameDeleted, offers);
   }
 
   public async Task<(long, long)> DeleteManyAsync(IEnumerable<Guid> ids)
   {
-    var isGameDeleted = await _gamesService.DeleteManyAsync(ids);
+    var isGameDeleted = await _gamesRepo.DeleteManyAsync(ids);
     int counter = 0;
     foreach (var id in ids)
     {
-      var offersCount = await _offersService.DeleteByGameIdAsync(id);
+      var offersCount = await _offersRepo.DeleteByGameIdAsync(id);
       counter += (int)offersCount;
     }
     return (isGameDeleted, counter);
@@ -37,11 +37,11 @@ public class GamesWithOffersService
 
   public async Task<ICollection<Game>?> GetAllAsync()
   {
-    var games = await _gamesService.GetAllAsync();
+    var games = await _gamesRepo.GetAllAsync();
     if (games == null) return null;
     foreach (var game in games)
     {
-      var offers = await _offersService.GetOffersByGameIdAsync(game.Id);
+      var offers = await _offersRepo.GetByGameIdAsync(game.Id);
       game.Offers = offers?.ToList() ?? new List<GameOffer>();
     }
     return games;
@@ -49,10 +49,10 @@ public class GamesWithOffersService
 
   public async Task<Entity?> GetByIdAsync(Guid id)
   {
-    var game = await _gamesService.GetByIdAsync(id);
+    var game = await _gamesRepo.GetByIdAsync(id);
     if (game == null) return null;
 
-    var offers = await _offersService.GetOffersByGameIdAsync(id);
+    var offers = await _offersRepo.GetByGameIdAsync(id);
     game.Offers = offers?.ToList() ?? new List<GameOffer>();
     return game;
   }
@@ -64,38 +64,38 @@ public class GamesWithOffersService
 
   public async Task<bool> SaveAsync(Game game)
   {
-    var result = await _gamesService.SaveAsync(game);
+    var result = await _gamesRepo.SaveAsync(game);
     if (!result) return false;
-    result = await _offersService.SaveManyAsync(game.Offers);
+    result = await _offersRepo.SaveManyAsync(game.Offers);
     return result;
   }
 
   public async Task<bool> SaveManyAsync(IEnumerable<Game> games)
   {
-    var result = await _gamesService.SaveManyAsync(games);
+    var result = await _gamesRepo.SaveManyAsync(games);
     if (!result) return false;
     foreach (var game in games)
     {
-      await _offersService.SaveManyAsync(game.Offers);
+      await _offersRepo.SaveManyAsync(game.Offers);
     }
     return true;
   }
 
   public async Task<bool> SaveOrUpdateAsync(Game game)
   {
-    var result = await _gamesService.SaveOrUpdateAsync(game);
+    var result = await _gamesRepo.SaveOrUpdateAsync(game);
     if (!result) return false;
-    result = await _offersService.SaveOrUpdateManyAsync(game.Offers);
+    result = await _offersRepo.SaveOrUpdateManyAsync(game.Offers);
     return result;
   }
 
   public async Task<bool> SaveOrUpdateManyAsync(IEnumerable<Game> games)
   {
-    var result = await _gamesService.SaveOrUpdateManyAsync(games);
+    var result = await _gamesRepo.SaveOrUpdateManyAsync(games);
     if (!result) return false;
     foreach (var game in games)
     {
-      await _offersService.SaveManyAsync(game.Offers);
+      await _offersRepo.SaveManyAsync(game.Offers);
     }
     return true;
   }

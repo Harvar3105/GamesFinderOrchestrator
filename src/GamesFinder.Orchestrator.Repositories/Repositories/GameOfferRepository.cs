@@ -55,7 +55,7 @@ public class GameOfferRepository : Repository<GameOffer>, IGameOfferRepository
     return grouped;
   }
 
-  public async Task<GameOffer?> GetByVandorsIdAsync(string vendorsGameId)
+  public async Task<GameOffer?> GetByVendorsIdAsync(string vendorsGameId)
   {
     return await _collection
       .Find(g => g.VendorsGameId.Equals(vendorsGameId, StringComparison.OrdinalIgnoreCase))

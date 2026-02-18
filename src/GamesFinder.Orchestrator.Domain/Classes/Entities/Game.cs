@@ -29,12 +29,11 @@ public class Game(
   [BsonElement("header_image")]
   public string? HeaderImage { get; set; } = headerImage;
   [BsonIgnore]
-  public List<GameOffer> Offers { get; set; } = new();
+  public List<GameOffer> Offers { get; set; } = initialOffers ?? new();
   [BsonElement("is_released")]
   public bool IsReleased { get; set; }
   [BsonElement("initial_price")]
   public decimal? InitialPrice {get; set;}
   [BsonElement("initial_currency")]
   public ECurrency? InitialCurrency {get; set;}
-
 }

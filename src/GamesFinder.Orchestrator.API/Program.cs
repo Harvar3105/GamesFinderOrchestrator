@@ -120,16 +120,14 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 
 builder.Services.AddScoped<IGameRepository, GameRepository>();
 builder.Services.AddScoped<IGameOfferRepository, GameOfferRepository>();
-builder.Services.AddScoped<IGamesService, GamesService>();
-builder.Services.AddScoped<IOffersService, GamesOffersService>();
-builder.Services.AddScoped<GamesWithOffersService>();
+builder.Services.AddScoped<IGamesWithOffersService, GamesWithOffersService>();
 builder.Services.AddScoped<ISteamService, SteamService>();
 builder.Services.AddScoped<IInstantGamingService, InstantGamingService>();
+builder.Services.AddScoped<ILoggerFactory, LoggerFactory>();
 
 builder.Services.AddSingleton<RedisCacheDB>();
 builder.Services.AddSingleton<IBrockerPublisher, RabbitMqPublisher>();
-builder.Services.AddSingleton<SteamWorkerPublisher>();
-builder.Services.AddSingleton<InstantGamingWorkersPublisher>();
+builder.Services.AddSingleton<PublisherFactory>();
 
 builder.Services.AddHostedService<SteamWorkerConsumer>();
 builder.Services.AddHostedService<InstantGamingWorkersConsumer>();

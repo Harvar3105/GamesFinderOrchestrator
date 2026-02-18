@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using GamesFinder.Orchestrator.Domain.Classes.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using GamesFinder.Orchestrator.Domain.Interfaces.DomainServices;
+using GamesFinder.Domain.Interfaces.Repositories;
 
 namespace GamesFinder.Orchestrator.Consumers;
 
@@ -19,8 +20,8 @@ public class SteamWorkerConsumer : Consumer<GameOrOffer>
 
   protected override async Task SaveToDatabaseAsync(IServiceScope scope, List<GameOrOffer> items)
   {
-    var gamesService = scope.ServiceProvider.GetRequiredService<IGamesService>();
-    var offersService = scope.ServiceProvider.GetRequiredService<IOffersService>();
+    var gamesRepo = scope.ServiceProvider.GetRequiredService<IGameRepository>();
+    var offersRepo = scope.ServiceProvider.GetRequiredService<IGameOfferRepository>();
 
     var games = items.Where(i => i.IsGame).Select(i => i.Game!).ToList();
     var offers = items.Where(i => !i.IsGame).Select(i => i.Offer!).ToList();
@@ -28,13 +29,13 @@ public class SteamWorkerConsumer : Consumer<GameOrOffer>
 
     if (games != null && games.Count() > 0)
     {
-      var success = await gamesService.SaveManyAsync(games);
+      var success = await gamesRepo.SaveManyAsync(games);
       if (!success) _logger.LogError("💥Could not save games!");
     }
     
     if (offers != null && offers.Count() > 0)
     {
-      var success = await offersService.SaveManyAsync(offers);
+      var success = await offersRepo.SaveManyAsync(offers);
       if (!success) _logger.LogError("💥Could not save offers!");
     }
   }

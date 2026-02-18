@@ -1,6 +1,7 @@
 
 using System.Text.Json.Nodes;
 using GamesFinder.Orchestrator.Domain.Classes.Tasks;
+using GamesFinder.Orchestrator.Domain.Interfaces.Infrastructure;
 using GamesFinder.Orchestrator.Domain.Interfaces.Services.ApplicationServices;
 using GamesFinder.Orchestrator.Publisher;
 using Microsoft.Extensions.Logging;
@@ -8,9 +9,9 @@ using Newtonsoft.Json;
 
 namespace GamesFinder.Orchestrator.Services.ApplicationServices;
 
-public class SteamService : VendorsService<SteamWorkerPublisher>, ISteamService
+public class SteamService : VendorsService<SteamScrapeTask>, ISteamService
 {
-  public SteamService(SteamWorkerPublisher publisher, ILogger<SteamService> logger) : base(publisher, logger)
+  public SteamService(PublisherFactory factory, ILogger<SteamService> logger) : base(factory.Create<SteamScrapeTask>(), logger)
   {
   }
 

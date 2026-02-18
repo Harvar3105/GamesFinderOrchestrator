@@ -2,7 +2,7 @@ using GamesFinder.Orchestrator.Domain.Interfaces.Services.ApplicationServices;
 using Microsoft.AspNetCore.Authorization;
 using GamesFinder.Orchestrator.API.Controllers.Contracts.InstantGaming;
 using Microsoft.AspNetCore.Mvc;
-using GamesFinder.Orchestrator.Domain.Interfaces.DomainServices;
+using GamesFinder.Domain.Interfaces.Repositories;
 
 namespace GamesFinder.Orchestrator.API.Controllers;
 
@@ -12,13 +12,13 @@ public class InstantGamingController : ControllerBase
 {
   private readonly ILogger<InstantGamingController> _logger;
   private readonly IInstantGamingService _instantGamingService;
-  private readonly IOffersService _offersService;
+  private readonly IGameOfferRepository _offersRepo;
 
-  public InstantGamingController(ILogger<InstantGamingController> logger, IInstantGamingService instantGamingService, IOffersService offersService)
+  public InstantGamingController(ILogger<InstantGamingController> logger, IInstantGamingService instantGamingService, IGameOfferRepository offersRepository)
   {
     _logger = logger;
     _instantGamingService = instantGamingService;
-    _offersService = offersService;
+    _offersRepo = offersRepository;
   }
 
   [HttpPost("scrapIds")]
@@ -75,7 +75,7 @@ public class InstantGamingController : ControllerBase
   {
     try
     {
-      var exists = await _offersService.CheckExistsByVendorsIdAsync(vendorId);
+      var exists = await _offersRepo.ExistsByVendorsIdAsync(vendorId);
       return Ok(new { Exists = exists });
     }
     catch (Exception ex)
@@ -100,12 +100,12 @@ public class InstantGamingController : ControllerBase
       {
         bool success = Guid.TryParse(gameId, out Guid parsedGameId);
         if (!success) return BadRequest("⚠️Invalid gameId format. Must be a valid GUID.");
-        var id = _offersService.GetIdByGameIdAsync(parsedGameId, GamesFinder.Domain.Enums.EVendor.InstantGaming);
+        var id = _offersRepo.GetIdByGameIdAsync(parsedGameId, GamesFinder.Domain.Enums.EVendor.InstantGaming);
         return Ok(new { OfferId = id });
       }
       else
       {
-        var id = await _offersService.GetIdByVendorsGameIdAsync(vendorId!, GamesFinder.Domain.Enums.EVendor.InstantGaming);
+        var id = await _offersRepo.GetIdByVendorsGameIdAsync(vendorId!, GamesFinder.Domain.Enums.EVendor.InstantGaming);
         return Ok(new { OfferId = id });
       }
     } catch (Exception ex)

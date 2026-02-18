@@ -3,7 +3,7 @@ using GamesFinder.Orchestrator.Publisher.Redis;
 using Microsoft.Extensions.Logging;
 using GamesFinder.Orchestrator.Domain.Classes.Entities;
 using Microsoft.Extensions.DependencyInjection;
-using GamesFinder.Orchestrator.Domain.Interfaces.DomainServices;
+using GamesFinder.Domain.Interfaces.Repositories;
 
 
 namespace GamesFinder.Orchestrator.Consumers;
@@ -21,7 +21,7 @@ public class InstantGamingWorkersConsumer : Consumer<GameOffer>
 
   protected override async Task SaveToDatabaseAsync(IServiceScope scope, List<GameOffer> items)
   {
-    var service = scope.ServiceProvider.GetRequiredService<IOffersService>();
-    await service.SaveManyAsync(items);
+    var repo = scope.ServiceProvider.GetRequiredService<IGameOfferRepository>();
+    await repo.SaveManyAsync(items);
   }
 }

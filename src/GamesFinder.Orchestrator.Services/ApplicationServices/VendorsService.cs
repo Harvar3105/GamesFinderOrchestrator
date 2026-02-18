@@ -5,12 +5,11 @@ using Microsoft.Extensions.Logging;
 
 namespace GamesFinder.Orchestrator.Services.ApplicationServices;
 
-public abstract class VendorsService <TPublisher> : IVendorsService
-  where TPublisher : class, IPublisher
+public abstract class VendorsService<TTask> : IVendorsService<TTask> where TTask : ScrapeTask
 {
-  protected TPublisher _publisher;
+  protected IPublisher<TTask> _publisher;
   protected readonly ILogger _logger;
-  public VendorsService(TPublisher publisher, ILogger logger)
+  public VendorsService(IPublisher<TTask> publisher, ILogger logger)
   {
     _publisher = publisher;
     _logger = logger;
@@ -18,7 +17,7 @@ public abstract class VendorsService <TPublisher> : IVendorsService
 
   public abstract string TaskRedisKeyPrefix  {get;}
 
-  public virtual async Task BatchPublishAsync(ScrapeTask task)
+  public virtual async Task BatchPublishAsync(TTask task)
   {
     await _publisher.PublishIdsScrapeTaskAsync(task);
   }

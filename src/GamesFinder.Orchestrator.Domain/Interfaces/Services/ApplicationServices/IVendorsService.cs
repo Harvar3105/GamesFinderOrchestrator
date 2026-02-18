@@ -4,10 +4,10 @@ using GamesFinder.Orchestrator.Domain.Interfaces.Infrastructure;
 
 namespace GamesFinder.Orchestrator.Domain.Interfaces.Services.ApplicationServices;
 
-public interface IVendorsService
+public interface IVendorsService<TTask>
 {
   // protected IOffersService _offersService { get; } //FIXME: Games or gameoffers ???
-  protected abstract Task BatchPublishAsync(ScrapeTask task);
+  protected abstract Task BatchPublishAsync(TTask task);
   protected int GetBatchSize(int totalItems, int workersCount);
   string TaskRedisKeyPrefix { get; }
 }
