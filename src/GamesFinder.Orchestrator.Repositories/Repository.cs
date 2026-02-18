@@ -10,6 +10,8 @@ public abstract class Repository<T> : IRepository<T> where T : Entity
   protected readonly IMongoCollection<T> _collection;
   protected readonly ILogger<Repository<T>> _logger;
 
+  //TODO: Configure bathcing with atomicity. Also for other repos
+
   public Repository(IMongoDatabase database, string collectionName, ILogger<Repository<T>> logger)
   {
     _logger = logger;

@@ -34,7 +34,7 @@ public class GameOfferRepository : Repository<GameOffer>, IGameOfferRepository
       .ToListAsync();
   }
 
-  public async Task<Dictionary<Guid, List<GameOffer>>?> GetByGameIdsAsync(IEnumerable<Guid> gameIds)
+  public async Task<Dictionary<Guid, List<GameOffer>>?> GetByGameIdManyAsync(IEnumerable<Guid> gameIds)
   {
     if (gameIds == null || !gameIds.Any())
       return null;
@@ -85,7 +85,7 @@ public class GameOfferRepository : Repository<GameOffer>, IGameOfferRepository
       .FirstOrDefaultAsync();
   }
 
-  public async Task<Guid?> GetOfferIdByVandorsIdAsync(string vendorsGameId)
+  public async Task<Guid?> GetOfferIdByVendorsIdAsync(string vendorsGameId)
   {
     var id = await _collection
       .Find(g => g.VendorsGameId.Equals(vendorsGameId, StringComparison.OrdinalIgnoreCase))
