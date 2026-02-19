@@ -32,7 +32,9 @@ public class GameOffer : Entity
     Amount = amount;
     Currency = currency;
   }
-  
-  //TODO: Configure Equals for object comparing
 
+  public override string ToString()
+  {
+    return "🫴:\n" + base.ToString() + $"GameID: {GameId}, Vendor: {Vendor}, VendorsGameId: {VendorsGameId},\nVendorsUrl: {VendorsUrl}, Available: {Available}, Amount: {Amount} {Currency}\n";
+  }
 }

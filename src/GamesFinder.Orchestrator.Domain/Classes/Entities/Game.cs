@@ -36,4 +36,9 @@ public class Game(
   public decimal? InitialPrice {get; set;}
   [BsonElement("initial_currency")]
   public ECurrency? InitialCurrency {get; set;}
+
+  public override string ToString()
+  {
+    return "🎮:\n" + base.ToString() + $"Name: {Name}, SteamID: {SteamID}, Offers count: {Offers.Count},\nDescription: {Description?.Substring(0, Math.Min(50, Description.Length))}..., SteamURL: {SteamURL}, HeaderImage: {HeaderImage}\n";
+  }
 }

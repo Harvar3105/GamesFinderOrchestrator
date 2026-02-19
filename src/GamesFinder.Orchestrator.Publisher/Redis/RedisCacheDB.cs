@@ -50,7 +50,7 @@ public class RedisCacheDB
 
           if (deserializedItem != null)
           {
-              result.Add(deserializedItem);
+            result.Add(deserializedItem);
           }
         }
         catch (JsonException ex)
@@ -59,7 +59,7 @@ public class RedisCacheDB
         }
       }
     }
-    _logger.LogInformation($"Deserialized {result.Count()} items from Redis with key: {key}");
+    _logger.LogInformation($"➡️Deserialized {result.Count()} items from Redis with key: {key}");
 
     return result;
   }

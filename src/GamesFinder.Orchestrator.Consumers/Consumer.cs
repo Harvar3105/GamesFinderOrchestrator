@@ -59,14 +59,14 @@ public abstract class Consumer<TResult> : BackgroundService, IBrockerConsumer
       try
       {
         var notification = await GetRedisResultNotificationAsync(ea);
-        if (notification == null) return;
+        if (notification == null) throw new Exception("💥Failed to get notification from message");
 
         _logger.LogInformation("🔑Processing Redis key: {Key}", notification.RedisResultKey);
 
         List<TResult>? items = await GetItemsFromRedisAsync(ea.DeliveryTag, notification.RedisResultKey);
-        if (items == null || items.Count() == 0) return;
+        if (items == null || items.Count() == 0) throw new Exception("⚠️No items found to process in redis!");
 
-        if (!await TrySave(scope, items, ea.DeliveryTag)) return;
+        if (!await TrySave(scope, items, ea.DeliveryTag)) throw new Exception($"💥Failed to save items to database!\nItem example {items.FirstOrDefault()}");
 
         await ClearRedisKeyAsync(notification.RedisResultKey);
 
@@ -74,7 +74,7 @@ public abstract class Consumer<TResult> : BackgroundService, IBrockerConsumer
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Unhandled consumer error");
+        _logger.LogError(ex);
         await _channel.BasicNackAsync(ea.DeliveryTag, false, true);
       }
     };
