@@ -14,7 +14,6 @@ export class HttpStatusError extends Error {
   }
 }
 
-//TODO: Pass object with named params instead of multiple params
 export async function fetchJson(url: string, proxy?: string, method?: string): Promise<any | HttpStatusError | null> {
   const options = proxy ? {
     method: method ?? 'GET',

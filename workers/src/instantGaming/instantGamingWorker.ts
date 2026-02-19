@@ -25,7 +25,6 @@ async function startInstantGamingWorker() {
         switch (task.type) {
           case eInstantGamingTaskType.SCRAPE_IDS:
             for (const gameId of (task as InstantGamingScrapeIdsTask).gameIds) {
-              // TODO: add ignore existing option
               var offer = await fetchInstantGamingOffer(gameId, task.currency, task.proxy)
               if (offer instanceof HttpStatusError) {
                 logger.error(`Stopping processing of task ${task.taskId} due to error: HTTP ${offer.status} ${offer.message}`, offer.body ?? '');
