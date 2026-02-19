@@ -61,10 +61,10 @@ public abstract class Consumer<TResult> : BackgroundService, IBrockerConsumer
         var notification = await GetRedisResultNotificationAsync(ea);
         if (notification == null) return;
 
-        _logger.LogInformation("Processing Redis key: {Key}", notification.RedisResultKey);
+        _logger.LogInformation("🔑Processing Redis key: {Key}", notification.RedisResultKey);
 
         List<TResult>? items = await GetItemsFromRedisAsync(ea.DeliveryTag, notification.RedisResultKey);
-        if (items == null) return;
+        if (items == null || items.Count() == 0) return;
 
         if (!await TrySave(scope, items, ea.DeliveryTag)) return;
 
