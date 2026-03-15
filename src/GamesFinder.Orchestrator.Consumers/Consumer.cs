@@ -74,7 +74,7 @@ public abstract class Consumer<TResult> : BackgroundService, IBrockerConsumer
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex);
+        _logger.LogError(ex.ToString());
         await _channel.BasicNackAsync(ea.DeliveryTag, false, true);
       }
     };

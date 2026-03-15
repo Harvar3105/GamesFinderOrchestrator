@@ -1,6 +1,8 @@
 ﻿using GamesFinder.Domain.Interfaces.Repositories;
 using GamesFinder.Orchestrator.Domain.Classes.Entities;
+using GamesFinder.Orchestrator.Domain.Enums;
 using GamesFinder.Orchestrator.Domain.Interfaces.DomainServices;
+using Microsoft.Extensions.Logging;
 
 namespace GamesFinder.Orchestrator.Services.DomainServices;
 
@@ -8,11 +10,13 @@ public class GamesWithOffersService : IGamesWithOffersService
 {
   private readonly IGameRepository _gamesRepo;
   private readonly IGameOfferRepository _offersRepo;
+  private readonly ILogger<GamesWithOffersService> _logger;
 
-  public GamesWithOffersService(IGameRepository gamesRepository, IGameOfferRepository offersRepository)
+  public GamesWithOffersService(IGameRepository gamesRepository, IGameOfferRepository offersRepository, ILogger<GamesWithOffersService> logger)
   {
     _gamesRepo = gamesRepository;
     _offersRepo = offersRepository;
+    _logger = logger;
   }
 
   public async Task<(bool, long)> DeleteAsync(Guid id)
@@ -57,10 +61,29 @@ public class GamesWithOffersService : IGamesWithOffersService
     return game;
   }
 
-  // public Task<ICollection<Entity>?> GetPagedAsync(int page, int pageSize)
-  // {
-  //   throw new NotImplementedException();
-  // }
+  public async Task<IEnumerable<(Game, decimal?)>> GetGamesWithMinimalOffersPriceAsync(int page, int pageSize, ECurrency currency)
+  {
+    try
+    {
+      var games = await _gamesRepo.GetPagedAsync(page, pageSize);
+      var result = new List<(Game, decimal?)>();
+
+      if (games == null || games.Count() == 0){ return result;}
+      
+      foreach (var game in games)
+      {
+        var minimalPrice = await _offersRepo.GetMinimalOfferPrice(game.Id, currency);
+        result.Add((game, minimalPrice));
+      }
+
+      return result;
+    }
+    catch (Exception ex)
+    {
+      _logger.LogCritical(ex.ToString());
+      return Enumerable.Empty<(Game, decimal?)>();
+    }
+  }
 
   public async Task<bool> SaveAsync(Game game)
   {

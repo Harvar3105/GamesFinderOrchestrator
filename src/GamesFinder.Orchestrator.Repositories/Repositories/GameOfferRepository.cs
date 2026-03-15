@@ -2,6 +2,7 @@ using System;
 using GamesFinder.Domain.Enums;
 using GamesFinder.Domain.Interfaces.Repositories;
 using GamesFinder.Orchestrator.Domain.Classes.Entities;
+using GamesFinder.Orchestrator.Domain.Enums;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 
@@ -92,5 +93,22 @@ public class GameOfferRepository : Repository<GameOffer>, IGameOfferRepository
       .Project(offer => offer.Id)
       .FirstOrDefaultAsync();
     return id == Guid.Empty ? null : id;
+  }
+
+  public async Task<decimal?> GetMinimalOfferPrice(Guid gameId, ECurrency currency)
+  {
+    try
+    {
+      return await _collection
+        .Find(offer => offer.Currency == currency && offer.GameId.Equals(gameId))
+        .SortBy(offer => offer.Amount)
+        .Project(offer => offer.Amount)
+        .FirstOrDefaultAsync();
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError(ex.Message);
+      return null;
+    }
   }
 }

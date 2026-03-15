@@ -23,4 +23,9 @@ public abstract class Entity
     if (obj is not Entity other) return false;
     return Id == other.Id;
   }
+
+  public override int GetHashCode()
+  {
+    return base.GetHashCode();
+  }
 }

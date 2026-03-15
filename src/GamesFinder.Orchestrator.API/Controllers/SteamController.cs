@@ -1,7 +1,10 @@
 using GamesFinder.Domain.Enums;
 using GamesFinder.Domain.Interfaces.Repositories;
 using GamesFinder.Orchestrator.API.Controllers.Contracts.Steam;
+using GamesFinder.Orchestrator.Domain.Enums;
+using GamesFinder.Orchestrator.Domain.Interfaces.DomainServices;
 using GamesFinder.Orchestrator.Domain.Interfaces.Services.ApplicationServices;
+using GamesFinder.Orchestrator.Services.DomainServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,13 +18,15 @@ public class SteamController : ControllerBase
   private readonly ISteamService _steamService;
   private readonly IGameRepository _gamesRepo;
   private readonly IGameOfferRepository _offersRepo;
+  private readonly IGamesWithOffersService _gamesWithOffersService;
 
-  public SteamController(ILogger<SteamController> logger, ISteamService steamService, IGameRepository gamesRepository, IGameOfferRepository offersRepository)
+  public SteamController(ILogger<SteamController> logger, ISteamService steamService, IGameRepository gamesRepository, IGameOfferRepository offersRepository, IGamesWithOffersService gamesWithOffersService)
   {
     _logger = logger;
     _steamService = steamService;
     _gamesRepo = gamesRepository;
     _offersRepo = offersRepository;
+    _gamesWithOffersService = gamesWithOffersService;
   }
 
   [HttpPost("scrap")]
@@ -123,5 +128,26 @@ public class SteamController : ControllerBase
       _logger.LogError(ex, $"Error retrieving offer ID for gameId: {gameId} or steamId: {steamId}");
       return StatusCode(500, "An error occurred while processing your request.");
     }
+  }
+
+  [HttpGet("getPagedWithCurrency")]
+  public async Task<IActionResult> GetPagedWithCurrency(int page, int pageSize, string currency = "EUR")
+  {
+    if (pageSize <= 0 || page < 0) return BadRequest("⚠️Invalid data provided");
+    var parsedCurrency = ECurrencyHelpers.GetECurrency(currency);
+    if (parsedCurrency is null) return BadRequest("⚠️Currency is not available");
+
+    var gamesData = await _gamesWithOffersService.GetGamesWithMinimalOffersPriceAsync(page, pageSize, parsedCurrency.Value);
+    var games = gamesData.Select(g => new { g.Item1, MinimalPrice = g.Item2 }).ToList();
+    _logger.LogInformation($"Total {games.Count} \n First: {games.FirstOrDefault()}");
+    return Ok(new {Games = games});
+  }
+
+  [HttpGet("getPaged")]
+  public async Task<IActionResult> GetPaged(int page, int pageSize){
+    if (pageSize <= 0 || page < 0) return BadRequest("⚠️Invalid data provided");
+
+    var games = await _gamesRepo.GetPagedAsync(page, pageSize);
+    return Ok(new {Games = games});
   }
 }
