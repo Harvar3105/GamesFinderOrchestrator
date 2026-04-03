@@ -10,7 +10,8 @@ import { fetchInstantGamingOffer } from "./instantGamingFetcher.js";
 
 async function startInstantGamingWorker() {
   const channel = await rabbitConn.createChannel();
-  createOrchestratorListener(
+  await channel.prefetch(1);
+  await createOrchestratorListener(
     channel,
     config.instantGamingRequests!,
     config.instantGamingResults!,
@@ -55,6 +56,12 @@ async function startInstantGamingWorker() {
               if (offer) list.push(offer);
             }
             break;
+        }
+
+        if (list.length === 0) {
+          logger.info(`⚠️No offers found for task ${task.taskId}, acknowledging without adding to redis.`);
+          channel.ack(msg);
+          return;
         }
 
         await redis.rpush(task.redisResultKey, ...list.map(r => JSON.stringify(r)));

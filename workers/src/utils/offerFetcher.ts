@@ -14,20 +14,22 @@ export class HttpStatusError extends Error {
   }
 }
 
-export async function fetchJson(url: string, proxy?: string, method?: string): Promise<any | HttpStatusError | null> {
+export async function fetchJson(url: string, proxy?: string, method?: string): Promise<any | null> {
   const options = proxy ? {
     method: method ?? 'GET',
     agent: new HttpsProxyAgent(proxy),
-    signal: AbortSignal.timeout(config.backendTimeoutMs)
+    signal: AbortSignal.timeout(config.backendTimeoutMs),
+    redirect: 'follow' as const
   }
   : {
     method: method ?? 'GET',
-    signal: AbortSignal.timeout(config.backendTimeoutMs)
+    signal: AbortSignal.timeout(config.backendTimeoutMs),
+    redirect: 'follow' as const
   };
   try {
     const res = await fetch(url, options);
 
-    if (!res.ok && !res.status.toString().startsWith('3')) {
+    if (!res.ok) {
       const body = await res.text().catch(() => undefined);
       logger.warn(`Received ${res.status} from ${url}, throwing HttpStatusError`);
       throw new HttpStatusError(res.status, `HTTP ${res.status} ${res.statusText}`, body);
@@ -46,22 +48,24 @@ export async function fetchJson(url: string, proxy?: string, method?: string): P
   }
 }
 
-export async function fetchHTML(url: string, proxy?: string): Promise<string | HttpStatusError | null> {
+export async function fetchHTML(url: string, proxy?: string): Promise<string | null> {
   const options = proxy ? {
     method: 'GET',
     agent: new HttpsProxyAgent(proxy),
-    timeout: config.backendTimeoutMs
+    timeout: config.backendTimeoutMs,
+    redirect: 'follow' as const
   }
   : {
     method: 'GET',
-    timeout: config.backendTimeoutMs
+    timeout: config.backendTimeoutMs,
+    redirect: 'follow' as const
   };
 
   try {
     const res = await fetch(url, options);
     logger.info(`Fetched HTML from ${url} with status: ${res.status}`);
 
-    if (!res.ok && !res.status.toString().startsWith('3')) {
+    if (!res.ok) {
       const body = await res.text().catch(() => undefined);
       logger.warn(`Received ${res.status} from ${url}, throwing HttpStatusError`);
       throw new HttpStatusError(res.status, `HTTP ${res.status} ${res.statusText}`, body);
@@ -74,6 +78,9 @@ export async function fetchHTML(url: string, proxy?: string): Promise<string | H
 }
 
 export function parseHtmlToDocument(html: string): Document {
-  const dom = new JSDOM(html);
+  const dom = new JSDOM(html, {
+    contentType: 'text/html',
+    pretendToBeVisual: true
+  });
   return dom.window.document;
 }

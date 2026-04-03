@@ -86,7 +86,7 @@ builder.Services.AddSingleton(new SteamOptions(
 ));
 builder.Services.AddSingleton(new WorkersOptions(
 	instantGamingWorkerCount: builder.Configuration.GetValue<int>("Workers:InstantGamingWorkerCount")!,
-	instantGamingSkipFirstIds: builder.Configuration.GetValue<int>("Workers:InstantGamingSkipFirstIds")!
+	instantGamingOverrideBatchSize: builder.Configuration.GetValue<int?>("Workers:InstantGamingOverrideBatchSize")
 ));
 
 builder.Services.AddSingleton(new RabbitMqConfig(

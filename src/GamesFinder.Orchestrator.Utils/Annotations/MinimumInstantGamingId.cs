@@ -15,16 +15,6 @@ public sealed class MinimumInstantGamingId : ValidationAttribute
     if (value is not int number)
       return new ValidationResult("Value must be an integer.");
 
-    var options = validationContext.GetService(typeof(WorkersOptions)) as WorkersOptions;
-
-    if (options is null)
-      throw new InvalidOperationException("ScrapingOptions not registered in DI");
-
-    if (number <= options.InstantGamingSkipFirstIds)
-    {
-      return new ValidationResult($"Value must be <= {options.InstantGamingSkipFirstIds}");
-    }
-
     return ValidationResult.Success;
   }
 }

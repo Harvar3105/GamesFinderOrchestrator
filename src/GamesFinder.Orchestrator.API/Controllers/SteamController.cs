@@ -45,6 +45,26 @@ public class SteamController : ControllerBase
     }
   }
 
+  [HttpGet("checkGameExistsByName")]
+  public async Task<IActionResult> CheckExistingGameByNameAsync(string gameName)
+  {
+    try
+    {
+      _logger.LogInformation($"Checking existence of game by name: {gameName}");
+      var game = await _gamesRepo.GetByAppNameAsync(gameName);
+      if (game == null) return Ok(new {Exists = false});
+      else {
+        _logger.LogInformation($"Game found Steam ID: {game.SteamID}");
+        return Ok(new {Exists = true, GameId = game.Id, SteamId = game.SteamID });
+      }
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError(ex, $"Error checking existence of game by name: {gameName}");
+      return StatusCode(500, "An error occurred while processing your request.");
+    }
+  }
+
   [HttpGet("checkGameExists")]
   public async Task<IActionResult> CheckExistingSteamIdAsync(int steamId, bool getGame = false)
   {

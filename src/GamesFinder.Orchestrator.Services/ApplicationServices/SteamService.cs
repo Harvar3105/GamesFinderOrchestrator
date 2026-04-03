@@ -30,7 +30,7 @@ public class SteamService : VendorsService<SteamScrapeTask>, ISteamService
 
     if (!updateExistingGames && !updateExistingOffers) steamIds = await RemoveExisting(steamIds);
 
-    var batchSize = GetBatchSize(steamIds.Count(), 1);
+    var batchSize = CalculateBatchSize(steamIds.Count(), 1);
     for (int i = 0; i < steamIds.Count(); i += batchSize)
     {
       var task = new SteamScrapeTask {

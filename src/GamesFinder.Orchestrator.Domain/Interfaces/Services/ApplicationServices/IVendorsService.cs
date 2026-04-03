@@ -8,6 +8,6 @@ public interface IVendorsService<TTask>
 {
   // protected IOffersService _offersService { get; } //FIXME: Games or gameoffers ???
   protected abstract Task BatchPublishAsync(TTask task);
-  protected int GetBatchSize(int totalItems, int workersCount);
+  protected int CalculateBatchSize(int totalItems, int workersCount);
   string TaskRedisKeyPrefix { get; }
 }

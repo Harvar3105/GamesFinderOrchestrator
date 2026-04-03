@@ -4,29 +4,24 @@ networks:
   shared-network:
     external: true
 
-secrets:
-  rabbitmq_username:
-    external: true
-  rabbitmq_password:
-    external: true
-  redis_password:
-    external: true
-
 services:
   # -----------------------------
   # RabbitMQ
   # -----------------------------
   rabbitmq:
     image: "rabbitmq:3-management"
-    container_name: gamesfinder-rabbitmq
+    container_name: rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     ports:
       - "5672:5672"
       - "15672:15672"
     environment:
-      RABBITMQ_DEFAULT_USER: /run/secrets/rabbitmq_username
-      RABBITMQ_DEFAULT_PASS_FILE: /run/secrets/rabbitmq_password
-    secrets:
-      - rabbitmq_password
+      RABBITMQ_DEFAULT_USER: ${RabbitMQ__Username}
+      RABBITMQ_DEFAULT_PASS: ${RabbitMQ__Password}
     networks:
       - shared-network
 
@@ -35,12 +30,15 @@ services:
   # -----------------------------
   redis:
     image: "redis:7-alpine"
-    container_name: gamesfinder-redis
+    container_name: redis
     ports:
       - "6379:6379"
-    command: ["redis-server", "--requirepass", "$(cat /run/secrets/redis_password)"]
-    secrets:
-      - redis_password
+    command: ["redis-server", "--requirepass", "${Redis__Password}"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${Redis__Password}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - shared-network
 
@@ -50,22 +48,50 @@ services:
   steam-worker:
     build:
       context: ./workers
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     container_name: steam-worker
+    env_file:
+      - ./.env
     environment:
-      - RABBITMQ_USER=/run/secrets/rabbitmq_username
-      - RABBITMQ_PASS_FILE=/run/secrets/rabbitmq_password
-      - REDIS_PASS_FILE=/run/secrets/redis_password
-    secrets:
-      - rabbitmq_password
-      - redis_password
+      - NODE_ENV=docker
+    volumes:
+      - ./workers/dist:/app/dist
+      - ./workers/package.json:/app/package.json
+      - ./workers/node_modules:/app/node_modules
     working_dir: /app
     command: ["npm", "run", "steam"]
     depends_on:
-      - rabbitmq
-      - redis
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    # restart: unless-stopped #For some reason fails at first start, loads on second
     networks:
       - shared-network
+  
+  instantgaming-worker:
+    build:
+      context: ./workers
+      dockerfile: Dockerfile.dev
+    env_file:
+      - ./.env
+    environment:
+      - NODE_ENV=docker
+    volumes:
+      - ./workers:/app:cached
+      - /app/node_modules
+    working_dir: /app
+    command: ["npm", "run", "instantgaming"]
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    # restart: unless-stopped #For some reason fails at first start, loads on second
+    networks:
+      - shared-network
+    deploy:
+      replicas: 5
 
   # -----------------------------
   # Backend / API
@@ -73,20 +99,22 @@ services:
   gamesfinder-api:
     build:
       context: .
-      dockerfile: Dockerfile
-    container_name: gamesfinder-api
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Production
-      - DOTNET_RUNNING_IN_CONTAINER=true
-      - RABBITMQ_PASS_FILE=/run/secrets/rabbitmq_password
-      - REDIS_PASS_FILE=/run/secrets/redis_password
-    secrets:
-      - rabbitmq_password
-      - redis_password
+      dockerfile: Dockerfile.dev
+    container_name: backend
+    working_dir: /app/src/GamesFinder.Orchestrator.API
+    command: ["dotnet", "run", "--urls", "http://0.0.0.0:8080"]
     ports:
       - "8081:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    env_file:
+      - ./.env
+    volumes:
+      - ./src:/app/src
     depends_on:
-      - rabbitmq
-      - redis
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - shared-network

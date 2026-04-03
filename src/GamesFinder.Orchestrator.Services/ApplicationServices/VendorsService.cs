@@ -22,7 +22,7 @@ public abstract class VendorsService<TTask> : IVendorsService<TTask> where TTask
     await _publisher.PublishIdsScrapeTaskAsync(task);
   }
 
-  public int GetBatchSize(int totalItems, int workersCount = 1)
+  public int CalculateBatchSize(int totalItems, int workersCount = 1)
   {
     if (totalItems == 0) { throw new Exception("No items to process."); }
     if (workersCount <= 0) { throw new Exception("Workers count must be greater than zero."); }

@@ -1,40 +1,29 @@
 import { v4 } from "uuid";
-import { fetchHTML, fetchJson, HttpStatusError, parseHtmlToDocument } from "../utils/offerFetcher.js";
+import { fetchHTML, HttpStatusError, parseHtmlToDocument } from "../utils/offerFetcher.js";
 import { GameOffer } from "../utils/types/entities/gameOffer.js";
 import { eCurrency } from "../utils/types/enums/eCurrency.js";
 import { getCanonicalIGurl, getFirstSteamIdFromMediaSourceIG } from "../utils/instantGaminghHelpers.js";
-import { config } from "../utils/config.js";
 import { eVendor } from "../utils/types/enums/eVendor.js";
 import { findNoStockElementIG, findPriceElementIG } from "../utils/instantGaminghHelpers.js";
 import logger from "../utils/logger.js";
 import { checkIgOfferExists, getIgOfferId } from "../backendUtils.js";
+import getSteamAndGameIdsFromHtml from "../utils/getSteamIdFromHtml.js";
 
 export async function fetchInstantGamingOffer(id: number, currency?: eCurrency, proxy?: string): Promise<GameOffer | null | HttpStatusError> {
-  const url = `https://www.instant-gaming.com/${id}-/?currency=${currency?.toString().toUpperCase() || 'EUR'}`;
+  const url = `https://www.instant-gaming.com/${encodeURIComponent(id)}-/?currency=${encodeURIComponent(currency?.toString().toUpperCase() || 'EUR')}`;
   
-  let data;
-  try {
-    data = await fetchJson(url);
-  } catch (err) {
-    if (err instanceof HttpStatusError) return err;
-    return null;
-  }
+  const data = await fetchHTML(url);
+  if (!data) return null;
 
-  const steamId = getFirstSteamIdFromMediaSourceIG(data)
-  if (!steamId) {
-    logger.error(`Could not recognize game from ${url}`);
-    return null;
-  }
-
-  const gameId = await getGameId(steamId);
-  if (!gameId){
-    logger.error(`Could not find gameId for steamId ${steamId} from ${url}`);
+  const steamAndGameIds = await getSteamAndGameIdsFromHtml(data);
+  if (!steamAndGameIds || !steamAndGameIds.gameId) {
+    logger.error(`❌Could not extract gameId from HTML of ${url}`);
     return null;
   }
 
   let offerExists = await checkIgOfferExists(id.toString());
   let offerId;
-  if (offerExists) offerId = await getIgOfferId({gameId: gameId!})?? await getIgOfferId({vendorId: id.toString()});
+  if (offerExists) offerId = await getIgOfferId({gameId: steamAndGameIds.gameId!})?? await getIgOfferId({vendorId: id.toString()});
   else offerId = v4();
 
   const doc = parseHtmlToDocument(data);
@@ -45,7 +34,7 @@ export async function fetchInstantGamingOffer(id: number, currency?: eCurrency, 
     id: offerId!,
     createdAt: new Date().toUTCString(),
     updatedAt: new Date().toUTCString(),
-    gameId: gameId,
+    gameId: steamAndGameIds.gameId,
     vendorsGameId: id.toString(),
     vendor: eVendor.InstatnGaming,
     vendorsUrl: canonicalUrl,
@@ -55,11 +44,4 @@ export async function fetchInstantGamingOffer(id: number, currency?: eCurrency, 
   }
 
   return gameOffer;
-}
-
-async function getGameId(steamId: number): Promise<string | null> {
-  const url = config.backendUrl! + config.backendCheckGame! + `?steamId=${steamId}&getId=true`;
-  const data = await fetchJson(url, undefined, 'POST');
-  if (!data || !data.exists) return null;
-  return data.gameId;
 }
