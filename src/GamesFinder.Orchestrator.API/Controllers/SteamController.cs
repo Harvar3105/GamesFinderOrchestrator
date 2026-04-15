@@ -157,9 +157,8 @@ public class SteamController : ControllerBase
     var parsedCurrency = ECurrencyHelpers.GetECurrency(currency);
     if (parsedCurrency is null) return BadRequest("⚠️Currency is not available");
 
-    var gamesData = await _gamesWithOffersService.GetGamesWithMinimalOffersPriceAsync(page, pageSize, parsedCurrency.Value);
-    var games = gamesData.Select(g => new { g.Item1, MinimalPrice = g.Item2 }).ToList();
-    _logger.LogInformation($"Total {games.Count} \n First: {games.FirstOrDefault()}");
+    var games = await _gamesWithOffersService.GetGamesPagedAsync(page, pageSize, parsedCurrency.Value);
+    _logger.LogInformation($"Total {games.Count()} \n First: {games.FirstOrDefault()}");
     return Ok(new {Games = games});
   }
 

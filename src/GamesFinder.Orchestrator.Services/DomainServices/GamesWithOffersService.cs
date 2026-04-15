@@ -61,6 +61,25 @@ public class GamesWithOffersService : IGamesWithOffersService
     return game;
   }
 
+  public async Task<IEnumerable<Game>> GetGamesPagedAsync(int page, int pageSize, ECurrency? currency = null)
+  {
+    var games = await _gamesRepo.GetPagedAsync(page, pageSize);
+    if (games == null || games.Count() == 0){ return [];}
+
+    foreach (var game in games)
+    {
+      var offers = await _offersRepo.GetByGameIdAsync(game.Id);
+      if (currency.HasValue)
+      {
+        offers = offers?.Where(o => o.Currency == currency.Value).ToList() ?? new List<GameOffer>();
+      }
+      if (offers == null || offers.Count() == 0) continue;
+      game.Offers = offers!.ToList();
+    }
+    
+    return games;
+  }
+
   public async Task<IEnumerable<(Game, decimal?)>> GetGamesWithMinimalOffersPriceAsync(int page, int pageSize, ECurrency currency)
   {
     try

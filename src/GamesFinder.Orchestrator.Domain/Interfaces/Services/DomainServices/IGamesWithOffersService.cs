@@ -14,4 +14,5 @@ public interface IGamesWithOffersService
   Task<bool> SaveOrUpdateAsync(Game game);
   Task<bool> SaveOrUpdateManyAsync(IEnumerable<Game> games);
   Task<IEnumerable<(Game, decimal?)>> GetGamesWithMinimalOffersPriceAsync(int page, int pageSize, ECurrency currency);
+  Task<IEnumerable<Game>> GetGamesPagedAsync(int page, int pageSize, ECurrency? currency = null);
 }
