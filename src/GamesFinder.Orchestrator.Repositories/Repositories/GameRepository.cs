@@ -117,4 +117,18 @@ public class GameRepository : Repository<Game>, IGameRepository
     if (id != Guid.Empty) return id;
     else return null;
   }
+
+  public async Task<int> GetTotalGamesCountAsync()
+  {
+    try
+    {
+      var count = await _collection.CountDocumentsAsync(_ => true);
+      return (int)count;
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError(ex.Message);
+      return 0;
+    }
+  }
 }

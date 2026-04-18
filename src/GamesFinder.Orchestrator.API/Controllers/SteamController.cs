@@ -150,6 +150,7 @@ public class SteamController : ControllerBase
     }
   }
 
+  //TODO: Consider for 1 endpoint with opt params. Optional offers?
   [HttpGet("getPagedWithCurrency")]
   public async Task<IActionResult> GetPagedWithCurrency(int page, int pageSize, string currency = "EUR")
   {
@@ -158,8 +159,9 @@ public class SteamController : ControllerBase
     if (parsedCurrency is null) return BadRequest("⚠️Currency is not available");
 
     var games = await _gamesWithOffersService.GetGamesPagedAsync(page, pageSize, parsedCurrency.Value);
-    _logger.LogInformation($"Total {games.Count()} \n First: {games.FirstOrDefault()}");
-    return Ok(new {Games = games});
+    var totalGamesCount = await _gamesRepo.GetTotalGamesCountAsync();
+    _logger.LogInformation($"Total {totalGamesCount} \n First: {games.FirstOrDefault()}");
+    return Ok(new {Games = games, TotalGamesCount = totalGamesCount});
   }
 
   [HttpGet("getPaged")]
@@ -167,6 +169,7 @@ public class SteamController : ControllerBase
     if (pageSize <= 0 || page < 0) return BadRequest("⚠️Invalid data provided");
 
     var games = await _gamesRepo.GetPagedAsync(page, pageSize);
-    return Ok(new {Games = games});
+    var totalGamesCount = await _gamesRepo.GetTotalGamesCountAsync();
+    return Ok(new {Games = games, TotalGamesCount = totalGamesCount});
   }
 }
