@@ -12,10 +12,11 @@ export async function checkGameExists(gameId: number, getGame: boolean = false):
 
   try {
     const data = await response.json();
+    logger.info(`Parsed response data: ${JSON.stringify(data)}`);
     if (getGame) {
-      return data.Game as Game;
+      return data.game as Game;
     } else {
-      return data.Exists as boolean;
+      return data.exists as boolean;
     }
   } catch (err) {
     logger.error(`💥Error parsing JSON response when checking game existence for Steam ID ${gameId}:`, err);
@@ -32,7 +33,7 @@ export async function checkSteamOfferExists(steamId: number): Promise<boolean | 
 
   try {
     const data = await response.json();
-    return data.Exists as boolean;
+    return data.exists as boolean;
   } catch (err) {
     logger.error(`💥Error parsing JSON response when checking Steam offer existence for Steam ID ${steamId}:`, err);
     return null;
@@ -48,7 +49,7 @@ export async function checkIgOfferExists(vendorId: string): Promise<boolean | nu
 
   try {
     const data = await response.json();
-    return data.Exists as boolean;
+    return data.exists as boolean;
   } catch (err) {
     logger.error(`💥Error parsing JSON response when checking Steam offer existence for Steam ID ${vendorId}:`, err);
     return null;
@@ -88,7 +89,7 @@ export async function getIgOfferId({gameId, vendorId}: GetOfferRequestParams): P
 
   try {
     const data = await response.json();
-    return data.OfferId as string;
+    return data.offerId as string;
   } catch (err) {
     logger.error(`💥Error parsing JSON response when getting Instant Gaming offer ID for gameId ${gameId} and vendorId ${vendorId}:`, err)
     return null
@@ -114,7 +115,7 @@ export async function getSteamOfferId({gameId, vendorId}: GetOfferRequestParams)
 
   try {
     const data = await response.json();
-    return data.OfferId as string;
+    return data.offerId as string;
   } catch (err) {
     logger.error(`💥Error parsing JSON response when getting Instant Gaming offer ID for gameId ${gameId} and vendorId ${vendorId}:`, err)
     return null

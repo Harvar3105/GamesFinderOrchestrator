@@ -15,8 +15,14 @@ export async function fetchSteamGame(id: number, updateGame: boolean, updateDeal
   let gameExists = await checkGameExists(id);
 
   let gameId;
-  if (gameExists) gameId = await getGameIdBySteamIdAsync(id);
-  else gameId = v4();
+  if (gameExists) {
+    gameId = await getGameIdBySteamIdAsync(id);
+  }
+  else {
+    gameId = v4();
+  }
+
+  logger.info(`➡️ Game Exists: ${gameExists}\nGame ID: ${gameId}`);
 
   let offerId;
   if (offerExists) offerId = await getSteamOfferId({gameId: gameId!})?? await getSteamOfferId({vendorId: id.toString()});
@@ -34,13 +40,7 @@ export async function fetchSteamGame(id: number, updateGame: boolean, updateDeal
 
   if (!data[id]?.success) return null;
 
-  
-
   const game = data[id].data;
-
-  
-
-  
 
   const isReleased = !game.release_date.coming_soon;
   let offers = null;
