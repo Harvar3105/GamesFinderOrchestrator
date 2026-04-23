@@ -7,7 +7,7 @@ import { eVendor } from "../utils/types/enums/eVendor.js";
 import { findNoStockElementIG, findPriceElementIG } from "../utils/instantGaminghHelpers.js";
 import logger from "../utils/logger.js";
 import { checkIgOfferExists, getIgOfferId } from "../backendUtils.js";
-import getSteamAndGameIdsFromHtml from "../utils/getSteamIdFromHtml.js";
+import getSteamAndGameIdsFromHtml, { getVendorsGameNameFromHtml } from "../utils/getSteamIdFromHtml.js";
 
 export async function fetchInstantGamingOffer(id: number, currency?: eCurrency, proxy?: string): Promise<GameOffer | null | HttpStatusError> {
   const url = `https://www.instant-gaming.com/${encodeURIComponent(id)}-/?currency=${encodeURIComponent(currency?.toString().toUpperCase() || 'EUR')}`;
@@ -23,8 +23,12 @@ export async function fetchInstantGamingOffer(id: number, currency?: eCurrency, 
 
   let offerExists = await checkIgOfferExists(id.toString());
   let offerId;
-  if (offerExists) offerId = await getIgOfferId({gameId: steamAndGameIds.gameId!})?? await getIgOfferId({vendorId: id.toString()});
-  else offerId = v4();
+  if (offerExists) {
+    offerId = await getIgOfferId({gameId: steamAndGameIds.gameId!})?? await getIgOfferId({vendorId: id.toString()});
+  }
+  else {
+    offerId = v4();
+  }
 
   const doc = parseHtmlToDocument(data);
   var priceElement = findPriceElementIG(doc);
@@ -40,7 +44,8 @@ export async function fetchInstantGamingOffer(id: number, currency?: eCurrency, 
     vendorsUrl: canonicalUrl,
     available: findNoStockElementIG(doc) ? false : true,
     amount: priceElement?.price ?? null,
-    currency: priceElement?.currency ?? null
+    currency: priceElement?.currency ?? null,
+    offerName: getVendorsGameNameFromHtml(data) ?? `UNKNOWN NAME - ${id}`
   }
 
   return gameOffer;

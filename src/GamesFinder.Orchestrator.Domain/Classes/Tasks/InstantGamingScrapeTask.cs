@@ -2,8 +2,8 @@ using GamesFinder.Orchestrator.Domain.Enums;
 
 namespace GamesFinder.Orchestrator.Domain.Classes.Tasks.InstantGaming;
 
-public abstract class InstantGamingScrapeTask : ScrapeTask
+public class InstantGamingScrapeTask : ScrapeTask
 {
+  public IEnumerable<long> VendorsIds {get; set;} = [];
   public ECurrency Currency { get; set; } = ECurrency.EUR;
-  public abstract override string ToString();
 }

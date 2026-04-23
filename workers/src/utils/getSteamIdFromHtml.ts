@@ -1,7 +1,6 @@
 import { getFirstSteamIdFromMediaSourceIG } from "./instantGaminghHelpers.js";
 import { fetchJson, parseHtmlToDocument } from "./offerFetcher.js";
 import { config } from "./config.js";
-import logger from "./logger.js";
 
 export type SteamAndGameIds = {
   steamId: number;
@@ -15,9 +14,7 @@ export default async function getSteamAndGameIdsFromHtml(html: string): Promise<
     var gameId = await getGameId(steamId);
     return {steamId: steamId, gameId: gameId!};
   } else {
-    var doc = parseHtmlToDocument(html);
-
-    var vendorsGameName = (doc.documentElement.querySelector('.game-title') as Element | null)?.innerHTML;
+    var vendorsGameName = getVendorsGameNameFromHtml(html);
     //TODO: Find more solutions to name comparison
     var parsedName = vendorsGameName?.split('-')[0].trim();
     
@@ -38,4 +35,10 @@ async function getGameId(steamId: number): Promise<string | null> {
   const data = await fetchJson(url, undefined, 'GET');
   if (!data || !data.exists) return null;
   return data.gameId;
+}
+
+export function getVendorsGameNameFromHtml(html: string): string | null {
+  var doc = parseHtmlToDocument(html);
+  var vendorsGameName = (doc.documentElement.querySelector('.game-title') as Element | null)?.innerHTML;
+  return vendorsGameName ?? null;
 }

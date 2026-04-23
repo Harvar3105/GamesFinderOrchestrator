@@ -56,7 +56,7 @@ public class InstantGamingController : ControllerBase
 
   [HttpPost("scrapUpTo")]
   [Authorize(Policy = "DevPolicy")]
-  public async Task<IActionResult> ScrapInstantGamingMaxCountAsync([FromBody] InstantGamingScrapUpToRequest model)
+  public async Task<IActionResult> ScrapInstantGamingUpToAsync([FromBody] InstantGamingScrapUpToRequest model)
   {
     try
     {

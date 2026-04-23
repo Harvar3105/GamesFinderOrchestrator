@@ -21,8 +21,10 @@ public class GameOffer : Entity
   public decimal? Amount {get; set;}
   [BsonElement("currency")]
   public ECurrency? Currency {get; set;}
+  [BsonElement("offer_name")]
+  public string OfferName { get; set; }
 
-  public GameOffer(Guid gameId, EVendor vendor, string vendorsGameId, string vendorsUrl, decimal? amount, ECurrency? currency, bool available = false)
+  public GameOffer(Guid gameId, EVendor vendor, string vendorsGameId, string vendorsUrl, decimal? amount, ECurrency? currency, string offerName, bool available = false)
   {
     GameId = gameId;
     Vendor = vendor;
@@ -31,10 +33,11 @@ public class GameOffer : Entity
     Available = available;
     Amount = amount;
     Currency = currency;
+    OfferName = offerName;
   }
 
   public override string ToString()
   {
-    return "🫴:\n" + base.ToString() + $"GameID: {GameId}, Vendor: {Vendor}, VendorsGameId: {VendorsGameId},\nVendorsUrl: {VendorsUrl}, Available: {Available}, Amount: {Amount} {Currency}\n";
+    return "🫴:\n" + base.ToString() + $"GameID: {GameId}, Vendor: {Vendor}, VendorsGameId: {VendorsGameId},\nVendorsUrl: {VendorsUrl}, Available: {Available}, Amount: {Amount} {Currency}, Offer Name: {OfferName}\n";
   }
 }

@@ -111,4 +111,38 @@ public class GameOfferRepository : Repository<GameOffer>, IGameOfferRepository
       return null;
     }
   }
+
+  public async Task<IEnumerable<long>> GetAllVendorIds(EVendor vendor)
+  {
+    var filter = Builders<GameOffer>.Filter.Eq(offer => offer.Vendor, vendor);
+    
+    var vendorIds = await _collection
+      .Find(filter)
+      .Project(offer => offer.VendorsGameId)
+      .ToListAsync();
+    
+    return vendorIds
+      .Where(id => long.TryParse(id, out _))
+      .Select(long.Parse);
+  }
+
+  public async Task<IEnumerable<long>> GetExistingVendorIds(IEnumerable<long> vendorIdsToCheck, EVendor vendor)
+  {
+    if (vendorIdsToCheck == null || !vendorIdsToCheck.Any())
+      return Enumerable.Empty<long>();
+
+    var vendorIdStrings = vendorIdsToCheck.Select(id => id.ToString()).ToList();
+    var filter = Builders<GameOffer>.Filter.And(
+      Builders<GameOffer>.Filter.Eq(offer => offer.Vendor, vendor),
+      Builders<GameOffer>.Filter.In(offer => offer.VendorsGameId, vendorIdStrings)
+    );
+    
+    var existingIds = await _collection
+      .Find(filter)
+      .Project(offer => offer.VendorsGameId)
+      .ToListAsync();
+    
+    return existingIds
+      .Select(long.Parse);
+  }
 }

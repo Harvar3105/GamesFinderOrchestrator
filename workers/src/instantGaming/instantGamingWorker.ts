@@ -4,7 +4,7 @@ import logger from "../utils/logger.js";
 import { HttpStatusError } from "../utils/offerFetcher.js";
 import { clearRedisKeyIfExists, createOrchestratorListener } from "../utils/orchestratorListener.js";
 import { parseTask, TaskKind } from "../utils/taskParser.js";
-import { InstantGamingScrapeIdsTask, InstantGamingScrapeRangeTask, InstantGamingTask } from "../utils/types/entities/tasks.js";
+import { InstantGamingTask } from "../utils/types/entities/tasks.js";
 import { eInstantGamingTaskType } from "../utils/types/enums/eInstantGamingTaskType.js";
 import { fetchInstantGamingOffer } from "./instantGamingFetcher.js";
 
@@ -23,39 +23,13 @@ async function startInstantGamingWorker() {
 
       try {
         const list = [];
-        switch (task.type) {
-          case eInstantGamingTaskType.SCRAPE_IDS:
-            for (const gameId of (task as InstantGamingScrapeIdsTask).gameIds) {
-              var offer = await fetchInstantGamingOffer(gameId, task.currency, task.proxy)
-              if (offer instanceof HttpStatusError) {
-                logger.error(`Stopping processing of task ${task.taskId} due to error: HTTP ${offer.status} ${offer.message}`, offer.body ?? '');
-                break;
-              }
-              if (offer) list.push(offer);
-            }
+        for (const offerId of task.vendorsIds){
+          var offer = await fetchInstantGamingOffer(offerId, task.currency, task.proxy);
+          if (offer instanceof HttpStatusError) {
+            logger.error(`Stopping processing of task ${task.taskId}. Stopped at:\n\tStartID: ${task.vendorsIds[0]}\n\tStoppedAt: ${offerId}\n\tLastID:${task.vendorsIds[-1]}\nDue to error: HTTP ${offer.status} ${offer.message}`, offer.body ?? '');
             break;
-          case eInstantGamingTaskType.SCRAPE_RANGE:
-            for (let gameId = (task as InstantGamingScrapeRangeTask).startId; gameId <= (task as InstantGamingScrapeRangeTask).endId; gameId++) {
-              var offer = await fetchInstantGamingOffer(gameId, task.currency, task.proxy)
-              if (offer instanceof HttpStatusError) {
-                logger.error(`Stopping processing of task ${task.taskId} due to error: HTTP ${offer.status} ${offer.message}`, offer.body ?? '');
-                logger.warn(`Reached gameId ${gameId} in range ${(task as InstantGamingScrapeRangeTask).startId} - ${(task as InstantGamingScrapeRangeTask).endId}, stopping further requests to avoid more errors.`);
-                break;
-              }
-              if (offer) list.push(offer);
-            }
-            break;
-          case eInstantGamingTaskType.SCRAPE_UP_TO:
-            for (let gameId = ++(config.instantGamingSkipFirst as number); gameId <= (task as any).upToId; gameId++) {
-              var offer = await fetchInstantGamingOffer(gameId, task.currency, task.proxy)
-              if (offer instanceof HttpStatusError) {
-                logger.error(`Stopping processing of task ${task.taskId} due to error: HTTP ${offer.status} ${offer.message}`, offer.body ?? '');
-                logger.warn(`Reached gameId ${gameId} while scraping up to ${(task as any).upToId}, stopping further requests to avoid more errors.`);
-                break;
-              }
-              if (offer) list.push(offer);
-            }
-            break;
+          }
+          if (offer) list.push(offer);
         }
 
         if (list.length === 0) {

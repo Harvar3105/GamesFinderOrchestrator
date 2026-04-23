@@ -1,3 +1,5 @@
+using GamesFinder.Domain.Enums;
+using GamesFinder.Domain.Interfaces.Repositories;
 using GamesFinder.Orchestrator.Domain.Classes;
 using GamesFinder.Orchestrator.Domain.Classes.Entities;
 using GamesFinder.Orchestrator.Domain.Classes.Tasks.InstantGaming;
@@ -11,9 +13,11 @@ namespace GamesFinder.Orchestrator.Services.ApplicationServices;
 public class InstantGamingService : VendorsService<InstantGamingScrapeTask>, IInstantGamingService
 {
   private readonly WorkersOptions _workersOptions;
-  public InstantGamingService(PublisherFactory factory, WorkersOptions workersOptions, ILogger<InstantGamingService> logger)
+  private readonly IGameOfferRepository _offerRepository;
+  public InstantGamingService(PublisherFactory factory, WorkersOptions workersOptions, IGameOfferRepository offerRepository, ILogger<InstantGamingService> logger)
     : base(factory.Create<InstantGamingScrapeTask>(), logger)
   {
+    _offerRepository = offerRepository;
     _workersOptions = workersOptions;
   }
 
@@ -27,17 +31,20 @@ public class InstantGamingService : VendorsService<InstantGamingScrapeTask>, IIn
       throw new ArgumentException("Steam ID list cannot be empty.");
     }
 
-    var batchSize = GetBatchSize(vendorsIds.Count());
-    for (int i = 0; i < vendorsIds.Count(); i += batchSize)
+    var parsedVendorIds = ParseVendorIds(vendorsIds);
+
+    List<long> selectedVendorIds = [];
+    if (updateExisting)
     {
-      var task = new InstantGamingScrapeIdsTask
-      {
-        GameIds = vendorsIds.Skip(i).Take(batchSize).ToList(),
-        UpdateExistingDeals = updateExisting,
-        RedisResultKey = TaskRedisKeyPrefix
-      };
-      await BatchPublishAsync(task); 
+      selectedVendorIds = parsedVendorIds;
     }
+    else
+    {
+      selectedVendorIds = await RemoveExistingVendorIds(parsedVendorIds);
+    }
+
+    var batchSize = GetBatchSize(selectedVendorIds.Count());
+    PublishTask(selectedVendorIds, batchSize);
   }
 
   public async Task PublishRangeScrapeTaskAsync(int minId, int maxId, bool updateExisting = false)
@@ -47,19 +54,20 @@ public class InstantGamingService : VendorsService<InstantGamingScrapeTask>, IIn
       _logger.LogWarning($"Invalid range for Instant Gaming scrape task: StartId={minId}, EndId={maxId}");
       throw new ArgumentException("Invalid range for Instant Gaming scrape task.");
     }
-    
-    var batchSize = GetBatchSize(maxId - minId + 1);
-    for (int i = minId; i <= maxId; i+= batchSize)
+
+    var ids = Enumerable.Range(minId, maxId - minId + 1).ToList();
+    List<long> selectedVendorIds = [];
+    if (updateExisting)
     {
-      var task = new InstantGamingScrapeRangeTask
-      {
-        StartId = i,
-        EndId = Math.Min(i + batchSize - 1, maxId),
-        UpdateExistingDeals = updateExisting,
-        RedisResultKey = TaskRedisKeyPrefix
-      };
-      await BatchPublishAsync(task);
+      selectedVendorIds = ids.Select(id => (long)id).ToList();
     }
+    else
+    {
+      selectedVendorIds = await RemoveExistingVendorIds(ids.Select(id => (long)id).ToList());
+    }
+
+    var batchSize = GetBatchSize(selectedVendorIds.Count());
+    PublishTask(selectedVendorIds, batchSize);
   }
 
   public async Task PublishUpToMaxIdScrapeTaskAsync(int maxId, bool updateExisting = false) // Max id is exclusive
@@ -70,25 +78,19 @@ public class InstantGamingService : VendorsService<InstantGamingScrapeTask>, IIn
       throw new ArgumentException("Invalid upToId for Instant Gaming scrape task.");
     }
 
-    // TODO: will be assigned to 1 worker. Consider splitting int ScrapeRangeTasks
-    // var task = new InstantGamingScrapeUpToTask {
-    //   UpToId = maxId,
-    //   UpdateExistingDeals = updateExisting,
-    //   RedisResultKey = TaskRedisKeyPrefix 
-    // };
-
-    var batchSize = GetBatchSize(maxId);
-    for (int i = 0; i <= maxId; i+= batchSize)
+    var ids = Enumerable.Range(0, maxId).ToList();
+    List<long> selectedVendorIds = [];
+    if (updateExisting)
     {
-      var task = new InstantGamingScrapeRangeTask
-      {
-        StartId = i,
-        EndId = Math.Min(i + batchSize - 1, maxId),
-        UpdateExistingDeals = updateExisting,
-        RedisResultKey = TaskRedisKeyPrefix
-      };
-      await BatchPublishAsync(task);
+      selectedVendorIds = ids.Select(id => (long)id).ToList();
     }
+    else
+    {
+      selectedVendorIds = await RemoveExistingVendorIds(ids.Select(id => (long)id).ToList());
+    }
+
+    var batchSize = GetBatchSize(selectedVendorIds.Count());
+    PublishTask(selectedVendorIds, batchSize);
   }
 
   private int GetBatchSize(int totalItems)
@@ -99,5 +101,41 @@ public class InstantGamingService : VendorsService<InstantGamingScrapeTask>, IIn
     }
 
     else return CalculateBatchSize(totalItems, _workersOptions.InstantGamingWorkerCount);
+  }
+
+  private async Task<List<long>> RemoveExistingVendorIds(List<long> vendorIds)
+  {
+    var existingVendorIds = await _offerRepository.GetAllVendorIds(EVendor.InstantGaming);
+    return vendorIds.Where(id => !existingVendorIds.Contains(id)).ToList();
+  }
+
+  private async void PublishTask(List<long> vendorIds, int batchSize)
+  {
+    for (int i = 0; i < vendorIds.Count(); i += batchSize)
+    {
+      var task = new InstantGamingScrapeTask
+      {
+        VendorsIds = vendorIds.Skip(i).Take(batchSize).ToList(),
+        RedisResultKey = TaskRedisKeyPrefix,
+      };
+      await BatchPublishAsync(task); 
+    }
+  }
+
+  private List<long> ParseVendorIds(List<string> vendorsIds)
+  {
+    var parsedVendorIds = new List<long>();
+    foreach (var id in vendorsIds)
+    {
+      if (long.TryParse(id, out var parsedId))
+      {
+        parsedVendorIds.Add(parsedId);
+      }
+      else
+      {
+        _logger.LogWarning("Invalid vendor ID: {VendorId}. Skipping.", id);
+      }
+    }
+    return parsedVendorIds;
   }
 }

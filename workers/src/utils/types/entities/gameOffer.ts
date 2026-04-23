@@ -11,4 +11,5 @@ export interface GameOffer extends Entity {
   available: boolean;
   amount: number | null;
   currency: eCurrency | null;
+  offerName: string;
 }

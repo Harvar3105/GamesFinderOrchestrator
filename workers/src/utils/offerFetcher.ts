@@ -63,7 +63,6 @@ export async function fetchHTML(url: string, proxy?: string): Promise<string | n
 
   try {
     const res = await fetch(url, options);
-    logger.info(`Fetched HTML from ${url} with status: ${res.status}`);
 
     if (!res.ok) {
       const body = await res.text().catch(() => undefined);
