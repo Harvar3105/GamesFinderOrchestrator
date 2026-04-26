@@ -1,7 +1,8 @@
-﻿using GamesFinder.Domain.Interfaces.Repositories;
+﻿using GamesFinder.Orchestrator.Domain.Classes.DTOs;
 using GamesFinder.Orchestrator.Domain.Classes.Entities;
 using GamesFinder.Orchestrator.Domain.Enums;
 using GamesFinder.Orchestrator.Domain.Interfaces.DomainServices;
+using GamesFinder.Orchestrator.Domain.Interfaces.Repositories;
 using Microsoft.Extensions.Logging;
 
 namespace GamesFinder.Orchestrator.Services.DomainServices;
@@ -140,5 +141,51 @@ public class GamesWithOffersService : IGamesWithOffersService
       await _offersRepo.SaveManyAsync(game.Offers);
     }
     return true;
+  }
+
+  public async Task<IEnumerable<Game>> GetGamesPagedWithFiltersAsync(PaginationFilterDto filterDto, PaginationFilterDto? steamFilters, ECurrency currency)
+  {
+    try
+    {
+      var games = await _gamesRepo.GetPagedWithFiltersAsync(filterDto);
+      
+      if (games == null || !games.Any()) return [];
+
+      foreach (var game in games)
+      {
+        var offers = await _offersRepo.GetByGameIdAsync(game.Id);
+        
+        if (!(!(steamFilters?.SteamAvailable ?? false) && !(steamFilters?.InstantGamingAvailable ?? false) && !(steamFilters?.G2aAvailable ?? false)))
+        {
+          offers = offers?.Where(o =>
+            (steamFilters?.SteamAvailable == true && o.Vendor == EVendor.Steam) ||
+            (steamFilters?.InstantGamingAvailable == true && o.Vendor == EVendor.InstantGaming) ||
+            (steamFilters?.G2aAvailable == true && o.Vendor == EVendor.G2A)
+          ).ToList() ?? new List<GameOffer>();
+        }
+
+        if (steamFilters?.MinPrice != null || steamFilters?.MaxPrice != null)
+        {
+          var minPrice = steamFilters.MinPrice;
+          var maxPrice = steamFilters.MaxPrice;
+          offers = offers?.Where(o =>
+            (!minPrice.HasValue || o.Amount >= minPrice.Value) &&
+            (!maxPrice.HasValue || o.Amount <= maxPrice.Value)
+          ).ToList() ?? new List<GameOffer>();
+        }
+
+        offers = offers?.Where(o => o.Currency == currency).ToList() ?? new List<GameOffer>();
+
+        if (offers == null || offers.Count() == 0) continue;
+        game.Offers = offers!.ToList();
+      }
+
+      return games;
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError(ex, "Error getting paged games with filters");
+      return [];
+    }
   }
 }

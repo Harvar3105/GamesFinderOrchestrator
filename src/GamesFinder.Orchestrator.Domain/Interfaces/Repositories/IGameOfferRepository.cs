@@ -1,8 +1,7 @@
-﻿using GamesFinder.Domain.Enums;
+﻿using GamesFinder.Orchestrator.Domain.Enums;
 using GamesFinder.Orchestrator.Domain.Classes.Entities;
-using GamesFinder.Orchestrator.Domain.Enums;
 
-namespace GamesFinder.Domain.Interfaces.Repositories;
+namespace GamesFinder.Orchestrator.Domain.Interfaces.Repositories;
 
 public interface IGameOfferRepository : IRepository<GameOffer>
 {

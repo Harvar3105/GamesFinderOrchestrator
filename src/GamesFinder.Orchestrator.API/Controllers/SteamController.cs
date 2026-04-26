@@ -1,10 +1,9 @@
-using GamesFinder.Domain.Enums;
-using GamesFinder.Domain.Interfaces.Repositories;
+using GamesFinder.Orchestrator.Domain.Interfaces.Repositories;
 using GamesFinder.Orchestrator.API.Controllers.Contracts.Steam;
+using GamesFinder.Orchestrator.Domain.Classes.DTOs;
 using GamesFinder.Orchestrator.Domain.Enums;
 using GamesFinder.Orchestrator.Domain.Interfaces.DomainServices;
 using GamesFinder.Orchestrator.Domain.Interfaces.Services.ApplicationServices;
-using GamesFinder.Orchestrator.Services.DomainServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -150,15 +149,32 @@ public class SteamController : ControllerBase
     }
   }
 
-  //TODO: Consider for 1 endpoint with opt params. Optional offers?
   [HttpGet("getPagedWithCurrency")]
-  public async Task<IActionResult> GetPagedWithCurrency(int page, int pageSize, string currency = "EUR")
+  public async Task<IActionResult> GetPagedWithCurrency(
+    int page,
+    int pageSize,
+    string currency = "EUR",
+    [FromQuery] SteamFiltersRequestModel filters = default!
+  )
   {
     if (pageSize <= 0 || page < 0) return BadRequest("⚠️Invalid data provided");
     var parsedCurrency = ECurrencyHelpers.GetECurrency(currency);
     if (parsedCurrency is null) return BadRequest("⚠️Currency is not available");
 
-    var games = await _gamesWithOffersService.GetGamesPagedAsync(page, pageSize, parsedCurrency.Value);
+    var paginationFilter = new PaginationFilterDto
+    {
+      Page = page,
+      PageSize = pageSize,
+      Query = filters?.Query,
+      MinPrice = filters?.Filters?.PriceRange?.Min,
+      MaxPrice = filters?.Filters?.PriceRange?.Max,
+      Sort = filters?.Sort,
+      SteamAvailable = filters?.Filters?.Availability?.Steam,
+      InstantGamingAvailable = filters?.Filters?.Availability?.InstantGaming,
+      G2aAvailable = filters?.Filters?.Availability?.G2a
+    };
+
+    var games = await _gamesWithOffersService.GetGamesPagedWithFiltersAsync(paginationFilter, paginationFilter, parsedCurrency.Value);
     var totalGamesCount = await _gamesRepo.GetTotalGamesCountAsync();
     _logger.LogInformation($"Total {totalGamesCount} \n First: {games.FirstOrDefault()}");
     return Ok(new {Games = games, TotalGamesCount = totalGamesCount});

@@ -1,9 +1,9 @@
-using GamesFinder.Domain.Enums;
-using GamesFinder.Domain.Interfaces.Repositories;
 using GamesFinder.Orchestrator.Domain.Classes;
 using GamesFinder.Orchestrator.Domain.Classes.Entities;
 using GamesFinder.Orchestrator.Domain.Classes.Tasks.InstantGaming;
+using GamesFinder.Orchestrator.Domain.Enums;
 using GamesFinder.Orchestrator.Domain.Interfaces.Infrastructure;
+using GamesFinder.Orchestrator.Domain.Interfaces.Repositories;
 using GamesFinder.Orchestrator.Domain.Interfaces.Services.ApplicationServices;
 using GamesFinder.Orchestrator.Publisher;
 using Microsoft.Extensions.Logging;

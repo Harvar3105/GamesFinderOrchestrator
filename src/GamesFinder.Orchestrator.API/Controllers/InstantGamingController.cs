@@ -2,7 +2,8 @@ using GamesFinder.Orchestrator.Domain.Interfaces.Services.ApplicationServices;
 using Microsoft.AspNetCore.Authorization;
 using GamesFinder.Orchestrator.API.Controllers.Contracts.InstantGaming;
 using Microsoft.AspNetCore.Mvc;
-using GamesFinder.Domain.Interfaces.Repositories;
+using GamesFinder.Orchestrator.Domain.Enums;
+using GamesFinder.Orchestrator.Domain.Interfaces.Repositories;
 
 namespace GamesFinder.Orchestrator.API.Controllers;
 
@@ -100,12 +101,12 @@ public class InstantGamingController : ControllerBase
       {
         bool success = Guid.TryParse(gameId, out Guid parsedGameId);
         if (!success) return BadRequest("⚠️Invalid gameId format. Must be a valid GUID.");
-        var id = _offersRepo.GetIdByGameIdAsync(parsedGameId, GamesFinder.Domain.Enums.EVendor.InstantGaming);
+        var id = _offersRepo.GetIdByGameIdAsync(parsedGameId, EVendor.InstantGaming);
         return Ok(new { OfferId = id });
       }
       else
       {
-        var id = await _offersRepo.GetIdByVendorsGameIdAsync(vendorId!, GamesFinder.Domain.Enums.EVendor.InstantGaming);
+        var id = await _offersRepo.GetIdByVendorsGameIdAsync(vendorId!, EVendor.InstantGaming);
         return Ok(new { OfferId = id });
       }
     } catch (Exception ex)

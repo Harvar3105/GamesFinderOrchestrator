@@ -1,7 +1,7 @@
 ﻿
 using GamesFinder.Orchestrator.Domain.Classes.Entities;
 
-namespace GamesFinder.Domain.Interfaces.Repositories;
+namespace GamesFinder.Orchestrator.Domain.Interfaces.Repositories;
 
 public interface IRepository<TEntity> where TEntity : Entity
 {

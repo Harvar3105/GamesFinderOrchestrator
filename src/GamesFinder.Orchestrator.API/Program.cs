@@ -10,19 +10,18 @@ using MongoDB.Driver;
 using GamesFinder.Orchestrator.Repositories;
 using GamesFinder.Orchestrator.Domain.Enums;
 using GamesFinder.Orchestrator.Domain.Classes;
-using GamesFinder.Domain.Interfaces.Repositories;
 using GamesFinder.Orchestrator.Repositories.Repositories;
 using GamesFinder.Orchestrator.Publisher.RabbitMQ;
 using GamesFinder.Orchestrator.Domain.Interfaces.Infrastructure;
 using GamesFinder.Orchestrator.Publisher.Redis;
 using StackExchange.Redis;
 using GamesFinder.Orchestrator.Publisher;
-using GamesFinder.Domain.Enums;
 using GamesFinder.Orchestrator.Consumers;
 using GamesFinder.Orchestrator.Services.DomainServices;
 using GamesFinder.Orchestrator.Domain.Interfaces.DomainServices;
 using GamesFinder.Orchestrator.Domain.Interfaces.Services.ApplicationServices;
 using GamesFinder.Orchestrator.Services.ApplicationServices;
+using GamesFinder.Orchestrator.Domain.Interfaces.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -199,7 +198,7 @@ if (builder.Environment.IsDevelopment())
 		context.Request.Body.Position = 0;
 
 		var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
-		logger.LogInformation("Incoming Request Body: {Body}", body);
+		logger.LogInformation($"From: {context.Request.Path}/{context.Request.QueryString}\nIncoming Request Body: {body}");
 		
 		// Accept
 		await next();

@@ -1,5 +1,4 @@
-﻿using GamesFinder.Domain.Enums;
-using GamesFinder.Orchestrator.Domain.Enums;
+﻿using GamesFinder.Orchestrator.Domain.Enums;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 namespace GamesFinder.Orchestrator.Domain.Classes.Entities;

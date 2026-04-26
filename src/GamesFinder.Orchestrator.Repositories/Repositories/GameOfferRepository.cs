@@ -1,8 +1,7 @@
 using System;
-using GamesFinder.Domain.Enums;
-using GamesFinder.Domain.Interfaces.Repositories;
-using GamesFinder.Orchestrator.Domain.Classes.Entities;
 using GamesFinder.Orchestrator.Domain.Enums;
+using GamesFinder.Orchestrator.Domain.Interfaces.Repositories;
+using GamesFinder.Orchestrator.Domain.Classes.Entities;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
 

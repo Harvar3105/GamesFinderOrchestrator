@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using GamesFinder.Orchestrator.Domain.Classes.Entities;
 using Microsoft.Extensions.DependencyInjection;
 using GamesFinder.Orchestrator.Domain.Interfaces.DomainServices;
-using GamesFinder.Domain.Interfaces.Repositories;
+using GamesFinder.Orchestrator.Domain.Interfaces.Repositories;
 
 namespace GamesFinder.Orchestrator.Consumers;
 
