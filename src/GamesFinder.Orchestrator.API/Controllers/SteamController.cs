@@ -174,8 +174,16 @@ public class SteamController : ControllerBase
       G2aAvailable = filters?.Filters?.Availability?.G2a
     };
 
-    var games = await _gamesWithOffersService.GetGamesPagedWithFiltersAsync(paginationFilter, paginationFilter, parsedCurrency.Value);
-    var totalGamesCount = await _gamesRepo.GetTotalGamesCountAsync();
+    var filtersIncluded = filters != null;
+    
+    var games = filtersIncluded
+      ? await _gamesWithOffersService.GetGamesPagedWithFiltersAsync(paginationFilter, paginationFilter, parsedCurrency.Value)
+      : await _gamesRepo.GetPagedWithFiltersAsync(paginationFilter);
+
+    var totalGamesCount = filtersIncluded
+      ? await _gamesRepo.GetTotalCountWithFiltersAsync(paginationFilter)
+      : await _gamesRepo.GetTotalGamesCountAsync();
+
     _logger.LogInformation($"Total {totalGamesCount} \n First: {games.FirstOrDefault()}");
     return Ok(new {Games = games, TotalGamesCount = totalGamesCount});
   }

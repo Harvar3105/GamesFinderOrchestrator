@@ -164,4 +164,25 @@ public class GameRepository : Repository<Game>, IGameRepository
       return [];
     }
   }
+
+  public async Task<int> GetTotalCountWithFiltersAsync(PaginationFilterDto filterDto)
+  {
+    try
+    {
+      var filter = Builders<Game>.Filter.Empty;
+
+      if (!string.IsNullOrWhiteSpace(filterDto.Query))
+      {
+        filter = Builders<Game>.Filter.Regex(g => g.Name, new MongoDB.Bson.BsonRegularExpression(filterDto.Query, "i"));
+      }
+
+      var count = await _collection.CountDocumentsAsync(filter);
+      return (int)count;
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError(ex, "Error counting games with filters");
+      return 0;
+    }
+  }
 }

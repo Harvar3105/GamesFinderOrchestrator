@@ -16,4 +16,5 @@ public interface IGameRepository : IRepository<Game>
 	Task<IEnumerable<long>> GetAllSteamIdsAsync();
 	Task<int> GetTotalGamesCountAsync();
 	Task<IEnumerable<Game>> GetPagedWithFiltersAsync(PaginationFilterDto filterDto);
+	Task<int> GetTotalCountWithFiltersAsync(PaginationFilterDto filterDto);
 }
