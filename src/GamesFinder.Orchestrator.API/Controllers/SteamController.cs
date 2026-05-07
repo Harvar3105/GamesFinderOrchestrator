@@ -153,13 +153,12 @@ public class SteamController : ControllerBase
   public async Task<IActionResult> GetPagedWithCurrency(
     int page,
     int pageSize,
-    string currency = "EUR",
+    string? currency,
     [FromQuery] SteamFiltersRequestModel filters = default!
   )
   {
     if (pageSize <= 0 || page < 0) return BadRequest("⚠️Invalid data provided");
-    var parsedCurrency = ECurrencyHelpers.GetECurrency(currency);
-    if (parsedCurrency is null) return BadRequest("⚠️Currency is not available");
+    var parsedCurrency = ECurrencyHelpers.GetECurrency(currency!);
 
     var paginationFilter = new PaginationFilterDto
     {
@@ -177,8 +176,8 @@ public class SteamController : ControllerBase
     var filtersIncluded = filters != null;
     
     var games = filtersIncluded
-      ? await _gamesWithOffersService.GetGamesPagedWithFiltersAsync(paginationFilter, paginationFilter, parsedCurrency.Value)
-      : await _gamesRepo.GetPagedWithFiltersAsync(paginationFilter);
+      ? await _gamesWithOffersService.GetGamesPagedWithFiltersAsync(paginationFilter, paginationFilter, parsedCurrency)
+      : await _gamesWithOffersService.GetGamesPagedAsync(page, pageSize);
 
     var totalGamesCount = filtersIncluded
       ? await _gamesRepo.GetTotalCountWithFiltersAsync(paginationFilter)

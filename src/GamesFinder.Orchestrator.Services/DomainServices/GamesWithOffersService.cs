@@ -143,7 +143,7 @@ public class GamesWithOffersService : IGamesWithOffersService
     return true;
   }
 
-  public async Task<IEnumerable<Game>> GetGamesPagedWithFiltersAsync(PaginationFilterDto filterDto, PaginationFilterDto? steamFilters, ECurrency currency)
+  public async Task<IEnumerable<Game>> GetGamesPagedWithFiltersAsync(PaginationFilterDto filterDto, PaginationFilterDto? steamFilters, ECurrency? currency)
   {
     try
     {
@@ -174,7 +174,10 @@ public class GamesWithOffersService : IGamesWithOffersService
           ).ToList() ?? new List<GameOffer>();
         }
 
-        offers = offers?.Where(o => o.Currency == currency).ToList() ?? new List<GameOffer>();
+        if (currency.HasValue)
+        {
+          offers = offers?.Where(o => o.Currency == currency.Value).ToList() ?? new List<GameOffer>();
+        }
 
         if (offers == null || offers.Count() == 0) continue;
         game.Offers = offers!.ToList();
