@@ -44,7 +44,7 @@ public class InstantGamingService : VendorsService<InstantGamingScrapeTask>, IIn
     }
 
     var batchSize = GetBatchSize(selectedVendorIds.Count());
-    PublishTask(selectedVendorIds, batchSize);
+    await PublishTask(selectedVendorIds, batchSize);
   }
 
   public async Task PublishRangeScrapeTaskAsync(int minId, int maxId, bool updateExisting = false)
@@ -67,7 +67,7 @@ public class InstantGamingService : VendorsService<InstantGamingScrapeTask>, IIn
     }
 
     var batchSize = GetBatchSize(selectedVendorIds.Count());
-    PublishTask(selectedVendorIds, batchSize);
+    await PublishTask(selectedVendorIds, batchSize);
   }
 
   public async Task PublishUpToMaxIdScrapeTaskAsync(int maxId, bool updateExisting = false) // Max id is exclusive
@@ -90,7 +90,7 @@ public class InstantGamingService : VendorsService<InstantGamingScrapeTask>, IIn
     }
 
     var batchSize = GetBatchSize(selectedVendorIds.Count());
-    PublishTask(selectedVendorIds, batchSize);
+    await PublishTask(selectedVendorIds, batchSize);
   }
 
   private int GetBatchSize(int totalItems)
@@ -109,7 +109,7 @@ public class InstantGamingService : VendorsService<InstantGamingScrapeTask>, IIn
     return vendorIds.Where(id => !existingVendorIds.Contains(id)).ToList();
   }
 
-  private async void PublishTask(List<long> vendorIds, int batchSize)
+  private async Task PublishTask(List<long> vendorIds, int batchSize)
   {
     for (int i = 0; i < vendorIds.Count(); i += batchSize)
     {
@@ -118,7 +118,7 @@ public class InstantGamingService : VendorsService<InstantGamingScrapeTask>, IIn
         VendorsIds = vendorIds.Skip(i).Take(batchSize).ToList(),
         RedisResultKey = TaskRedisKeyPrefix,
       };
-      await BatchPublishAsync(task); 
+      await BatchPublishAsync(task);
     }
   }
 

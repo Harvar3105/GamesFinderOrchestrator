@@ -183,7 +183,7 @@ public class GamesWithOffersService : IGamesWithOffersService
         game.Offers = offers!.ToList();
       }
 
-      return games;
+      return games.Where(g => g.Offers != null && g.Offers.Any()).ToList();
     }
     catch (Exception ex)
     {

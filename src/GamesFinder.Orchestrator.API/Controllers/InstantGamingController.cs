@@ -101,7 +101,7 @@ public class InstantGamingController : ControllerBase
       {
         bool success = Guid.TryParse(gameId, out Guid parsedGameId);
         if (!success) return BadRequest("⚠️Invalid gameId format. Must be a valid GUID.");
-        var id = _offersRepo.GetIdByGameIdAsync(parsedGameId, EVendor.InstantGaming);
+        var id = await _offersRepo.GetIdByGameIdAsync(parsedGameId, EVendor.InstantGaming);
         return Ok(new { OfferId = id });
       }
       else

@@ -10,6 +10,7 @@ export interface Task {
 export interface SteamTask extends Task {
   gameIds: number[];
   updateExistingGames: boolean;
+  updateExistingDeals: boolean;
 }
 
 export interface InstantGamingTask extends Task {
@@ -40,6 +41,7 @@ export function normalizeSteamTask(raw: any): SteamTask {
   return {
     ...normalizeBaseTask(raw),
     updateExistingGames: raw.UpdateExistingGames ?? raw.updateExistingGames,
+    updateExistingDeals: raw.UpdateExistingDeals ?? raw.updateExistingDeals,
     gameIds: raw.GameIds ?? raw.gameIds
   };
 }
