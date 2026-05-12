@@ -64,9 +64,8 @@ public abstract class Consumer<TResult> : BackgroundService, IBrockerConsumer
         _logger.LogInformation("🔑Processing Redis key: {Key}", notification.RedisResultKey);
 
         List<TResult>? items = await GetItemsFromRedisAsync(ea.DeliveryTag, notification.RedisResultKey);
-        if (items == null || items.Count() == 0) throw new Exception("⚠️No items found to process in redis!");
 
-        if (!await TrySave(scope, items, ea.DeliveryTag)) throw new Exception($"💥Failed to save items to database!\nItem example {items.FirstOrDefault()}");
+        await TrySave(scope, items, ea.DeliveryTag);
 
         await ClearRedisKeyAsync(notification.RedisResultKey);
 
@@ -83,22 +82,20 @@ public abstract class Consumer<TResult> : BackgroundService, IBrockerConsumer
     await Task.Delay(Timeout.Infinite, stoppingToken);
   }
 
-  private async Task<bool> TrySave(IServiceScope scope, List<TResult> items, ulong deliveryTag)
+  private async Task TrySave(IServiceScope scope, List<TResult> items, ulong deliveryTag)
   {
     try
     {
       await SaveToDatabaseAsync(scope, items);
-      return true;
     }
     catch (Exception ex)
     {
       _logger.LogError(ex, "DB save error");
-      await _channel!.BasicNackAsync(deliveryTag, false, true);
-      return false;
+      throw new Exception("💥Failed to save items to database!", ex);
     }
   }
 
-  protected virtual async Task<List<TResult>?> GetItemsFromRedisAsync(ulong deliveryTag, string redisKey)
+  protected virtual async Task<List<TResult>> GetItemsFromRedisAsync(ulong deliveryTag, string redisKey)
   {
     List<TResult>? items;
     try
@@ -108,15 +105,13 @@ public abstract class Consumer<TResult> : BackgroundService, IBrockerConsumer
     catch (Exception ex)
     {
       _logger.LogError(ex, "Redis error");
-      await _channel!.BasicNackAsync(deliveryTag, false, true);
-      return null;
+      throw new Exception("💥Failed to get items from redis!", ex);
     }
 
     if (items == null || items.Count == 0)
     {
       _logger.LogWarning("No items found in redis.");
-      await _channel!.BasicRejectAsync(deliveryTag, false);
-      return null;
+      throw new Exception("⚠️No items found to process in redis!");
     }
     return items;
   }

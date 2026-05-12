@@ -22,14 +22,28 @@ async function startInstantGamingWorker() {
       if (!task) return;
 
       try {
+        const unprocessedIds = [];
         const list = [];
         for (const offerId of task.vendorsIds){
           var offer = await fetchInstantGamingOffer(offerId, task.currency, task.proxy);
           if (offer instanceof HttpStatusError) {
-            logger.error(`Stopping processing of task ${task.taskId}. Stopped at:\n\tStartID: ${task.vendorsIds[0]}\n\tStoppedAt: ${offerId}\n\tLastID:${task.vendorsIds[-1]}\nDue to error: HTTP ${offer.status} ${offer.message}`, offer.body ?? '');
-            break;
+            logger.warn(`⚠️Error fetching offer ${offerId} for task ${task.taskId}:`, offer);
+            unprocessedIds.push(offerId);
+            continue;
           }
           if (offer) list.push(offer);
+        }
+
+        if (unprocessedIds.length > 0) {
+          await new Promise(res => setTimeout(res, config.cooldownMs));
+          for (const offerId of unprocessedIds){
+            var offer = await fetchInstantGamingOffer(offerId, task.currency, task.proxy);
+            if (offer instanceof HttpStatusError) {
+              logger.error(`💥Error fetching offer ${offerId} for second time. Requires further developers investigation!`, offer);
+              continue;
+            }
+            if (offer) list.push(offer);
+          }
         }
 
         if (list.length === 0) {
