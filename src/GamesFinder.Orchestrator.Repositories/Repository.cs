@@ -1,4 +1,4 @@
-using GamesFinder.Domain.Interfaces.Repositories;
+using GamesFinder.Orchestrator.Domain.Interfaces.Repositories;
 using GamesFinder.Orchestrator.Domain.Classes.Entities;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
@@ -9,6 +9,8 @@ public abstract class Repository<T> : IRepository<T> where T : Entity
 {
   protected readonly IMongoCollection<T> _collection;
   protected readonly ILogger<Repository<T>> _logger;
+
+  //TODO: Configure bathcing with atomicity. Also for other repos
 
   public Repository(IMongoDatabase database, string collectionName, ILogger<Repository<T>> logger)
   {
@@ -117,7 +119,7 @@ public abstract class Repository<T> : IRepository<T> where T : Entity
     return await _collection.CountDocumentsAsync(_ => true);
   }
   
-  public async Task<ICollection<T>> GetPagedAsync(int page, int pageSize)
+  public async Task<ICollection<T>?> GetPagedAsync(int page, int pageSize)
   {
     return await _collection
       .Find(_ => true)

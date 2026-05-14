@@ -1,5 +1,5 @@
 export enum eVendor {
   Steam = 'Steam',
-  InstatnGaming = 'Instant Gaming',
+  InstatnGaming = 'InstantGaming',
   G2A = 'G2A',
 }

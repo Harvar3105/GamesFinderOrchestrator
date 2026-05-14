@@ -9,5 +9,7 @@ export interface GameOffer extends Entity {
   vendor: eVendor;
   vendorsUrl: string;
   available: boolean;
-  price: Record<eCurrency, number> | null;
+  amount: number | null;
+  currency: eCurrency | null;
+  offerName: string;
 }

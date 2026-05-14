@@ -17,22 +17,37 @@ if (process.env.NODE_ENV !== 'docker') {
 
 export const config = {
   rabbitUrl: process.env.RABBIT_URL || 'amqp://localhost',
-  defaultQueue: process.env.RABBITMQ_DEFAULT_QUEUE,
-  steamRequests: process.env.RABBITMQ_STEAM_REQUESTS_QUEUE,
-  steamResults: process.env.RABBITMQ_STEAM_RESULTS_QUEUE,
+  defaultQueue: process.env.RabbitMQ__DefaultQueue,
+
+  steamRequests: process.env.RabbitMQ__SteamRequestsQueue,
+  steamResults: process.env.RabbitMQ__SteamResultsQueue,
   maxRequests: Number(process.env.MAX_REQUESTS) || 200,
-  cooldownMs: Number(process.env.COOLDOWN_MS) || 5 * 60 * 1000
+  cooldownMs: Number(process.env.COOLDOWN_MS) || 5 * 60 * 1000,
+
+  instantGamingRequests: process.env.RabbitMQ__InstantGamingRequestsQueue,
+  instantGamingResults: process.env.RabbitMQ__InstantGamingResultsQueue,
+  instantGamingSkipFirst: process.env.INSTANT_GAMING_SKIP_FIRST || 10,
+
+  backendUrl: process.env.BACKEND_URL,
+  backendCheckGame: process.env.BACKEND_CHECK_GAME,
+  backendCheckGameExistsByName: process.env.BACKEND_CHECK_GAME_EXISTS_BY_NAME,
+  backendCheckSteamOffer: process.env.BACKEND_CHECK_STEAM_OFFER,
+  backendCheckIgOffer: process.env.BACKEND_CHECK_IG_OFFER,
+  backendGetIgOfferId: process.env.BACKEND_GET_IG_OFFER_ID,
+  backendGetSteamOfferId: process.env.BACKEND_GET_STEAM_OFFER_ID,
+  backendGetGameId: process.env.BACKEND_GET_GAME_ID,
+  backendTimeoutMs: Number(process.env.BACKEND_TIMEOUT_MS) || 5000,
 };
 
 export const redis = new Redis({
-  host: process.env.REDIS_HOST,
-  port: Number(process.env.REDIS_PORT),
-  password: process.env.REDIS_PASSWORD
+  host: process.env.Redis__Host,
+  port: Number(process.env.Redis__Port),
+  password: process.env.Redis__Password
 });
 
 export const rabbitConn = await amqp.connect({
-  hostname: process.env.RABBITMQ_HOST,
-  port: Number(process.env.RABBITMQ_PORT),
-  username: process.env.RABBITMQ_USERNAME,
-  password: process.env.RABBITMQ_PASSWORD
+  hostname: process.env.RabbitMQ__HostName,
+  port: Number(process.env.RabbitMQ__Port),
+  username: process.env.RabbitMQ__Username,
+  password: process.env.RabbitMQ__Password
 });

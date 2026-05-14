@@ -1,7 +1,7 @@
 ﻿
 using GamesFinder.Orchestrator.Domain.Classes.Entities;
 
-namespace GamesFinder.Domain.Interfaces.Repositories;
+namespace GamesFinder.Orchestrator.Domain.Interfaces.Repositories;
 
 public interface IRepository<TEntity> where TEntity : Entity
 {
@@ -16,5 +16,5 @@ public interface IRepository<TEntity> where TEntity : Entity
 	public Task<TEntity?> GetByIdAsync(Guid id);
 	public Task<bool> ExistsAsync(Guid id);
 	public Task<long> CountAsync();
-	public Task<ICollection<TEntity>> GetPagedAsync(int page, int pageSize);
+	public Task<ICollection<TEntity>?> GetPagedAsync(int page, int pageSize);
 }

@@ -1,4 +1,4 @@
-﻿namespace GamesFinder.Domain.Enums;
+﻿namespace GamesFinder.Orchestrator.Domain.Enums;
 
 public enum EPriceCompare
 {

@@ -6,25 +6,32 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc",
-    "steam": "ts-node dist/steam/steamWorker.js"
+    "steam": "node dist/steam/steamWorker.js",
+    "steam:watch": "nodemon -L --watch dist/steam --ext js --exec node dist/steam/steamWorker.js",
+    "instantgaming": "node dist/instantGaming/instantGamingWorker.js",
+    "instantgaming:watch": "nodemon -L --watch dist/instantGaming --ext js --exec node dist/instantGaming/instantGamingWorker.js"
   },
   "dependencies": {
-    "@types/amqplib": "^0.10.7",
-    "@types/node": "^24.7.2",
-    "@types/node-fetch": "^2.6.13",
     "amqplib": "^0.10.9",
     "dotenv": "^17.2.3",
+    "https-proxy-agent": "^7.0.6",
     "ioredis": "^5.8.1",
+    "jsdom": "^27.4.0",
     "node-fetch": "^3.3.2",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.9.3",
     "uuid": "^13.0.0",
     "winston": "^3.18.3"
   },
+  "devDependencies": {
+    "@types/amqplib": "^0.10.7",
+    "@types/jsdom": "^27.0.0",
+    "@types/node": "^24.7.2",
+    "@types/node-fetch": "^2.6.13",
+    "@types/winston": "^2.4.4",
+    "nodemon": "^3.1.11",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
   "keywords": [],
   "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "@types/winston": "^2.4.4"
-  }
+  "license": "ISC"
 }

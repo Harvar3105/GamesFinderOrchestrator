@@ -31,7 +31,6 @@ public class RedisCacheDB
 
   public async Task<IEnumerable<T>?> ListRangeAsync<T>(string key)
   {
-    _logger.LogInformation($"Fetching list range from Redis with key: {key}");
     var json = await _db.ListRangeAsync(key);
     var result = new List<T>();
 
@@ -51,7 +50,7 @@ public class RedisCacheDB
 
           if (deserializedItem != null)
           {
-              result.Add(deserializedItem);
+            result.Add(deserializedItem);
           }
         }
         catch (JsonException ex)
@@ -60,7 +59,7 @@ public class RedisCacheDB
         }
       }
     }
-    _logger.LogInformation($"Deserialized {result.Count()} items from Redis with key: {key} as\n{string.Join(", ", result.Take(3).Select(r => r?.ToString() ?? "null"))}...");
+    _logger.LogInformation($"➡️Deserialized {result.Count()} items from Redis with key: {key}");
 
     return result;
   }

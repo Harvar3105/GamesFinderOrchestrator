@@ -6,7 +6,7 @@ namespace GamesFinder.Orchestrator.Domain.Classes.Entities;
 
 public class Game(
   string name,
-  int steamID,
+  long steamID,
   List<GameOffer>? initialOffers = null,
   string? description = null,
   string? steamUrl = null,
@@ -19,9 +19,9 @@ public class Game(
   [BsonElement("steam_url")]
   public string? SteamURL { get; set; } = steamUrl;
   [BsonElement("steam_id")]
-  public int SteamID { get; set; } = steamID;
+  public long SteamID { get; set; } = steamID;
   [BsonElement("in_packages")]
-	public List<int> InPackages { get; set; } = new();
+	public List<long> InPackages { get; set; } = new();
 	[BsonElement("isDLC")]
 	public bool IsDLC { get; set; }
   [BsonElement("description")]
@@ -29,10 +29,16 @@ public class Game(
   [BsonElement("header_image")]
   public string? HeaderImage { get; set; } = headerImage;
   [BsonIgnore]
-  public List<GameOffer> Offers { get; set; } = new();
+  public List<GameOffer> Offers { get; set; } = initialOffers ?? new();
   [BsonElement("is_released")]
   public bool IsReleased { get; set; }
-  [BsonElement("initial_prices")]
-  public Dictionary<ECurrency, decimal> InitialPrices { get; set; } = new();
+  [BsonElement("initial_price")]
+  public decimal? InitialPrice {get; set;}
+  [BsonElement("initial_currency")]
+  public ECurrency? InitialCurrency {get; set;}
 
+  public override string ToString()
+  {
+    return "🎮:\n" + base.ToString() + $"Name: {Name}, SteamID: {SteamID}, Offers count: {Offers?.Count()},\nDescription: {Description?.Substring(0, Math.Min(50, Description.Length))}..., SteamURL: {SteamURL}\n";
+  }
 }

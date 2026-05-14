@@ -10,26 +10,31 @@ using MongoDB.Driver;
 using GamesFinder.Orchestrator.Repositories;
 using GamesFinder.Orchestrator.Domain.Enums;
 using GamesFinder.Orchestrator.Domain.Classes;
-using GamesFinder.Domain.Interfaces.Repositories;
 using GamesFinder.Orchestrator.Repositories.Repositories;
-using GamesFinder.DAL.Repositories;
-using GamesFinder.Orchestrator.Domain.Interfaces.Services;
-using GamesFinder.Orchestrator.Services;
-using GamesFinder.Orchestrator.Domain.Classes.Entities;
 using GamesFinder.Orchestrator.Publisher.RabbitMQ;
 using GamesFinder.Orchestrator.Domain.Interfaces.Infrastructure;
 using GamesFinder.Orchestrator.Publisher.Redis;
 using StackExchange.Redis;
 using GamesFinder.Orchestrator.Publisher;
-using GamesFinder.Domain.Enums;
 using GamesFinder.Orchestrator.Consumers;
+using GamesFinder.Orchestrator.Services.DomainServices;
+using GamesFinder.Orchestrator.Domain.Interfaces.DomainServices;
+using GamesFinder.Orchestrator.Domain.Interfaces.Services.ApplicationServices;
+using GamesFinder.Orchestrator.Services.ApplicationServices;
+using GamesFinder.Orchestrator.Domain.Interfaces.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+	.AddJsonOptions(options =>
+    {
+			options.JsonSerializerOptions.Converters.Add(
+				new System.Text.Json.Serialization.JsonStringEnumConverter()
+			);
+	});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -84,12 +89,19 @@ builder.Services.AddSingleton(new SteamOptions(
 	domainName: builder.Configuration.GetValue<string>("SteamApi:Name")!,
 	apiKey: builder.Configuration.GetValue<string>("SteamApi:Key")!
 ));
+builder.Services.AddSingleton(new WorkersOptions(
+	instantGamingWorkerCount: builder.Configuration.GetValue<int>("Workers:InstantGamingWorkerCount")!,
+	instantGamingOverrideBatchSize: builder.Configuration.GetValue<int?>("Workers:InstantGamingOverrideBatchSize")
+));
+
 builder.Services.AddSingleton(new RabbitMqConfig(
 	hostName: builder.Configuration.GetValue<string>("RabbitMQ:HostName")!,
 	port: builder.Configuration.GetValue<int>("RabbitMQ:Port"),
 	defaultQueue: builder.Configuration.GetValue<string>("RabbitMQ:DefaultQueue")!,
 	steamRequestsQueue: builder.Configuration.GetValue<string>("RabbitMQ:SteamRequestsQueue")!,
 	steamResultsQueue: builder.Configuration.GetValue<string>("RabbitMQ:SteamResultsQueue")!,
+	instantGamingRequestsQueue: builder.Configuration.GetValue<string>("RabbitMQ:InstantGamingRequestsQueue")!,
+	instantGamingResultsQueue: builder.Configuration.GetValue<string>("RabbitMQ:InstantGamingResultsQueue")!,
 	userName: builder.Configuration.GetValue<string>("RabbitMQ:Username")!,
 	password: builder.Configuration.GetValue<string>("RabbitMQ:Password")!
 ));
@@ -111,15 +123,18 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 	return ConnectionMultiplexer.Connect(configurationOptions);
 });
 
-builder.Services.AddScoped<IGameRepository<Game>, GameRepository>();
-builder.Services.AddScoped<IGameOfferRepository<GameOffer>, GameOfferRepository>();
-// builder.Services.AddSingleton<IGamesWithOffersService<Game>, GamesWithOffersService>();
+builder.Services.AddScoped<IGameRepository, GameRepository>();
+builder.Services.AddScoped<IGameOfferRepository, GameOfferRepository>();
+builder.Services.AddScoped<IGamesWithOffersService, GamesWithOffersService>();
 builder.Services.AddScoped<ISteamService, SteamService>();
+builder.Services.AddScoped<IInstantGamingService, InstantGamingService>();
+
 builder.Services.AddSingleton<RedisCacheDB>();
 builder.Services.AddSingleton<IBrockerPublisher, RabbitMqPublisher>();
-builder.Services.AddSingleton<SteamWorkerPublisher>();
+builder.Services.AddSingleton<PublisherFactory>();
 
 builder.Services.AddHostedService<SteamWorkerConsumer>();
+builder.Services.AddHostedService<InstantGamingWorkersConsumer>();
 
 
 BsonSerializer.RegisterSerializer(typeof(ECurrency), new EnumSerializer<ECurrency>(BsonType.String));
@@ -183,7 +198,7 @@ if (builder.Environment.IsDevelopment())
 		context.Request.Body.Position = 0;
 
 		var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
-		logger.LogInformation("Incoming Request Body: {Body}", body);
+		logger.LogInformation($"From: {context.Request.Path}/{context.Request.QueryString}\nIncoming Request Body: {body}");
 		
 		// Accept
 		await next();

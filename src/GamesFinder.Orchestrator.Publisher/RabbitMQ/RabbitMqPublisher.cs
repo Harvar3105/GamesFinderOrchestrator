@@ -28,7 +28,7 @@ public class RabbitMqPublisher : IBrockerPublisher
       });
   }
 
-  public async Task PublishAsync<T>(T message, string? queueName = null)
+  public async Task PublishAsync(object task, string? queueName = null)
   {
     var connection = await _lazyConnection.Value;
     var channel = await connection.CreateChannelAsync();
@@ -43,7 +43,7 @@ public class RabbitMqPublisher : IBrockerPublisher
       arguments: null
     );
 
-    var json = JsonSerializer.Serialize(message);
+    var json = JsonSerializer.Serialize(task);
     var body = Encoding.UTF8.GetBytes(json);
 
     var props = new BasicProperties

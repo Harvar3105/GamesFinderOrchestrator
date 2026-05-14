@@ -1,104 +1,85 @@
-﻿using System.ComponentModel;
-using GamesFinder.Orchestrator.Domain.Interfaces.Infrastructure;
-using GamesFinder.Orchestrator.Domain.Interfaces.Services;
-using GamesFinder.Orchestrator.Publisher.RabbitMQ;
+﻿using GamesFinder.Orchestrator.Publisher.RabbitMQ;
 using GamesFinder.Orchestrator.Publisher.Redis;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Hosting;
-using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
-using System.Text;
-using System.Text.Json;
 using GamesFinder.Orchestrator.Domain.Classes.Entities;
 using Microsoft.Extensions.DependencyInjection;
+using GamesFinder.Orchestrator.Domain.Interfaces.DomainServices;
+using GamesFinder.Orchestrator.Domain.Interfaces.Repositories;
 
 namespace GamesFinder.Orchestrator.Consumers;
 
-public class SteamWorkerConsumer : BackgroundService, IBrockerConsumer
+public class SteamWorkerConsumer : Consumer<GameOrOffer>
 {
-  private readonly Lazy<Task<IConnection>> _lazyConnection;
-  private readonly RabbitMqConfig _config;
-  private readonly IServiceProvider _serviceProvider;
-  private readonly ILogger<SteamWorkerConsumer> _logger;
-  private readonly RedisCacheDB _redis;
+  protected override string QueueName { get; }
+  public SteamWorkerConsumer(
+    RabbitMqConfig config,
+    IServiceProvider serviceProvider,
+    ILogger<SteamWorkerConsumer> logger,
+    RedisCacheDB redis)
+    : base(config, serviceProvider, logger, redis) { QueueName = config.SteamResultsQueue; }
 
-  public SteamWorkerConsumer(RabbitMqConfig config, IServiceProvider serviceProvider, ILogger<SteamWorkerConsumer> logger, RedisCacheDB redis)
+  protected override async Task SaveToDatabaseAsync(IServiceScope scope, List<GameOrOffer> items)
   {
-    _config = config;
-    _serviceProvider = serviceProvider;
-    _logger = logger;
-    _redis = redis;
+    var gamesRepo = scope.ServiceProvider.GetRequiredService<IGameRepository>();
+    var offersRepo = scope.ServiceProvider.GetRequiredService<IGameOfferRepository>();
 
-    _logger.LogInformation("SteamWorkerConsumer initialized: " + _config.HostName + "," + _config.Port);
+    var games = items.Where(i => i.IsGame).Select(i => i.Game!).ToList();
+    var offers = items.Where(i => !i.IsGame).Select(i => i.Offer!).ToList();
+    if (games != null && games.Count() > 0) offers.AddRange(games.Where(g => g.Offers != null).Select(g => g.Offers!.First()));
 
-    _lazyConnection = new Lazy<Task<IConnection>>(async () =>
-      {
-        var factory = new ConnectionFactory
-        {
-          HostName = _config.HostName,
-          Port = _config.Port,
-          UserName = _config.UserName,
-          Password = _config.Password
-        };
-
-        return await factory.CreateConnectionAsync();
-      });
-  }
-
-  protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-  {
-    var connection = await _lazyConnection.Value;
-    var channel = await connection.CreateChannelAsync();
-
-    var consumer = new AsyncEventingBasicConsumer(channel);
-    consumer.ReceivedAsync += async (_, ea) =>
+    if (games != null && games.Count() > 0)
     {
-      var scope = _serviceProvider.CreateScope();
-      ISteamService steamService = scope.ServiceProvider.GetRequiredService<ISteamService>();
-
-
-      var message = Encoding.UTF8.GetString(ea.Body.ToArray());
-      var result = JsonSerializer.Deserialize<RedisResultNotification>(
-        message,
-        new JsonSerializerOptions
-        {
-          PropertyNameCaseInsensitive = true
-        });
-      if (result == null) return;
-
-      _logger.LogInformation($"Recieved result from steam worker with redis key: {result.RedisResultKey}");
-
-      var games = await _redis.ListRangeAsync<Game>(result.RedisResultKey);
-      if (games is null || !games.Any())
-      {
-        _logger.LogError("No games were found in result!");
-        return;
-      }
-
-      _logger.LogInformation($"Saving {games?.Count()} games to database...");
-
-      await steamService.SaveManyAsync(games!);
-      await _redis.ClearKey(result.RedisResultKey);
-
-      await channel.BasicAckAsync(ea.DeliveryTag, false);
-    };
-
-    await channel.BasicConsumeAsync(_config.SteamResultsQueue, false, consumer);
-    await Task.Delay(Timeout.Infinite, stoppingToken);
-  }
-
-  public async ValueTask DisposeAsync()
-  {
-    if (_lazyConnection.IsValueCreated)
+      var success = await gamesRepo.SaveManyAsync(games);
+      if (!success) _logger.LogError("💥Could not save games!");
+    }
+    
+    if (offers != null && offers.Count() > 0)
     {
-      var connection = await _lazyConnection.Value;
-      await connection.DisposeAsync();
+      var success = await offersRepo.SaveManyAsync(offers);
+      if (!success) _logger.LogError("💥Could not save offers!");
     }
   }
-  
-  private class RedisResultNotification
+
+  protected override async Task<List<GameOrOffer>?> GetItemsFromRedisAsync(ulong deliveryTag, string redisKey)
   {
-    public string TaskId { get; set; } = string.Empty;
-    public string RedisResultKey { get; set; } = string.Empty;
+    List<GameOrOffer>? items = [];
+    try
+    {
+      var games = await _redis.ListRangeAsync<Game>($"{redisKey}:games");
+      var offers = await _redis.ListRangeAsync<GameOffer>($"{redisKey}:offers");
+
+      var incapsulatedGames = games?.Select(g => new GameOrOffer(game: g, offer: null));
+      var incapsulatedOffers = offers?.Select(o => new GameOrOffer(game: null, offer: o)); 
+      
+      if (incapsulatedGames != null) items.AddRange(incapsulatedGames);
+      if (incapsulatedOffers != null) items.AddRange(incapsulatedOffers);
+      return items;
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError(ex, "Redis error");
+      await _channel!.BasicNackAsync(deliveryTag, false, true);
+      return null;
+    }
+  }
+
+  protected override async Task ClearRedisKeyAsync(string redisKey)
+  {
+    await _redis.ClearKey(redisKey);
+    await _redis.ClearKey($"{redisKey}:games");
+    await _redis.ClearKey($"{redisKey}:offers");
+  }
+}
+
+public record GameOrOffer
+{
+  public Game? Game { get; set; }
+  public GameOffer? Offer { get; set; }
+  public bool IsGame => Game != null;
+
+  public GameOrOffer(Game? game, GameOffer? offer)
+  {
+    Game = game;
+    Offer = offer;
   }
 }
