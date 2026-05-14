@@ -1,5 +1,3 @@
-version: "3.9"
-
 networks:
   shared-network:
     external: true
@@ -48,17 +46,12 @@ services:
   steam-worker:
     build:
       context: ./workers
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile.prod
     container_name: steam-worker
     env_file:
       - ./.env
     environment:
       - NODE_ENV=docker
-    volumes:
-      - ./workers/dist:/app/dist
-      - ./workers/package.json:/app/package.json
-      - ./workers/node_modules:/app/node_modules
-    working_dir: /app
     command: ["npm", "run", "steam"]
     depends_on:
       rabbitmq:
@@ -72,15 +65,11 @@ services:
   instantgaming-worker:
     build:
       context: ./workers
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile.prod
     env_file:
       - ./.env
     environment:
       - NODE_ENV=docker
-    volumes:
-      - ./workers:/app:cached
-      - /app/node_modules
-    working_dir: /app
     command: ["npm", "run", "instantgaming"]
     depends_on:
       rabbitmq:
@@ -99,18 +88,14 @@ services:
   gamesfinder-api:
     build:
       context: .
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile.prod
     container_name: backend
-    working_dir: /app/src/GamesFinder.Orchestrator.API
-    command: ["dotnet", "run", "--urls", "http://0.0.0.0:8080"]
     ports:
       - "8081:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
     env_file:
       - ./.env
-    volumes:
-      - ./src:/app/src
     depends_on:
       rabbitmq:
         condition: service_healthy

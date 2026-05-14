@@ -20,16 +20,16 @@ COPY src/. ./src/
 WORKDIR /app/src/GamesFinder.Orchestrator.API
 
 # Publish the application
-RUN dotnet publish -c Debug -o /app/publish
+RUN dotnet publish -c Release -o /app/publish /p:UseAppHost=false
 
 # 2. Runtime
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
+ENV ASPNETCORE_URLS=http://+:8080
 COPY --from=build /app/publish .
 
 # Open ports
-EXPOSE 5000
-EXPOSE 5001
+EXPOSE 8080
 
 # Run
 ENTRYPOINT ["dotnet", "GamesFinder.Orchestrator.API.dll"]
