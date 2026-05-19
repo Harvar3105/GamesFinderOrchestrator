@@ -1,3 +1,4 @@
+import { getVendorsGameNameFromHtml } from "./getSteamIdFromHtml.js";
 import { eCurrency, getECurrencyBySymbol, getECurrencyFromString } from "./types/enums/eCurrency.js";
 
 export function splitIntoBatches<T>(array: T[], batchSize: number): T[][] {
@@ -57,4 +58,10 @@ export function getCanonicalIGurl(root: Document | Element | null | undefined): 
   } catch (e) {
     return null;
   }
+}
+
+export function checkIfPCGameIG(html: string): boolean {
+  var name = getVendorsGameNameFromHtml(html);
+  if (name?.toLocaleLowerCase().includes("pc")) return true;
+  return false;
 }
