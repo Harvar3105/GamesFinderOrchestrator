@@ -7,6 +7,7 @@ import { GameOffer } from "../utils/types/entities/gameOffer.js";
 import logger from "../utils/logger.js";
 import { fetchJson, HttpStatusError } from "../utils/offerFetcher.js";
 import { checkGameExists, checkSteamOfferExists, getGameIdBySteamIdAsync, getSteamOfferId } from "../backendUtils.js";
+import { fetchGameStoreMetadata } from "./gameMetadataFetcher.js";
 
 export async function fetchSteamGame(id: number, updateGame: boolean, updateDeal: boolean, region: eRegion = eRegion.US ): Promise<Game | GameOffer | null | HttpStatusError> {
   const url = `https://store.steampowered.com/api/appdetails?appids=${id}&cc=${region}&l=en`;
@@ -50,8 +51,7 @@ export async function fetchSteamGame(id: number, updateGame: boolean, updateDeal
   let currency: eCurrency | null = null;
   let initialAmount: number | null = null;
 
-  // TODO: Add not released games as a preorder
-  if (isReleased && (!offerExists || (offerExists && updateDeal))) {
+  if (!offerExists || (offerExists && updateDeal)) {
     try {
       // Might depend on region but due to steam api poor typization we do it like this
       currency = getECurrencyFromString(game.price_overview?.currency || 'null')!; 
@@ -76,6 +76,12 @@ export async function fetchSteamGame(id: number, updateGame: boolean, updateDeal
   }
 
   if (!gameExists || (gameExists && updateGame)) {
+    let storeMetadata = await fetchGameStoreMetadata(id);
+    if (storeMetadata instanceof HttpStatusError) {
+      logger.error(`Error fetching metadata for game ID ${id}:`, storeMetadata);
+      storeMetadata = null;
+    }
+
     return {
     id: gameId!,
     createdAt: new Date().toUTCString(),
@@ -91,55 +97,8 @@ export async function fetchSteamGame(id: number, updateGame: boolean, updateDeal
     initialCurrency: currency,
     offers: offers,
     isReleased: isReleased,
+    storeMetadata: storeMetadata
     };
   }
   return offers ? offers[0] : null;
-}
-
-export async function scrapeBatch(ids: number[], updateGames: boolean = true, updateDeals: boolean = true, region?: eRegion): Promise<scrapeResult> {
-  let result = new scrapeResult();
-
-  for (let i = 0; i < ids.length; i++) {
-    const id = ids[i];
-    try {
-      const res = await fetchSteamGame(id, updateGames, updateDeals, region);
-
-      if (res instanceof HttpStatusError) {
-        if (res.status === 0){
-          result.skippedIds ++;
-          continue;
-        }
-
-        logger.error(`⚠️Stopping batch: received HTTP ${res.status} for Steam id ${id}`);
-        result.err = res;
-        result.unprocessedIds = ids.slice(i);
-        return result;
-      }
-
-      if (!res) continue;
-
-      if ('steamID' in res) {
-        result.games.push(res);
-      } else {
-        result.offers.push(res);
-      }
-      
-    } catch (err) {
-      logger.error(`Unexpected error while fetching game ${id}:`, err);
-    }
-  }
-
-  return result;
-}
-export class scrapeResult {
-  games: Game[] = [];
-  offers: GameOffer[] = [];
-  err?: HttpStatusError;
-  unprocessedIds?: number[];
-  skippedIds: number = 0;
-
-  constructor(err?: HttpStatusError, unprocessedIds?: number[]) {
-    this.err = err;
-    this.unprocessedIds = unprocessedIds;
-  }
 }

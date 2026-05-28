@@ -35,6 +35,7 @@ public class SteamController : ControllerBase
     try
     {
       await _steamService.PublishIdsScrapeTaskAsync(model.steamIds, model.updateExistingGames, model.updateExistingOffers);
+      //TODO: Count time. 1 Id takes 1 second. After 200 ids comes 5 min cooldown.
       return Ok(new { Message = $"✅Scraping task initiated for {model.steamIds.Count} Steam IDs. Take a break, process will take some time 😎" });
     }
     catch (Exception ex)

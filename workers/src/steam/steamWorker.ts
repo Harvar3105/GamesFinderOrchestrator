@@ -1,15 +1,13 @@
 import { rabbitConn } from '../utils/config.js';
 import { config, redis } from '../utils/config.js';
 import { SteamTask, normalizeSteamTask } from '../utils/types/entities/tasks.js';
-import { scrapeBatch, scrapeResult } from './gameFetcher.js';
-import { Game } from '../utils/types/entities/game.js';
+import { fetchSteamGame } from './gameFetcher.js';
 import logger from '../utils/logger.js';
-import { splitIntoBatches } from '../utils/instantGaminghHelpers.js';
-import { clearRedisKeyIfExists, clearRedisSteamKeys, createOrchestratorListener } from '../utils/orchestratorListener.js';
+import { createOrchestratorListener } from '../utils/orchestratorListener.js';
 import { parseTask, TaskKind } from '../utils/taskParser.js';
+import { GameOffer, isGameOffer } from '../utils/types/entities/gameOffer.js';
+import { Game, isGame } from '../utils/types/entities/game.js';
 import { HttpStatusError } from '../utils/offerFetcher.js';
-import { GameOffer } from '../utils/types/entities/gameOffer.js';
-import { ChainableCommander } from 'ioredis';
 
 async function startSteamWorker() {
   const channel = await rabbitConn.createChannel();
@@ -23,39 +21,23 @@ async function startSteamWorker() {
 
       let task: SteamTask | null = parseTask(msg, TaskKind.Steam, channel) as SteamTask | null;
       if (!task) return;
-      
-      // TODO: Consider scraping not in batches but one by one with a cooldown after 429 response
-      var queue;
-      task.gameIds.length > config.maxRequests 
-        ? queue = splitIntoBatches(task.gameIds, config.maxRequests)
-        : queue = [task.gameIds];
 
-      logger.info(`🚀Starting task ${task.taskId} with ${task.gameIds.length} game IDs, split into ${queue.length} batches.`);
+      logger.info(`🚀Starting task ${task.taskId} with ${task.gameIds.length} game IDs.`);
+      let counter = 0;
+      
+      const firstTry = await processIds(task.gameIds, task.updateExistingGames, task.updateExistingDeals, task.taskId, task.redisResultKey);
+      counter += firstTry.successfulCount;
+      
+      if (firstTry.unsuccessfulIds && firstTry.unsuccessfulIds.length > 0) {
+        logger.warn(`⚠️Retrying ${firstTry.unsuccessfulIds.length} unsuccessful IDs for task ${task.taskId} after first attempt...`);
+        await new Promise(res => setTimeout(res, config.cooldownMs));
+        const retryResult = await processIds(firstTry.unsuccessfulIds, task.updateExistingGames, task.updateExistingDeals, task.taskId, task.redisResultKey);
+        counter += retryResult.successfulCount;
+        logger.info(`✅Task ${task.taskId} done after retry, scraped additional ${retryResult.successfulCount} games.`);
+      }
+
 
       try {
-        let total = 0;
-        while (queue.length > 0) {
-          const batch = queue.shift()!;
-          const multi = redis.multi();
-          logger.info(`Processing batch of ${batch.length} game IDs for task ${task.taskId}...`);
-          const result: scrapeResult = await scrapeBatch(batch, task.updateExistingGames, task.updateExistingDeals);
-          total += batch.length;
-
-          if (result.err && result.unprocessedIds) {
-            logger.error(`Stopping batch processing due to error: HTTP ${result.err.status} ${result.err.message}`, result.err.body ?? '');
-            total -= result.unprocessedIds.length;
-            await saveDataToRedis(task.redisResultKey, result, multi);
-            queue.push(result.unprocessedIds);
-            await new Promise(res => setTimeout(res, config.cooldownMs));
-            continue;
-          }
-
-          await saveDataToRedis(task.redisResultKey, result, multi);
-          logger.info(`ℹ️Just added ${result.games.length} games to redis, scraped ${total} ids so far.`);
-
-          if (total % config.maxRequests === 0) await new Promise(res => setTimeout(res, config.cooldownMs));
-        }
-
         await channel.sendToQueue(
           config.steamResults!, 
           Buffer.from(JSON.stringify({
@@ -65,7 +47,7 @@ async function startSteamWorker() {
           { persistent: true }
         )
         channel.ack(msg);
-        logger.info(`✅Task ${task.taskId} done, scraped ${total} games.`);
+        logger.info(`✅Task ${task.taskId} done, scraped ${counter} games.`);
       } catch (err) {
         logger.error('❌Error processing task:', err);
         channel.nack(msg, false, true);
@@ -74,21 +56,66 @@ async function startSteamWorker() {
   )
 }
 
-async function saveDataToRedis(redisKey: string, result: scrapeResult, multi: ChainableCommander) {
-  if (result.games.length > 0) {
-    multi.rpush(
+type ProcessResult = {
+  successfulCount: number;
+  unsuccessfulIds: number[] | null;
+}
+
+async function processIds(gameIds: number[], updateGames: boolean, updateDeals: boolean, taskId: string, taskRedisKey: string) : Promise<ProcessResult> {
+  let games: Game[] = [];
+  let offers: GameOffer[] = [];
+  let unseccessfulIds: number[] = [];
+  let counter = 0;
+  for (const id of gameIds) {
+    const fetchResult = await fetchSteamGame(id, updateGames, updateDeals);
+    await new Promise(res => setTimeout(res, config.steamTagsAndGenresRequestDelayMs));
+    
+    if (fetchResult instanceof HttpStatusError) {
+      logger.error(`💥Error fetching game ${id}: ${fetchResult.status}\n\t${fetchResult.message}`, fetchResult.body ?? '');
+      unseccessfulIds.push(id);
+      continue;
+    }
+
+    if (isGame(fetchResult)) games.push(fetchResult);
+    else if (isGameOffer(fetchResult)) offers.push(fetchResult);
+    else logger.warn(`⚠️Unexpected result for game ${id}:`, fetchResult);
+
+    counter++;
+
+    if (counter % 200 === 0){
+      logger.info(`⌚Scraped ${counter} games so far for task ${taskId}...`);
+      await saveDataToRedis(taskRedisKey, games, offers);
+      games = [];
+      offers = [];
+      await new Promise(res => setTimeout(res, config.cooldownMs));
+    }
+  }
+  await saveDataToRedis(taskRedisKey, games, offers);
+  games = [];
+  offers = [];
+
+  let result: ProcessResult = {successfulCount: counter, unsuccessfulIds: null};
+  if (unseccessfulIds.length > 0) {
+    result.successfulCount = counter - unseccessfulIds.length;
+    result.unsuccessfulIds = unseccessfulIds;
+  }
+  return result;
+}
+
+async function saveDataToRedis(redisKey: string, games: Game[], offers: GameOffer[]) {
+  if (games.length > 0) {
+    await redis.rpush(
       `${redisKey}:games`,
-      ...result.games.map(g => JSON.stringify(g))
+      ...games.map(g => JSON.stringify(g))
     );
   }
 
-  if (result.offers.length > 0) {
-    multi.rpush(
+  if (offers.length > 0) {
+    await redis.rpush(
       `${redisKey}:offers`,
-      ...result.offers.map(o => JSON.stringify(o))
+      ...offers.map(o => JSON.stringify(o))
     );
   }
-  await multi.exec();
 }
 
 startSteamWorker().catch(logger.crit);

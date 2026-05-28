@@ -36,9 +36,20 @@ public class Game(
   public decimal? InitialPrice {get; set;}
   [BsonElement("initial_currency")]
   public ECurrency? InitialCurrency {get; set;}
+  [BsonElement("store_metadata")]
+  public GameStoreMetadata? StoreMetadata { get; set; }
 
   public override string ToString()
   {
     return "🎮:\n" + base.ToString() + $"Name: {Name}, SteamID: {SteamID}, Offers count: {Offers?.Count()},\nDescription: {Description?.Substring(0, Math.Min(50, Description.Length))}..., SteamURL: {SteamURL}\n";
+  }
+
+  public record GameStoreMetadata
+  {
+    public IEnumerable<string> Tags { get; init; } = [];
+    public IEnumerable<string> Genres { get; init; } = [];
+    public int PositiveReviews { get; init; }
+    public int NegativeReviews { get; init; }
+    public double PositiveReviewsPercent { get; init; }
   }
 }
