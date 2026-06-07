@@ -68,7 +68,8 @@ export async function fetchSteamGame(id: number, updateGame: boolean, updateDeal
         vendorsUrl: vendorsUrl,
         available: true,
         amount: currentAmount,
-        currency: currency
+        currency: currency,
+        offerName: game.name
       } as GameOffer]
     } catch (e) {
       logger.error(`❌Error parsing price for game ID ${id}:`, e);

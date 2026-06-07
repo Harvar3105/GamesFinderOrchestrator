@@ -6,6 +6,7 @@ using GamesFinder.Orchestrator.Domain.Interfaces.DomainServices;
 using GamesFinder.Orchestrator.Domain.Interfaces.Services.ApplicationServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using GamesFinder.Orchestrator.Domain.Classes;
 
 namespace GamesFinder.Orchestrator.API.Controllers;
 
@@ -18,14 +19,16 @@ public class SteamController : ControllerBase
   private readonly IGameRepository _gamesRepo;
   private readonly IGameOfferRepository _offersRepo;
   private readonly IGamesWithOffersService _gamesWithOffersService;
+  private readonly SteamOptions _steamOptions;
 
-  public SteamController(ILogger<SteamController> logger, ISteamService steamService, IGameRepository gamesRepository, IGameOfferRepository offersRepository, IGamesWithOffersService gamesWithOffersService)
+  public SteamController(SteamOptions options, ILogger<SteamController> logger, ISteamService steamService, IGameRepository gamesRepository, IGameOfferRepository offersRepository, IGamesWithOffersService gamesWithOffersService)
   {
     _logger = logger;
     _steamService = steamService;
     _gamesRepo = gamesRepository;
     _offersRepo = offersRepository;
     _gamesWithOffersService = gamesWithOffersService;
+    _steamOptions = options;
   }
 
   [HttpPost("scrap")]
@@ -35,14 +38,50 @@ public class SteamController : ControllerBase
     try
     {
       await _steamService.PublishIdsScrapeTaskAsync(model.steamIds, model.updateExistingGames, model.updateExistingOffers);
-      //TODO: Count time. 1 Id takes 1 second. After 200 ids comes 5 min cooldown.
-      return Ok(new { Message = $"✅Scraping task initiated for {model.steamIds.Count} Steam IDs. Take a break, process will take some time 😎" });
+      var approximateRequestTimeMs = CountRelationalRequestTime(model.steamIds.Count);
+      var approximateRequestTime = ConvertMillisecondsToTimeString(approximateRequestTimeMs);
+
+      return Ok(new { Message = $"✅Scraping task initiated for {model.steamIds.Count} Steam IDs. Approximate time: {approximateRequestTime}. Take a break, process will take some time 😎" });
     }
     catch (Exception ex)
     {
       _logger.LogError(ex, "Error initiating scraping task for Steam IDs.");
       return StatusCode(500, "An error occurred while processing your request.");
     }
+  }
+
+  private long CountRelationalRequestTime(int processedIdsCount)
+  {
+    if (processedIdsCount <= 0) return 0;
+
+    var cooldownPeriods = (processedIdsCount - 1) / _steamOptions.MaxRequests;
+    return (long)processedIdsCount * _steamOptions.TagsRquestsDelay + (long)cooldownPeriods * _steamOptions.CooldownMilliseconds;
+  }
+
+  private static string ConvertMillisecondsToTimeString(long milliseconds)
+  {
+    if (milliseconds <= 0) return "0 seconds";
+
+    var time = TimeSpan.FromMilliseconds(milliseconds);
+    var parts = new List<string>();
+
+    if (time.Hours > 0 || time.Days > 0)
+    {
+      var hours = (time.Days * 24) + time.Hours;
+      parts.Add($"{hours} hour{(hours == 1 ? string.Empty : "s")}");
+    }
+
+    if (time.Minutes > 0)
+    {
+      parts.Add($"{time.Minutes} minute{(time.Minutes == 1 ? string.Empty : "s")}");
+    }
+
+    if (time.Seconds > 0 || parts.Count == 0)
+    {
+      parts.Add($"{time.Seconds} second{(time.Seconds == 1 ? string.Empty : "s")}");
+    }
+
+    return string.Join(" ", parts);
   }
 
   [HttpGet("checkGameExistsByName")]

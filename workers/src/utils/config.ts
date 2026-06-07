@@ -22,7 +22,7 @@ export const config = {
   steamRequests: process.env.RabbitMQ__SteamRequestsQueue,
   steamResults: process.env.RabbitMQ__SteamResultsQueue,
   steamTagsAndGenresRequestDelayMs: Number(process.env.STEAM_TAGS_AND_GENRES_REQUEST_DELAY_MS) || 1000,
-  maxRequests: Number(process.env.MAX_REQUESTS) || 200,
+  maxRequests: Number(process.env.MAX__REQUESTS) || 200,
   cooldownMs: Number(process.env.COOLDOWN_MS) || 5 * 60 * 1000,
 
   instantGamingRequests: process.env.RabbitMQ__InstantGamingRequestsQueue,

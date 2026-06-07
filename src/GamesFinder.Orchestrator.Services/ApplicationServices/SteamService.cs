@@ -1,5 +1,6 @@
 
 using System.Text.Json.Nodes;
+using GamesFinder.Orchestrator.Domain.Classes;
 using GamesFinder.Orchestrator.Domain.Classes.Tasks;
 using GamesFinder.Orchestrator.Domain.Interfaces.Infrastructure;
 using GamesFinder.Orchestrator.Domain.Interfaces.Repositories;
@@ -13,9 +14,11 @@ namespace GamesFinder.Orchestrator.Services.ApplicationServices;
 public class SteamService : VendorsService<SteamScrapeTask>, ISteamService
 {
   private readonly IGameRepository _gameRepo;
-  public SteamService(PublisherFactory factory, IGameRepository gameRepository, ILogger<SteamService> logger) : base(factory.Create<SteamScrapeTask>(), logger)
+  private readonly SteamOptions _options;
+  public SteamService(SteamOptions options, PublisherFactory factory, IGameRepository gameRepository, ILogger<SteamService> logger) : base(factory.Create<SteamScrapeTask>(), logger)
   {
     _gameRepo = gameRepository;
+    _options = options;
   }
 
   public override string TaskRedisKeyPrefix => $"steam:scrape:result:{Guid.NewGuid()}";
@@ -30,7 +33,7 @@ public class SteamService : VendorsService<SteamScrapeTask>, ISteamService
 
     if (!updateExistingGames && !updateExistingOffers) steamIds = await RemoveExisting(steamIds);
 
-    var batchSize = CalculateBatchSize(steamIds.Count(), 1);
+    var batchSize = _options.MaxRequests;
     for (int i = 0; i < steamIds.Count(); i += batchSize)
     {
       var task = new SteamScrapeTask {

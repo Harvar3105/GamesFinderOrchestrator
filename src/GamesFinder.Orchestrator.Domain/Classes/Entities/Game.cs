@@ -22,7 +22,7 @@ public class Game(
   public long SteamID { get; set; } = steamID;
   [BsonElement("in_packages")]
 	public List<long> InPackages { get; set; } = new();
-	[BsonElement("isDLC")]
+	[BsonElement("is_DLC")]
 	public bool IsDLC { get; set; }
   [BsonElement("description")]
   public string? Description { get; set; } = description;
@@ -46,10 +46,15 @@ public class Game(
 
   public record GameStoreMetadata
   {
+    [BsonElement("tags")]
     public IEnumerable<string> Tags { get; init; } = [];
+    [BsonElement("genres")]
     public IEnumerable<string> Genres { get; init; } = [];
+    [BsonElement("positive_reviews")]
     public int PositiveReviews { get; init; }
+    [BsonElement("negative_reviews")]
     public int NegativeReviews { get; init; }
+    [BsonElement("positive_reviews_percent")]
     public double PositiveReviewsPercent { get; init; }
   }
 }

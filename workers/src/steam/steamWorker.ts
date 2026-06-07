@@ -27,13 +27,15 @@ async function startSteamWorker() {
       
       const firstTry = await processIds(task.gameIds, task.updateExistingGames, task.updateExistingDeals, task.taskId, task.redisResultKey);
       counter += firstTry.successfulCount;
+      logger.info(`✅Task ${task.taskId} done, scraped ${firstTry.successfulCount} games. Cooling down for ${config.cooldownMs}ms...`);
+      await new Promise(res => setTimeout(res, config.cooldownMs));
       
       if (firstTry.unsuccessfulIds && firstTry.unsuccessfulIds.length > 0) {
         logger.warn(`⚠️Retrying ${firstTry.unsuccessfulIds.length} unsuccessful IDs for task ${task.taskId} after first attempt...`);
-        await new Promise(res => setTimeout(res, config.cooldownMs));
         const retryResult = await processIds(firstTry.unsuccessfulIds, task.updateExistingGames, task.updateExistingDeals, task.taskId, task.redisResultKey);
         counter += retryResult.successfulCount;
         logger.info(`✅Task ${task.taskId} done after retry, scraped additional ${retryResult.successfulCount} games.`);
+        await new Promise(res => setTimeout(res, config.cooldownMs));
       }
 
 
@@ -65,7 +67,6 @@ async function processIds(gameIds: number[], updateGames: boolean, updateDeals: 
   let games: Game[] = [];
   let offers: GameOffer[] = [];
   let unseccessfulIds: number[] = [];
-  let counter = 0;
   for (const id of gameIds) {
     const fetchResult = await fetchSteamGame(id, updateGames, updateDeals);
     await new Promise(res => setTimeout(res, config.steamTagsAndGenresRequestDelayMs));
@@ -79,24 +80,14 @@ async function processIds(gameIds: number[], updateGames: boolean, updateDeals: 
     if (isGame(fetchResult)) games.push(fetchResult);
     else if (isGameOffer(fetchResult)) offers.push(fetchResult);
     else logger.warn(`⚠️Unexpected result for game ${id}:`, fetchResult);
-
-    counter++;
-
-    if (counter % 200 === 0){
-      logger.info(`⌚Scraped ${counter} games so far for task ${taskId}...`);
-      await saveDataToRedis(taskRedisKey, games, offers);
-      games = [];
-      offers = [];
-      await new Promise(res => setTimeout(res, config.cooldownMs));
-    }
   }
   await saveDataToRedis(taskRedisKey, games, offers);
   games = [];
   offers = [];
 
-  let result: ProcessResult = {successfulCount: counter, unsuccessfulIds: null};
+  let result: ProcessResult = {successfulCount: config.maxRequests - unseccessfulIds.length, unsuccessfulIds: null};
   if (unseccessfulIds.length > 0) {
-    result.successfulCount = counter - unseccessfulIds.length;
+    result.successfulCount = config.maxRequests - unseccessfulIds.length;
     result.unsuccessfulIds = unseccessfulIds;
   }
   return result;

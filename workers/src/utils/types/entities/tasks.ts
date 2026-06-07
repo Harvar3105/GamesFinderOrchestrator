@@ -19,6 +19,14 @@ export interface InstantGamingTask extends Task {
   vendorsIds: number[];
 }
 
+function normalizeNumberArray(value: unknown): number[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((item) => Number(item))
+    .filter((item) => Number.isFinite(item));
+}
+
 function normalizeBaseTask(raw: any): Task {
   return {
     taskId: raw.TaskId ?? raw.taskId,
@@ -33,7 +41,7 @@ export function normalizeInstantGamingTask(raw: any): InstantGamingTask {
     ...normalizeBaseTask(raw),
     proxy: raw.Proxy ?? raw.proxy,
     currency: raw.Currency ?? raw.currency,
-    vendorsIds: raw.VendorsIds ?? raw.vendorsIds
+    vendorsIds: normalizeNumberArray(raw.VendorsIds ?? raw.vendorsIds)
   };
 }
 
@@ -42,7 +50,7 @@ export function normalizeSteamTask(raw: any): SteamTask {
     ...normalizeBaseTask(raw),
     updateExistingGames: raw.UpdateExistingGames ?? raw.updateExistingGames,
     updateExistingDeals: raw.UpdateExistingDeals ?? raw.updateExistingDeals,
-    gameIds: raw.GameIds ?? raw.gameIds
+    gameIds: normalizeNumberArray(raw.GameIds ?? raw.gameIds)
   };
 }
 
