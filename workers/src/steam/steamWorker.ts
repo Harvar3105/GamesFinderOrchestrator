@@ -85,9 +85,9 @@ async function processIds(gameIds: number[], updateGames: boolean, updateDeals: 
   games = [];
   offers = [];
 
-  let result: ProcessResult = {successfulCount: config.maxRequests - unseccessfulIds.length, unsuccessfulIds: null};
+  let result: ProcessResult = {successfulCount: gameIds.length - unseccessfulIds.length, unsuccessfulIds: null};
   if (unseccessfulIds.length > 0) {
-    result.successfulCount = config.maxRequests - unseccessfulIds.length;
+    result.successfulCount = gameIds.length - unseccessfulIds.length;
     result.unsuccessfulIds = unseccessfulIds;
   }
   return result;

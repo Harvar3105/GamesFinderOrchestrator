@@ -15,13 +15,13 @@ export async function fetchGameStoreMetadata(id: number): Promise<null | HttpSta
   let data = null;
   try {
     data = await fetchJson(url);
-    if (!data.success) return null;
+    if (!data.name) return null;
   } catch (err) {
     if (err instanceof HttpStatusError) return err;
     return null;
   }
 
-  if (!data.tags || !data.genres) return null;
+  if (!data.tags || !data.genre) return null;
 
   const genres = data["genre"]?.split(", ") || [];
   const tags = Object.keys(data["tags"]) || [];

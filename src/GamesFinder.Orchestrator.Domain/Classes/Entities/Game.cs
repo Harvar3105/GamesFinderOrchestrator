@@ -10,8 +10,9 @@ public class Game(
   List<GameOffer>? initialOffers = null,
   string? description = null,
   string? steamUrl = null,
-  string? headerImage = null
-    ) : Entity
+  string? headerImage = null,
+  Game.GameStoreMetadata? storeMetadata = null
+  ) : Entity
 {
   [BsonElement("name")]
   public string Name { get; set; } = name;
@@ -41,7 +42,7 @@ public class Game(
 
   public override string ToString()
   {
-    return "🎮:\n" + base.ToString() + $"Name: {Name}, SteamID: {SteamID}, Offers count: {Offers?.Count()},\nDescription: {Description?.Substring(0, Math.Min(50, Description.Length))}..., SteamURL: {SteamURL}\n";
+    return "🎮:\n" + base.ToString() + $"Name: {Name}, SteamID: {SteamID}, Offers count: {Offers?.Count()},\nDescription: {Description?.Substring(0, Math.Min(50, Description.Length))}..., SteamURL: {SteamURL}\nMetadata: {StoreMetadata}";
   }
 
   public record GameStoreMetadata
@@ -56,5 +57,10 @@ public class Game(
     public int NegativeReviews { get; init; }
     [BsonElement("positive_reviews_percent")]
     public double PositiveReviewsPercent { get; init; }
+
+    public override string ToString()
+    {
+      return $"Tags: {string.Join(", ", Tags)}, Genres: {string.Join(", ", Genres)}, PositiveReviews: {PositiveReviews}, NegativeReviews: {NegativeReviews}, PositiveReviewsPercent: {PositiveReviewsPercent}%";
+    }
   }
 }

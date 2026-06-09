@@ -79,7 +79,7 @@ export async function fetchSteamGame(id: number, updateGame: boolean, updateDeal
   if (!gameExists || (gameExists && updateGame)) {
     let storeMetadata = await fetchGameStoreMetadata(id);
     if (storeMetadata instanceof HttpStatusError) {
-      logger.error(`Error fetching metadata for game ID ${id}:`, storeMetadata);
+      logger.error(`💥Error fetching metadata for game ID ${id}:`, storeMetadata);
       storeMetadata = null;
     }
 

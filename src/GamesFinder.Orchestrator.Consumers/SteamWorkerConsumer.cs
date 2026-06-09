@@ -47,6 +47,8 @@ public class SteamWorkerConsumer : Consumer<GameOrOffer>
     {
       var games = await _redis.ListRangeAsync<Game>($"{redisKey}:games");
       var offers = await _redis.ListRangeAsync<GameOffer>($"{redisKey}:offers");
+      _logger.LogInformation($"Retrieved {games?.Count()} games and {offers?.Count()} offers from Redis for key: {redisKey}");
+      _logger.LogInformation($"Game example: {games?.FirstOrDefault()?.ToString() ?? "No games retrieved"}, Offer example: {offers?.FirstOrDefault()?.ToString() ?? "No offers retrieved"}");
 
       var incapsulatedGames = games?.Select(g => new GameOrOffer(game: g, offer: null));
       var incapsulatedOffers = offers?.Select(o => new GameOrOffer(game: null, offer: o)); 
