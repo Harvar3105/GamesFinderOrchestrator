@@ -38,7 +38,7 @@ public class Game(
   [BsonElement("initial_currency")]
   public ECurrency? InitialCurrency {get; set;}
   [BsonElement("store_metadata")]
-  public GameStoreMetadata? StoreMetadata { get; set; }
+  public GameStoreMetadata? StoreMetadata { get; set; } = storeMetadata;
 
   public override string ToString()
   {

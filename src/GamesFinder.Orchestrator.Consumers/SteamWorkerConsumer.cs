@@ -29,13 +29,13 @@ public class SteamWorkerConsumer : Consumer<GameOrOffer>
 
     if (games != null && games.Count() > 0)
     {
-      var success = await gamesRepo.SaveManyAsync(games);
+      var success = await gamesRepo.SaveOrUpdateManyAsync(games);
       if (!success) _logger.LogError("💥Could not save games!");
     }
     
     if (offers != null && offers.Count() > 0)
     {
-      var success = await offersRepo.SaveManyAsync(offers);
+      var success = await offersRepo.SaveOrUpdateManyAsync(offers);
       if (!success) _logger.LogError("💥Could not save offers!");
     }
   }
