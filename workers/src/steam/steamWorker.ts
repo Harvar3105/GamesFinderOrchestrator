@@ -11,8 +11,9 @@ import { HttpStatusError } from '../utils/offerFetcher.js';
 
 async function startSteamWorker() {
   const channel = await rabbitConn.createChannel();
+  await channel.prefetch(1);
 
-  createOrchestratorListener(
+  await createOrchestratorListener(
     channel,
     config.steamRequests!,
     config.steamResults!,
