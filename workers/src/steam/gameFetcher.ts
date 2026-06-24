@@ -8,6 +8,7 @@ import logger from "../utils/logger.js";
 import { fetchJson, HttpStatusError } from "../utils/offerFetcher.js";
 import { checkGameExists, checkSteamOfferExists, getGameIdBySteamIdAsync, getSteamOfferId } from "../backendUtils.js";
 import { fetchGameStoreMetadata } from "./gameMetadataFetcher.js";
+import { config } from "../utils/config.js";
 
 export async function fetchSteamGame(id: number, updateGame: boolean, updateDeal: boolean, region: eRegion = eRegion.US ): Promise<Game | GameOffer | null | HttpStatusError> {
   const url = `https://store.steampowered.com/api/appdetails?appids=${id}&cc=${region}&l=en`;
@@ -23,23 +24,16 @@ export async function fetchSteamGame(id: number, updateGame: boolean, updateDeal
     gameId = v4();
   }
 
-  logger.info(`➡️ Game Exists: ${gameExists}\nGame ID: ${gameId}`);
-
   let offerId;
   if (offerExists) offerId = await getSteamOfferId({gameId: gameId!})?? await getSteamOfferId({vendorId: id.toString()});
   else offerId = v4();
 
   if (gameExists && offerExists && !updateGame && !updateDeal) return new HttpStatusError(0, "");
   
-  let data;
-  try {
-    data = await fetchJson(url);
-  } catch (err) {
-    if (err instanceof HttpStatusError) return err;
-    return null;
-  }
+  const data = await fetchJson({url: url, timeoutMS: config.steamApiTimeoutMs});
+  if (data instanceof HttpStatusError) return data;
 
-  if (!data[id]?.success) return null;
+  if (!data?.[id]?.success) return null;
 
   const game = data[id].data;
 

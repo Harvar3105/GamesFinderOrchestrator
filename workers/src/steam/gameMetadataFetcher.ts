@@ -1,3 +1,4 @@
+import { config } from "../utils/config.js";
 import { fetchJson, HttpStatusError } from "../utils/offerFetcher.js";
 
 export type GameStoreMetaData = {
@@ -12,14 +13,9 @@ export type GameStoreMetaData = {
 export async function fetchGameStoreMetadata(id: number): Promise<null | HttpStatusError | GameStoreMetaData> {
   const url = `https://steamspy.com/api.php?request=appdetails&appid=${id}`;
 
-  let data = null;
-  try {
-    data = await fetchJson(url);
-    if (!data.name) return null;
-  } catch (err) {
-    if (err instanceof HttpStatusError) return err;
-    return null;
-  }
+  const data = await fetchJson({url: url, timeoutMS: config.steamTagsAndGenresRequestDelayMs});
+  if (data instanceof HttpStatusError) return data;
+  if (!data.name) return null;
 
   if (!data.tags || !data.genre) return null;
 

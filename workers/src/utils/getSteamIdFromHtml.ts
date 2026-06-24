@@ -25,14 +25,14 @@ export default async function getSteamAndGameIdsFromHtml(html: string): Promise<
 
 async function getIdsFromBackend(gameName: string): Promise<SteamAndGameIds | null> {
   const url = config.backendUrl! + config.backendCheckGameExistsByName + `?gameName=${encodeURIComponent(gameName)}&getSteamId=true`;
-  const data = await fetchJson(url, undefined, 'GET');
+  const data = await fetchJson({url: url, method: 'GET', timeoutMS: config.backendTimeoutMs});
   if (!data?.exists) return null;
   return {steamId: data.steamId, gameId: data.gameId};
 }
 
 async function getGameId(steamId: number): Promise<string | null> {
   const url = config.backendUrl! + config.backendCheckGame! + `?steamId=${encodeURIComponent(steamId)}&getId=true`;
-  const data = await fetchJson(url, undefined, 'GET');
+  const data = await fetchJson({url: url, method: 'GET', timeoutMS: config.backendTimeoutMs});
   if (!data || !data.exists) return null;
   return data.gameId;
 }
