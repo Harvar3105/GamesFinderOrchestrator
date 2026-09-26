@@ -87,7 +87,10 @@ builder.Services.AddAuthorization(options =>
 
 builder.Services.AddSingleton(new SteamOptions(
 	domainName: builder.Configuration.GetValue<string>("SteamApi:Name")!,
-	apiKey: builder.Configuration.GetValue<string>("SteamApi:Key")!
+	apiKey: builder.Configuration.GetValue<string>("SteamApi:Key")!,
+	maxRequests: builder.Configuration.GetValue<int>("SteamApi:MaxRequests")!,
+	tagsRquestsDelay: builder.Configuration.GetValue<int>("SteamApi:TagsRquestsDelay")!,
+	cooldownMilliseconds: builder.Configuration.GetValue<int>("SteamApi:CooldownMilliseconds")!
 ));
 builder.Services.AddSingleton(new WorkersOptions(
 	instantGamingWorkerCount: builder.Configuration.GetValue<int>("Workers:InstantGamingWorkerCount")!,

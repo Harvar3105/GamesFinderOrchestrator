@@ -13,38 +13,45 @@ export class HttpStatusError extends Error {
     this.body = body;
   }
 }
-
-export async function fetchJson(url: string, proxy?: string, method?: string): Promise<any | null> {
-  const options = proxy ? {
-    method: method ?? 'GET',
-    agent: new HttpsProxyAgent(proxy),
-    signal: AbortSignal.timeout(config.backendTimeoutMs),
+export type FetchParams = {
+  url: string;
+  proxy?: string;
+  method?: string;
+  timeoutMS?: number;
+};
+export async function fetchJson(params: FetchParams): Promise<any | HttpStatusError> {
+  const options = params.proxy ? {
+    method: params.method ?? 'GET',
+    agent: new HttpsProxyAgent(params.proxy),
+    signal: AbortSignal.timeout(params.timeoutMS ?? config.backendTimeoutMs),
     redirect: 'follow' as const
   }
   : {
-    method: method ?? 'GET',
-    signal: AbortSignal.timeout(config.backendTimeoutMs),
+    method: params.method ?? 'GET',
+    signal: AbortSignal.timeout(params.timeoutMS ?? config.backendTimeoutMs),
     redirect: 'follow' as const
   };
   try {
-    const res = await fetch(url, options);
+    const res = await fetch(params.url, options);
 
     if (!res.ok) {
       const body = await res.text().catch(() => undefined);
-      logger.warn(`Received ${res.status} from ${url}, throwing HttpStatusError`);
-      throw new HttpStatusError(res.status, `HTTP ${res.status} ${res.statusText}`, body);
+      const error = new HttpStatusError(res.status, `HTTP ${res.status} ${res.statusText}`, body);
+      logger.warn(`Received ${res.status} from ${params.url}`, error);
+      return error;
     }
 
     try {
       return await res.json();
     } catch (parseErr) {
-      logger.error(`❌Error parsing JSON from ${url}`, parseErr);
-      return null;
+      const error = new HttpStatusError(-2, `Failed to read or parse JSON from ${params.url}`);
+      logger.error(`❌Error reading/parsing JSON from ${params.url}`, parseErr);
+      return error;
     }
   } catch (err) {
-    if (err instanceof HttpStatusError) throw err;
-    logger.error(`❌Error fetching JSON from ${url}`, err);
-    return null;
+    const error = new HttpStatusError(-1, `Failed to fetch JSON from ${params.url}`);
+    logger.error(`❌Error fetching JSON from ${params.url}`, err);
+    return error;
   }
 }
 
