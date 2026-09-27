@@ -32,58 +32,22 @@ public class SteamController : ControllerBase
   }
 
   [HttpPost("scrap")]
-  [Authorize(Policy = "DevPolicy")]
+  [Authorize(Roles = "admin_gfp")]
   public async Task<IActionResult> ScrapSteamIdsAsync([FromBody] SteamRequestModel model)
   {
     try
     {
       await _steamService.PublishIdsScrapeTaskAsync(model.steamIds, model.updateExistingGames, model.updateExistingOffers);
-      var approximateRequestTimeMs = CountRelationalRequestTime(model.steamIds.Count);
-      var approximateRequestTime = ConvertMillisecondsToTimeString(approximateRequestTimeMs);
 
-      return Ok(new { Message = $"✅Scraping task initiated for {model.steamIds.Count} Steam IDs. Approximate time: {approximateRequestTime}. Take a break, process will take some time 😎" });
+      return Created();
     }
     catch (Exception ex)
     {
       _logger.LogError(ex, "Error initiating scraping task for Steam IDs.");
-      return StatusCode(500, "An error occurred while processing your request.");
+      return Problem("An error occurred while processing your request.");
     }
   }
-
-  private long CountRelationalRequestTime(int processedIdsCount)
-  {
-    if (processedIdsCount <= 0) return 0;
-
-    var cooldownPeriods = (processedIdsCount - 1) / _steamOptions.MaxRequests;
-    return (long)processedIdsCount * _steamOptions.TagsRquestsDelay + (long)cooldownPeriods * _steamOptions.CooldownMilliseconds;
-  }
-
-  private static string ConvertMillisecondsToTimeString(long milliseconds)
-  {
-    if (milliseconds <= 0) return "0 seconds";
-
-    var time = TimeSpan.FromMilliseconds(milliseconds);
-    var parts = new List<string>();
-
-    if (time.Hours > 0 || time.Days > 0)
-    {
-      var hours = (time.Days * 24) + time.Hours;
-      parts.Add($"{hours} hour{(hours == 1 ? string.Empty : "s")}");
-    }
-
-    if (time.Minutes > 0)
-    {
-      parts.Add($"{time.Minutes} minute{(time.Minutes == 1 ? string.Empty : "s")}");
-    }
-
-    if (time.Seconds > 0 || parts.Count == 0)
-    {
-      parts.Add($"{time.Seconds} second{(time.Seconds == 1 ? string.Empty : "s")}");
-    }
-
-    return string.Join(" ", parts);
-  }
-
+  //TODO: Create separate controller for games
   [HttpGet("checkGameExistsByName")]
   public async Task<IActionResult> CheckExistingGameByNameAsync(string gameName)
   {
@@ -100,7 +64,7 @@ public class SteamController : ControllerBase
     catch (Exception ex)
     {
       _logger.LogError(ex, $"Error checking existence of game by name: {gameName}");
-      return StatusCode(500, "An error occurred while processing your request.");
+      return Problem("An error occurred while processing your request.");
     }
   }
 
@@ -120,7 +84,7 @@ public class SteamController : ControllerBase
     catch (Exception ex)
     {
       _logger.LogError(ex, $"Error checking existence of Steam ID: {steamId}");
-      return StatusCode(500, "An error occurred while processing your request.");
+      return Problem("An error occurred while processing your request.");
     }
   }
 
@@ -140,7 +104,8 @@ public class SteamController : ControllerBase
     }
     catch (Exception ex)
     {
-      _logger.LogError(ex, $"Error checking existence of Steam ID: {steamId}"); return StatusCode(500, "An error occurred while processing your request.");
+      _logger.LogError(ex, $"Error checking existence of Steam ID: {steamId}");
+      return Problem("An error occurred while processing your request.");
     }
   }
 
@@ -155,7 +120,7 @@ public class SteamController : ControllerBase
     catch (Exception ex)
     {
       _logger.LogError(ex, $"Error checking existence of game offer for Steam ID: {steamId}");
-      return StatusCode(500, "An error occurred while processing your request.");
+      return Problem("An error occurred while processing your request.");
     }
   }
 
@@ -185,7 +150,7 @@ public class SteamController : ControllerBase
     } catch (Exception ex)
     {
       _logger.LogError(ex, $"Error retrieving offer ID for gameId: {gameId} or steamId: {steamId}");
-      return StatusCode(500, "An error occurred while processing your request.");
+      return Problem("An error occurred while processing your request.");
     }
   }
 
