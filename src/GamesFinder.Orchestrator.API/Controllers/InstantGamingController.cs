@@ -23,51 +23,51 @@ public class InstantGamingController : ControllerBase
   }
 
   [HttpPost("scrapIds")]
-  [Authorize(Policy = "DevPolicy")]
+  [Authorize(Roles = "admin_gfp")]
   public async Task<IActionResult> ScrapInstantGamingIdsAsync([FromBody] InstantGamingScrapIdsRequest model)
   {
     _logger.LogInformation("Received request to scrap Instant Gaming IDs: {Ids}", string.Join(", ", model.InstantGamingIds));
     try
     {
       await _instantGamingService.PublishIdsScrapeTaskAsync(model.InstantGamingIds, model.UpdateExisting);
-      return Ok(new { Message = $"Scraping task initiated." });
+      return Created();
     }
     catch (Exception ex)
     {
       _logger.LogError(ex, "Error initiating scraping task for Instant Gaming IDs.");
-      return StatusCode(500, "An error occurred while processing your request.");
+      return Problem("An error occurred while processing your request.");
     }
   }
 
   [HttpPost("scrapRange")]
-  [Authorize(Policy = "DevPolicy")]
+  [Authorize(Roles = "admin_gfp")]
   public async Task<IActionResult> ScrapInstantGamingRangeAsync([FromBody] InstantGamingScrapRangeRequest model)
   {
     try
     {
       await _instantGamingService.PublishRangeScrapeTaskAsync(model.MinimumId, model.MaximumId, model.UpdateExisting);
-      return Ok(new { Message = $"Range scraping task initiated from ID {model.MinimumId} to {model.MaximumId}." });
+      return Created();
     }
     catch (Exception ex)
     {
       _logger.LogError(ex, "Error initiating range scraping task for Instant Gaming IDs.");
-      return StatusCode(500, "An error occurred while processing your request.");
+      return Problem("An error occurred while processing your request.");
     }
   }
 
   [HttpPost("scrapUpTo")]
-  [Authorize(Policy = "DevPolicy")]
+  [Authorize(Roles = "admin_gfp")]
   public async Task<IActionResult> ScrapInstantGamingUpToAsync([FromBody] InstantGamingScrapUpToRequest model)
   {
     try
     {
       await _instantGamingService.PublishUpToMaxIdScrapeTaskAsync(model.MaxIdCount, model.UpdateExisting);
-      return Ok(new { Message = $"Max count scraping task initiated for {model.MaxIdCount} IDs." });
+      return Created();
     }
     catch (Exception ex)
     {
       _logger.LogError(ex, "Error initiating max count scraping task for Instant Gaming IDs.");
-      return StatusCode(500, "An error occurred while processing your request.");
+      return Problem("An error occurred while processing your request.");
     }
   }
 
@@ -82,7 +82,7 @@ public class InstantGamingController : ControllerBase
     catch (Exception ex)
     {
       _logger.LogError(ex, $"Error checking existence of game offer for Steam ID: {vendorId}");
-      return StatusCode(500, "An error occurred while processing your request.");
+      return Problem("An error occurred while processing your request.");
     }
   }
 
@@ -112,7 +112,7 @@ public class InstantGamingController : ControllerBase
     } catch (Exception ex)
     {
       _logger.LogError(ex, $"Error retrieving offer ID for gameId: {gameId} or steamId: {vendorId}");
-      return StatusCode(500, "An error occurred while processing your request.");
+      return Problem("An error occurred while processing your request.");
     }
   }
 }

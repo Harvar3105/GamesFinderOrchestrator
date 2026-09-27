@@ -5,6 +5,8 @@ using GamesFinder.Orchestrator.Domain.Interfaces.Infrastructure;
 using GamesFinder.Orchestrator.Publisher.RabbitMQ;
 using Microsoft.Extensions.Logging;
 
+namespace GamesFinder.Orchestrator.Publisher;
+
 public class PublisherFactory
 {
   private readonly IBrockerPublisher _broker;

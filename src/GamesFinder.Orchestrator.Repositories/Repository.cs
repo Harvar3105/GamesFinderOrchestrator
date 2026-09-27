@@ -18,7 +18,7 @@ public abstract class Repository<T> : IRepository<T> where T : Entity
     _collection = database.GetCollection<T>(collectionName);
   }
   
-  public async Task<bool> SaveAsync(T entity)
+  public virtual async Task<bool> SaveAsync(T entity)
   {
     try
     {
@@ -33,7 +33,7 @@ public abstract class Repository<T> : IRepository<T> where T : Entity
     return true;
   }
 
-  public async Task<bool> SaveManyAsync(IEnumerable<T> entities)
+  public virtual async Task<bool> SaveManyAsync(IEnumerable<T> entities)
   {
     try
     {
@@ -48,7 +48,7 @@ public abstract class Repository<T> : IRepository<T> where T : Entity
     return true;
   }
 
-  public async Task<bool> SaveOrUpdateAsync(T entity)
+  public virtual async Task<bool> SaveOrUpdateAsync(T entity)
   {
     try
     {
@@ -64,7 +64,7 @@ public abstract class Repository<T> : IRepository<T> where T : Entity
     return true;
   }
 
-  public async Task<bool> SaveOrUpdateManyAsync(IEnumerable<T> entities)
+  public virtual async Task<bool> SaveOrUpdateManyAsync(IEnumerable<T> entities)
   {
     try
     {
@@ -87,39 +87,39 @@ public abstract class Repository<T> : IRepository<T> where T : Entity
     }
   }
 
-  public async Task<bool> DeleteAsync(Guid id)
+  public virtual async Task<bool> DeleteAsync(Guid id)
   {
     var result = await _collection.DeleteOneAsync(e => e.Id == id);
     return result.DeletedCount > 0;
   }
 
-  public async Task<bool> UpdateAsync(T entity)
+  public virtual async Task<bool> UpdateAsync(T entity)
   {
     var result = await _collection.ReplaceOneAsync(e => e.Id == entity.Id, entity);
     return result.ModifiedCount > 0;
   }
 
-  public async Task<ICollection<T>?> GetAllAsync()
+  public virtual async Task<ICollection<T>?> GetAllAsync()
   {
     return await _collection.Find(_ => true).ToListAsync();
   }
 
-  public async Task<T?> GetByIdAsync(Guid id)
+  public virtual async Task<T?> GetByIdAsync(Guid id)
   {
     return await _collection.Find(e => e.Id == id).FirstOrDefaultAsync();
   }
 
-  public async Task<bool> ExistsAsync(Guid id)
+  public virtual async Task<bool> ExistsAsync(Guid id)
   {
     return await _collection.Find(e => e.Id == id).AnyAsync();
   }
 
-  public async Task<long> CountAsync()
+  public virtual async Task<long> CountAsync()
   {
     return await _collection.CountDocumentsAsync(_ => true);
   }
   
-  public async Task<ICollection<T>?> GetPagedAsync(int page, int pageSize)
+  public virtual async Task<ICollection<T>?> GetPagedAsync(int page, int pageSize)
   {
     return await _collection
       .Find(_ => true)
@@ -128,7 +128,7 @@ public abstract class Repository<T> : IRepository<T> where T : Entity
       .ToListAsync();
   }
 
-  public async Task<long> DeleteManyAsync(IEnumerable<Guid> ids)
+  public virtual async Task<long> DeleteManyAsync(IEnumerable<Guid> ids)
   {
     var result = await _collection.DeleteManyAsync(e => ids.Contains(e.Id));
     return result.DeletedCount;

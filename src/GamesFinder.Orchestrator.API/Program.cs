@@ -22,6 +22,7 @@ using GamesFinder.Orchestrator.Domain.Interfaces.DomainServices;
 using GamesFinder.Orchestrator.Domain.Interfaces.Services.ApplicationServices;
 using GamesFinder.Orchestrator.Services.ApplicationServices;
 using GamesFinder.Orchestrator.Domain.Interfaces.Repositories;
+using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -63,6 +64,7 @@ var twp = new TokenValidationParameters
 	ValidateIssuer = true,
 	ValidateAudience = true,
 	ValidateIssuerSigningKey = true,
+	ValidAlgorithms = new[] { SecurityAlgorithms.HmacSha256 },
 	ValidIssuer = builder.Configuration.GetValue<string>("Security:JWTIssuer"),
 	ValidAudience = builder.Configuration.GetValue<string>("Security:JWTAudience"),
 	IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
@@ -78,10 +80,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 	.AddJwtBearer(options => {options.TokenValidationParameters = twp;});
 builder.Services.AddAuthorization(options =>
 {
-	if (!requireJwt)
-	{
-		options.AddPolicy("DevPolicy", policy => policy.RequireAssertion(_ => true));
-	}
+	if (requireJwt)
+    {
+			options.FallbackPolicy = new AuthorizationPolicyBuilder()
+				.RequireAuthenticatedUser()
+				.Build();
+    }
 });
 
 
@@ -128,6 +132,7 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 
 builder.Services.AddScoped<IGameRepository, GameRepository>();
 builder.Services.AddScoped<IGameOfferRepository, GameOfferRepository>();
+builder.Services.AddScoped<IUserDataRepository, UserDataRepository>();
 builder.Services.AddScoped<IGamesWithOffersService, GamesWithOffersService>();
 builder.Services.AddScoped<ISteamService, SteamService>();
 builder.Services.AddScoped<IInstantGamingService, InstantGamingService>();
@@ -150,50 +155,52 @@ builder.WebHost.ConfigureKestrel(options =>
 
 builder.Services.AddCors(options =>
 {
-	options.AddPolicy("AllowAll", policy =>
-	{
-		policy.AllowAnyOrigin()
-			.AllowAnyHeader()
-			.AllowAnyMethod();
-	});
-});
-
-builder.Services.AddCors(options =>
-{
 	options.AddPolicy("Prod", policy =>
 	{
-		policy.WithOrigins(
-				"http://localhost:3000",
-				"http://localhost:8080",
-				"http://localhost:27017",
-				"http://localhost:80",
-				"http:80"
-				)
+		policy.WithOrigins(builder.Configuration
+				.GetSection("Security:CORS:Origins")
+				.Get<string[]>() ?? [])
 			.AllowAnyMethod()
 			.AllowAnyHeader();
 	});
 });
 
-var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+if (builder.Environment.IsDevelopment())
 {
-	app.MapOpenApi();
+	builder.Services.AddCors(options =>
+	{
+		options.AddPolicy("DevCors", policy =>
+		{
+			policy
+				.AllowAnyOrigin()
+				.AllowAnyHeader()
+				.AllowAnyMethod();
+		});
+	});
 }
+else
+{
+	builder.Services.AddCors(options =>
+    {
+			options.AddPolicy("ProdCors", policy =>
+			{
+				policy
+					.WithOrigins("https://your-frontend.example")
+					.AllowAnyHeader()
+					.AllowAnyMethod();
+			});
+    });
+}
+
+//TODO: Add userData seeding for default users
+var app = builder.Build();
 
 if (builder.Environment.IsDevelopment())
 {
 	app.Use(async (context, next) =>
 	{
-		// Set default user
-		var identity = new ClaimsIdentity(new[]
-		{
-			new Claim(ClaimTypes.Name, "DevUser"),
-			new Claim(ClaimTypes.Role, "Admin")
-		}, "Dev");
-		context.User = new ClaimsPrincipal(identity);
-		
+		app.MapOpenApi();
+
 		// Enable requests logging
 		context.Request.EnableBuffering();
 		using var reader = new StreamReader(context.Request.Body, Encoding.UTF8, detectEncodingFromByteOrderMarks: false, leaveOpen: true);
@@ -207,11 +214,11 @@ if (builder.Environment.IsDevelopment())
 		await next();
 	});
 	
-	app.UseCors("AllowAll");
+	app.UseCors("DevCors");
 }
 else
 {
-	app.UseCors("Prod");
+	app.UseCors("ProdCors");
 }
 
 app.UseSwagger();
