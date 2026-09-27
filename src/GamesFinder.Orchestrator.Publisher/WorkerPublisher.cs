@@ -3,6 +3,8 @@ using GamesFinder.Orchestrator.Domain.Interfaces.Infrastructure;
 using GamesFinder.Orchestrator.Publisher.RabbitMQ;
 using Microsoft.Extensions.Logging;
 
+namespace GamesFinder.Orchestrator.Publisher;
+
 public class WorkerPublisher<TTask> : IPublisher<TTask> where TTask : ScrapeTask
 {
   private readonly IBrockerPublisher _publisher;
