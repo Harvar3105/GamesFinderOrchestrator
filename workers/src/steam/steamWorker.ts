@@ -48,11 +48,6 @@ async function startSteamWorker() {
   )
 }
 
-type ProcessResult = {
-  successfulCount: number;
-  unsuccessfulIds: number[] | null;
-}
-
 async function saveDataToRedis(redisKey: string, games: Game[], offers: GameOffer[]) {
   if (games.length > 0) {
     await redis.rpush(
