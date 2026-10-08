@@ -2,7 +2,7 @@ import { v4 } from "uuid";
 import { fetchHTML, HttpStatusError, parseHtmlToDocument } from "../utils/offerFetcher.js";
 import { GameOffer } from "../utils/types/entities/gameOffer.js";
 import { eCurrency } from "../utils/types/enums/eCurrency.js";
-import { checkIfPCGameIG, getCanonicalIGurl, getFirstSteamIdFromMediaSourceIG } from "../utils/instantGaminghHelpers.js";
+import { checkIfPCGameIG, getCanonicalIGurl } from "../utils/instantGaminghHelpers.js";
 import { eVendor } from "../utils/types/enums/eVendor.js";
 import { findNoStockElementIG, findPriceElementIG } from "../utils/instantGaminghHelpers.js";
 import logger from "../utils/logger.js";
