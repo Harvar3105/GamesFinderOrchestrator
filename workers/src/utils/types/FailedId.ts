@@ -1,6 +1,6 @@
 import { HttpStatusError } from "../offerFetcher.js";
 
-export type failedIds = {
+export type FailedId = {
   id: number;
   reason: HttpStatusError | string;
 }

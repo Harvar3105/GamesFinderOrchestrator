@@ -3,7 +3,7 @@ import logger from "../utils/logger.js";
 import { HttpStatusError } from "../utils/offerFetcher.js";
 import { Game, isGame } from "../utils/types/entities/game.js";
 import { GameOffer, isGameOffer } from "../utils/types/entities/gameOffer.js";
-import { failedIds } from "../utils/types/unprocessedId.js";
+import { FailedId } from "../utils/types/FailedId.js";
 import { fetchSteamGame } from "./gameFetcher.js";
 
 export type SteamWorkerTaskResult = {
@@ -37,14 +37,14 @@ export default async function processSteamWorkerTask(batch: number[], taskId: st
 export type SteamWorkerProcessResult = {
   games: Game[];
   offers: GameOffer[];
-  failedIds: failedIds[];
+  failedIds: FailedId[];
   newCallsState: number;
 }
 
 export async function processSteamWorkerIds(ids: number[], updateExistingGames: boolean, updateExistingDeals: boolean, callsCounter: number): Promise<SteamWorkerProcessResult> {
   let games: Game[] = [];
   let offers: GameOffer[] = [];
-  let failedIds: failedIds[] = [];
+  let failedIds: FailedId[] = [];
 
   for (const id of ids) {
     let fetchResult = await fetchSteamGame(id, updateExistingGames, updateExistingDeals);

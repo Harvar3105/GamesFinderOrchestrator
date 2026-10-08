@@ -4,6 +4,7 @@ import { HttpStatusError } from "../utils/offerFetcher.js";
 import { GameOffer } from "../utils/types/entities/gameOffer.js";
 import { InstantGamingTask } from "../utils/types/entities/tasks.js";
 import { eCurrency } from "../utils/types/enums/eCurrency.js";
+import { FailedId } from "../utils/types/FailedId.js";
 import { fetchInstantGamingOffer } from "./instantGamingFetcher.js";
 
 export default async function processInstantGamingTask(task: InstantGamingTask, msg: any): Promise<GameOffer[]> {
@@ -27,13 +28,9 @@ export default async function processInstantGamingTask(task: InstantGamingTask, 
   return totalProcessed;
 }
 export type ProcessInstantGamingTaskResult = {
-  unprocessed: UnprocessedInstantGamingId[];
+  unprocessed: FailedId[];
   processed: GameOffer[];
 };
-export type UnprocessedInstantGamingId = {
-  id: number;
-  reason: HttpStatusError | string;
-}
 
 export async function processInstantGamingTaskIds(ids: number[], taskId: string, currency?: eCurrency, proxy?: string): Promise<ProcessInstantGamingTaskResult> {
   const unprocessed = [];
