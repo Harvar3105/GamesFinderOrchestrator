@@ -95,7 +95,7 @@ public abstract class Consumer<TResult> : BackgroundService, IBrockerConsumer
     }
   }
 
-  protected virtual async Task<List<TResult>> GetItemsFromRedisAsync(ulong deliveryTag, string redisKey)
+  protected virtual async Task<List<TResult>?> GetItemsFromRedisAsync(ulong deliveryTag, string redisKey)
   {
     List<TResult>? items;
     try

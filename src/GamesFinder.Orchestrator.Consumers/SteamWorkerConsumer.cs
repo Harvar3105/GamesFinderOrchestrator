@@ -29,13 +29,13 @@ public class SteamWorkerConsumer : Consumer<GameOrOffer>
 
     if (games != null && games.Count() > 0)
     {
-      var success = await gamesRepo.SaveManyAsync(games);
+      var success = await gamesRepo.SaveOrUpdateManyAsync(games);
       if (!success) _logger.LogError("💥Could not save games!");
     }
     
     if (offers != null && offers.Count() > 0)
     {
-      var success = await offersRepo.SaveManyAsync(offers);
+      var success = await offersRepo.SaveOrUpdateManyAsync(offers);
       if (!success) _logger.LogError("💥Could not save offers!");
     }
   }
@@ -47,6 +47,8 @@ public class SteamWorkerConsumer : Consumer<GameOrOffer>
     {
       var games = await _redis.ListRangeAsync<Game>($"{redisKey}:games");
       var offers = await _redis.ListRangeAsync<GameOffer>($"{redisKey}:offers");
+      _logger.LogInformation($"Retrieved {games?.Count()} games and {offers?.Count()} offers from Redis for key: {redisKey}");
+      _logger.LogInformation($"Game example: {games?.FirstOrDefault()?.ToString() ?? "No games retrieved"}, Offer example: {offers?.FirstOrDefault()?.ToString() ?? "No offers retrieved"}");
 
       var incapsulatedGames = games?.Select(g => new GameOrOffer(game: g, offer: null));
       var incapsulatedOffers = offers?.Select(o => new GameOrOffer(game: null, offer: o)); 

@@ -12,7 +12,6 @@ export async function checkGameExists(gameId: number, getGame: boolean = false):
 
   try {
     const data = await response.json();
-    logger.info(`Parsed response data: ${JSON.stringify(data)}`);
     if (getGame) {
       return data.game as Game;
     } else {

@@ -10,8 +10,9 @@ public class Game(
   List<GameOffer>? initialOffers = null,
   string? description = null,
   string? steamUrl = null,
-  string? headerImage = null
-    ) : Entity
+  string? headerImage = null,
+  Game.GameStoreMetadata? storeMetadata = null
+  ) : Entity
 {
   [BsonElement("name")]
   public string Name { get; set; } = name;
@@ -22,7 +23,7 @@ public class Game(
   public long SteamID { get; set; } = steamID;
   [BsonElement("in_packages")]
 	public List<long> InPackages { get; set; } = new();
-	[BsonElement("isDLC")]
+	[BsonElement("is_DLC")]
 	public bool IsDLC { get; set; }
   [BsonElement("description")]
   public string? Description { get; set; } = description;
@@ -36,9 +37,30 @@ public class Game(
   public decimal? InitialPrice {get; set;}
   [BsonElement("initial_currency")]
   public ECurrency? InitialCurrency {get; set;}
+  [BsonElement("store_metadata")]
+  public GameStoreMetadata? StoreMetadata { get; set; } = storeMetadata;
 
   public override string ToString()
   {
-    return "🎮:\n" + base.ToString() + $"Name: {Name}, SteamID: {SteamID}, Offers count: {Offers?.Count()},\nDescription: {Description?.Substring(0, Math.Min(50, Description.Length))}..., SteamURL: {SteamURL}\n";
+    return "🎮:\n" + base.ToString() + $"Name: {Name}, SteamID: {SteamID}, Offers count: {Offers?.Count()},\nDescription: {Description?.Substring(0, Math.Min(50, Description.Length))}..., SteamURL: {SteamURL}\nMetadata: {StoreMetadata}";
+  }
+
+  public record GameStoreMetadata
+  {
+    [BsonElement("tags")]
+    public IEnumerable<string> Tags { get; init; } = [];
+    [BsonElement("genres")]
+    public IEnumerable<string> Genres { get; init; } = [];
+    [BsonElement("positive_reviews")]
+    public int PositiveReviews { get; init; }
+    [BsonElement("negative_reviews")]
+    public int NegativeReviews { get; init; }
+    [BsonElement("positive_reviews_percent")]
+    public double PositiveReviewsPercent { get; init; }
+
+    public override string ToString()
+    {
+      return $"Tags: {string.Join(", ", Tags)}, Genres: {string.Join(", ", Genres)}, PositiveReviews: {PositiveReviews}, NegativeReviews: {NegativeReviews}, PositiveReviewsPercent: {PositiveReviewsPercent}%";
+    }
   }
 }

@@ -6,6 +6,7 @@ using GamesFinder.Orchestrator.Domain.Interfaces.DomainServices;
 using GamesFinder.Orchestrator.Domain.Interfaces.Services.ApplicationServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using GamesFinder.Orchestrator.Domain.Classes;
 
 namespace GamesFinder.Orchestrator.API.Controllers;
 
@@ -18,32 +19,35 @@ public class SteamController : ControllerBase
   private readonly IGameRepository _gamesRepo;
   private readonly IGameOfferRepository _offersRepo;
   private readonly IGamesWithOffersService _gamesWithOffersService;
+  private readonly SteamOptions _steamOptions;
 
-  public SteamController(ILogger<SteamController> logger, ISteamService steamService, IGameRepository gamesRepository, IGameOfferRepository offersRepository, IGamesWithOffersService gamesWithOffersService)
+  public SteamController(SteamOptions options, ILogger<SteamController> logger, ISteamService steamService, IGameRepository gamesRepository, IGameOfferRepository offersRepository, IGamesWithOffersService gamesWithOffersService)
   {
     _logger = logger;
     _steamService = steamService;
     _gamesRepo = gamesRepository;
     _offersRepo = offersRepository;
     _gamesWithOffersService = gamesWithOffersService;
+    _steamOptions = options;
   }
 
   [HttpPost("scrap")]
-  [Authorize(Policy = "DevPolicy")]
+  [Authorize(Roles = "admin_gfp")]
   public async Task<IActionResult> ScrapSteamIdsAsync([FromBody] SteamRequestModel model)
   {
     try
     {
       await _steamService.PublishIdsScrapeTaskAsync(model.steamIds, model.updateExistingGames, model.updateExistingOffers);
-      return Ok(new { Message = $"✅Scraping task initiated for {model.steamIds.Count} Steam IDs. Take a break, process will take some time 😎" });
+
+      return Created();
     }
     catch (Exception ex)
     {
       _logger.LogError(ex, "Error initiating scraping task for Steam IDs.");
-      return StatusCode(500, "An error occurred while processing your request.");
+      return Problem("An error occurred while processing your request.");
     }
   }
-
+  //TODO: Create separate controller for games
   [HttpGet("checkGameExistsByName")]
   public async Task<IActionResult> CheckExistingGameByNameAsync(string gameName)
   {
@@ -60,7 +64,7 @@ public class SteamController : ControllerBase
     catch (Exception ex)
     {
       _logger.LogError(ex, $"Error checking existence of game by name: {gameName}");
-      return StatusCode(500, "An error occurred while processing your request.");
+      return Problem("An error occurred while processing your request.");
     }
   }
 
@@ -80,7 +84,7 @@ public class SteamController : ControllerBase
     catch (Exception ex)
     {
       _logger.LogError(ex, $"Error checking existence of Steam ID: {steamId}");
-      return StatusCode(500, "An error occurred while processing your request.");
+      return Problem("An error occurred while processing your request.");
     }
   }
 
@@ -100,7 +104,8 @@ public class SteamController : ControllerBase
     }
     catch (Exception ex)
     {
-      _logger.LogError(ex, $"Error checking existence of Steam ID: {steamId}"); return StatusCode(500, "An error occurred while processing your request.");
+      _logger.LogError(ex, $"Error checking existence of Steam ID: {steamId}");
+      return Problem("An error occurred while processing your request.");
     }
   }
 
@@ -115,7 +120,7 @@ public class SteamController : ControllerBase
     catch (Exception ex)
     {
       _logger.LogError(ex, $"Error checking existence of game offer for Steam ID: {steamId}");
-      return StatusCode(500, "An error occurred while processing your request.");
+      return Problem("An error occurred while processing your request.");
     }
   }
 
@@ -145,7 +150,7 @@ public class SteamController : ControllerBase
     } catch (Exception ex)
     {
       _logger.LogError(ex, $"Error retrieving offer ID for gameId: {gameId} or steamId: {steamId}");
-      return StatusCode(500, "An error occurred while processing your request.");
+      return Problem("An error occurred while processing your request.");
     }
   }
 
