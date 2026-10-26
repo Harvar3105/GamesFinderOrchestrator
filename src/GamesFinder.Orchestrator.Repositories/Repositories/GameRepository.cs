@@ -49,6 +49,9 @@ public class GameRepository : Repository<Game>, IGameRepository
     }
   }
 
+  // TODO: Loads the whole `games` collection into memory on every call, and the InstantGaming
+  // worker calls it for each product without a Steam ID. Decide on a server-side approach:
+  // a normalized-name field with an index, a MongoDB text index, or a cached name lookup.
   public async Task<Game?> GetByAppNameAsync(string appName)
   {
     try

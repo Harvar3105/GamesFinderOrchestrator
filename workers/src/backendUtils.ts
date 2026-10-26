@@ -13,6 +13,8 @@ export async function checkGameExists(gameId: number, getGame: boolean = false):
   try {
     const data = await response.json();
     if (getGame) {
+      // FIXME: The backend returns the game Id (Guid string) in `game`, not a Game object.
+      // Either change the return type to string or make the endpoint return the full game.
       return data.game as Game;
     } else {
       return data.exists as boolean;

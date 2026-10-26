@@ -19,6 +19,8 @@ export type FetchParams = {
   method?: string;
   timeoutMS?: number;
 };
+// FIXME: Global (native) fetch ignores the `agent` option, so the proxy is never used.
+// Use undici's ProxyAgent via `dispatcher`, or import node-fetch (already a dependency).
 export async function fetchJson(params: FetchParams): Promise<any | HttpStatusError> {
   const options = params.proxy ? {
     method: params.method ?? 'GET',
@@ -55,6 +57,11 @@ export async function fetchJson(params: FetchParams): Promise<any | HttpStatusEr
   }
 }
 
+// FIXME: Native fetch ignores both `agent` and `timeout`: no proxy is applied and requests
+// can hang indefinitely. Use `signal: AbortSignal.timeout(...)` as in fetchJson.
+// FIXME: The HttpStatusError thrown below is caught by the same try/catch and turned into null,
+// so callers never see the status code. Rate limits (429) and server errors are silently
+// skipped instead of being retried in processInstantGamingTaskIds.
 export async function fetchHTML(url: string, proxy?: string): Promise<string | null> {
   const options = proxy ? {
     method: 'GET',

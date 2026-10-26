@@ -20,6 +20,9 @@ public class GameOfferRepository : Repository<GameOffer>, IGameOfferRepository
       .ContinueWith(task => task.Result.DeletedCount);
   }
 
+  // FIXME: Not filtered by vendor. A Steam app ID and an InstantGaming product ID with the same
+  // number collide, so an offer may be reported as existing when it belongs to another vendor.
+  // Add an EVendor parameter (used by SteamController and InstantGamingController).
   public async Task<bool> ExistsByVendorsIdAsync(string vendorsId)
   {
     return await _collection

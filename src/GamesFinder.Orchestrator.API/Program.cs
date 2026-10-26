@@ -153,6 +153,8 @@ builder.WebHost.ConfigureKestrel(options =>
 	options.Limits.MinRequestBodyDataRate = null;
 });
 
+// TODO: Two production CORS policies exist: "Prod" (origins from Security:CORS:Origins) is never
+// applied, while "ProdCors" is. Decide which one to keep and remove the other.
 builder.Services.AddCors(options =>
 {
 	options.AddPolicy("Prod", policy =>
@@ -185,6 +187,7 @@ else
 			options.AddPolicy("ProdCors", policy =>
 			{
 				policy
+					// FIXME: Placeholder origin — production frontend requests will be rejected by CORS.
 					.WithOrigins("https://your-frontend.example")
 					.AllowAnyHeader()
 					.AllowAnyMethod();
@@ -199,6 +202,8 @@ if (builder.Environment.IsDevelopment())
 {
 	app.Use(async (context, next) =>
 	{
+		// FIXME: Endpoint mapping runs inside middleware on every request. Call app.MapOpenApi()
+		// once during startup, outside app.Use.
 		app.MapOpenApi();
 
 		// Enable requests logging

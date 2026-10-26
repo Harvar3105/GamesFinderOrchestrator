@@ -28,6 +28,8 @@ export async function fetchSteamGame(id: number, updateGame: boolean, updateDeal
   if (offerExists) offerId = await getSteamOfferId({gameId: gameId!})?? await getSteamOfferId({vendorId: id.toString()});
   else offerId = v4();
 
+  // FIXME: "Nothing to update" is reported as an error. processSteamWorkerIds adds such IDs to
+  // failedIds, retries them and logs warnings. Return a distinct "skipped" result instead.
   if (gameExists && offerExists && !updateGame && !updateDeal) return new HttpStatusError(0, "");
   
   const data = await fetchJson({url: url, timeoutMS: config.steamApiTimeoutMs});

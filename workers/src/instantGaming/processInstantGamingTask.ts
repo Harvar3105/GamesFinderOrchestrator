@@ -37,6 +37,8 @@ export async function processInstantGamingTaskIds(ids: number[], taskId: string,
   const processed = [];
   for (const offerId of ids){
     var offer = await fetchInstantGamingOffer(offerId, currency, proxy);
+    // FIXME: Never true — fetchHTML swallows HTTP errors and returns null (see offerFetcher.ts),
+    // so failed IDs are never collected and the retry pass in processInstantGamingTask never runs.
     if (offer instanceof HttpStatusError) {
       unprocessed.push({ id: offerId, reason: offer });
       continue;

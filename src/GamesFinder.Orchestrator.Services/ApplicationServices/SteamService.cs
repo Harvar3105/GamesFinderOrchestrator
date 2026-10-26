@@ -38,6 +38,8 @@ public class SteamService : VendorsService<SteamScrapeTask>, ISteamService
     {
       var task = new SteamScrapeTask {
         GameIds = steamIds.Skip(i).Take(batchSize).Select(id => id.ToString()).ToList(),
+        // FIXME: Flags are swapped. UpdateExistingDeals must receive updateExistingOffers
+        // and UpdateExistingGames must receive updateExistingGames.
         UpdateExistingDeals = updateExistingGames,
         UpdateExistingGames = updateExistingOffers,
         RedisResultKey = TaskRedisKeyPrefix
