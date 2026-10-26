@@ -8,11 +8,9 @@ export enum TaskKind {
 }
 
 export function parseTask(msg: ConsumeMessage, type: TaskKind, channel: Channel) {
-  // FIXME: JSON.parse is outside the try block. Malformed JSON throws from the consume callback
-  // instead of being logged and nacked below.
-  const obj = JSON.parse(msg.content.toString());
   let result = null;
   try{
+    const obj = JSON.parse(msg.content.toString());
     switch (type) {
       case TaskKind.Steam: {
         result = normalizeSteamTask(obj);

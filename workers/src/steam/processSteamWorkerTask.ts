@@ -1,10 +1,10 @@
 import { config } from "../utils/config.js";
 import logger from "../utils/logger.js";
-import { HttpStatusError } from "../utils/offerFetcher.js";
+import { HttpStatusError, WrongDataError } from "../utils/offerFetcher.js";
 import { Game, isGame } from "../utils/types/entities/game.js";
 import { GameOffer, isGameOffer } from "../utils/types/entities/gameOffer.js";
 import { FailedId } from "../utils/types/FailedId.js";
-import { fetchSteamGame } from "./gameFetcher.js";
+import { fetchSteamGame, SkippedError } from "./gameFetcher.js";
 
 export type SteamWorkerTaskResult = {
   games: Game[];
@@ -47,25 +47,40 @@ export async function processSteamWorkerIds(ids: number[], updateExistingGames: 
   let failedIds: FailedId[] = [];
 
   for (const id of ids) {
-    let fetchResult = await fetchSteamGame(id, updateExistingGames, updateExistingDeals);
-    await new Promise(res => setTimeout(res, config.steamTagsAndGenresRequestDelayMs));
-    callsCounter++;
-
-    if (fetchResult instanceof HttpStatusError) {
-      if (fetchResult.status === 429) {
-      logger.info(`⌚Rate limited while fetching game ${id}. Waiting for ${config.cooldownMs}ms before retrying...`);
-      await new Promise(res => setTimeout(res, config.cooldownMs));
-      fetchResult = await fetchSteamGame(id, updateExistingGames, updateExistingDeals);
+    let fetchResult;
+    try {
       callsCounter++;
+      fetchResult = await fetchSteamGame(id, updateExistingGames, updateExistingDeals);
+    } catch (err) {
+      if (err instanceof HttpStatusError && err.status === 429) {
+        logger.info(`⌚Rate limited while fetching game ${id}. Waiting for ${config.cooldownMs}ms before retrying...`);
+        await new Promise(res => setTimeout(res, config.cooldownMs));
+        callsCounter++;
+        try {
+          fetchResult = await fetchSteamGame(id, updateExistingGames, updateExistingDeals);
+        } catch (err) {
+          if (err instanceof HttpStatusError) {
+            logger.error(err.message);
+            failedIds.push({id: id, reason: err.message});
+          }
+          continue;
+        }
+      } else if (err instanceof HttpStatusError) {
+        logger.error(err.message);
+        failedIds.push({id: id, reason: err.message});
+        continue;
+      } else if (err instanceof WrongDataError || err instanceof SkippedError) {
+        logger.error(err.message);
+        continue;
       } else {
-        failedIds.push({id: id, reason: fetchResult});
+        logger.error("Unexpected error occured!", err);
         continue;
       }
     }
+    await new Promise(res => setTimeout(res, config.steamTagsAndGenresRequestDelayMs));
 
     if (isGame(fetchResult)) games.push(fetchResult);
     else if (isGameOffer(fetchResult)) offers.push(fetchResult);
-    else failedIds.push({id: id, reason: `Unexpected result for game ${id}: ${fetchResult}`});
   }
 
   return { games, offers, failedIds, newCallsState: callsCounter };

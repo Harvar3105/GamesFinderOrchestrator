@@ -10,13 +10,10 @@ export type GameStoreMetaData = {
 }
 
 // This method should not be called more than once per second due to steamspy api limitations, otherwise it will return 403 error. We can not use proxies here because steamspy blocks them as well.
-export async function fetchGameStoreMetadata(id: number): Promise<null | HttpStatusError | GameStoreMetaData> {
+export async function fetchGameStoreMetadata(id: number): Promise<null | GameStoreMetaData> {
   const url = `https://steamspy.com/api.php?request=appdetails&appid=${id}`;
 
-  // FIXME: The request delay setting is used as the request timeout (1s by default), so slow
-  // SteamSpy responses are aborted. Use a dedicated timeout setting (e.g. steamApiTimeoutMs).
-  const data = await fetchJson({url: url, timeoutMS: config.steamTagsAndGenresRequestDelayMs});
-  if (data instanceof HttpStatusError) return data;
+  const data = await fetchJson({url: url, timeoutMS: config.steamTagsAndGenresTimeoutMS});
   if (!data.name) return null;
 
   if (!data.tags || !data.genre) return null;

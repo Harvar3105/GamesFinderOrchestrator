@@ -22,19 +22,18 @@ export const config = {
   steamRequests: process.env.RabbitMQ__SteamRequestsQueue,
   steamResults: process.env.RabbitMQ__SteamResultsQueue,
   steamTagsAndGenresRequestDelayMs: Number(process.env.STEAM_TAGS_AND_GENRES_REQUEST_DELAY_MS) || 1000,
+  steamTagsAndGenresTimeoutMS: Number(process.env.STEAM_TAGS_AND_GENRES_TIMEOUT_MS) || 3000,
   steamApiTimeoutMs: Number(process.env.STEAM_API_TIMEOUT_MS) || 5000,
   maxRequests: Number(process.env.MAX__REQUESTS) || 200,
   cooldownMs: Number(process.env.COOLDOWN_MS) || 5 * 60 * 1000,
 
   instantGamingRequests: process.env.RabbitMQ__InstantGamingRequestsQueue,
   instantGamingResults: process.env.RabbitMQ__InstantGamingResultsQueue,
-  // TODO: Unused setting (also typed string | number). Decide whether to implement skipping
-  // the first N InstantGaming IDs or remove it.
-  instantGamingSkipFirst: process.env.INSTANT_GAMING_SKIP_FIRST || 10,
 
   backendUrl: process.env.BACKEND_URL,
   backendCheckGame: process.env.BACKEND_CHECK_GAME,
   backendCheckGameExistsByName: process.env.BACKEND_CHECK_GAME_EXISTS_BY_NAME,
+  backendCheckGameExistsBySteamId: process.env.BACKEND_CHECK_GAME_EXISTS_BY_STEAM_ID,
   backendCheckSteamOffer: process.env.BACKEND_CHECK_STEAM_OFFER,
   backendCheckIgOffer: process.env.BACKEND_CHECK_IG_OFFER,
   backendGetIgOfferId: process.env.BACKEND_GET_IG_OFFER_ID,

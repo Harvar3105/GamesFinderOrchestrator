@@ -69,21 +69,32 @@ public class SteamController : ControllerBase
   }
 
   [HttpGet("checkGameExists")]
-  public async Task<IActionResult> CheckExistingSteamIdAsync(int steamId, bool getGame = false)
+  public async Task<IActionResult> CheckGameExists(string gameId)
   {
+    var success = Guid.TryParse(gameId, out var parsedId);
+    if (!success) return BadRequest("Invalid id requested.");
     try
     {
-      var exists = await _gamesRepo.ExistsBySteamIdAsync(steamId);
-      if (getGame && exists)
-      {
-        var game = await _gamesRepo.GetBySteamIdAsync(steamId);
-        return Ok(new { Exists = true, Game = game!.Id });
-      }
+      var exists = await _gamesRepo.ExistsAsync(parsedId);
       return Ok(new {Exists = exists});
     }
     catch (Exception ex)
     {
-      _logger.LogError(ex, $"Error checking existence of Steam ID: {steamId}");
+      _logger.LogError(ex, $"Error checking existence of game: {gameId}");
+      return Problem("An error occurred while processing your request.");
+    }
+  }
+
+  [HttpGet("checkGameExistsBySteamId")]
+  public async Task<IActionResult> CheckGameExistsBySteamId(int steamId)
+  {
+    try
+    {
+      var exists = await _gamesRepo.ExistsBySteamIdAsync(steamId);
+      return Ok(new {Exists = exists});
+    } catch (Exception ex)
+    {
+      _logger.LogError(ex, $"Error checking existence of game by steam id: {steamId}");
       return Problem("An error occurred while processing your request.");
     }
   }
@@ -114,7 +125,7 @@ public class SteamController : ControllerBase
   {
     try
     {
-      var exists = await _offersRepo.ExistsByVendorsIdAsync(steamId.ToString());
+      var exists = await _offersRepo.ExistsByVendorsIdAsync(steamId.ToString(), EVendor.Steam);
       return Ok(new { Exists = exists });
     }
     catch (Exception ex)
@@ -162,7 +173,7 @@ public class SteamController : ControllerBase
     [FromQuery] SteamFiltersRequestModel filters = default!
   )
   {
-    if (pageSize <= 0 || page < 0) return BadRequest("⚠️Invalid data provided");
+    if (pageSize <= 0 || page < 1) return BadRequest("⚠️Invalid data provided");
     var parsedCurrency = ECurrencyHelpers.GetECurrency(currency!);
 
     var paginationFilter = new PaginationFilterDto
@@ -194,7 +205,7 @@ public class SteamController : ControllerBase
 
   [HttpGet("getPaged")]
   public async Task<IActionResult> GetPaged(int page, int pageSize){
-    if (pageSize <= 0 || page < 0) return BadRequest("⚠️Invalid data provided");
+    if (pageSize <= 0 || page < 1) return BadRequest("⚠️Invalid data provided");
 
     var games = await _gamesRepo.GetPagedAsync(page, pageSize);
     var totalGamesCount = await _gamesRepo.GetTotalGamesCountAsync();

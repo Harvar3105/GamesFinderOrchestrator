@@ -43,7 +43,7 @@ Project references: `API → all other projects`; `Services → Domain, Publishe
 
 ### Endpoints (`api/[controller]`)
 
-- **Steam**: `POST scrap` (role `admin_gfp`); `GET checkGameExistsByName`, `checkGameExists`, `getGameIdBySteamId`, `checkGameOfferExists`, `getOfferId`, `getPagedWithCurrency`, `getPaged`.
+- **Steam**: `POST scrap` (role `admin_gfp`); `GET checkGameExistsByName`, `checkGameExists` (by game Id), `checkGameExistsBySteamId`, `getGameIdBySteamId`, `checkGameOfferExists`, `getOfferId`, `getPagedWithCurrency`, `getPaged`.
 - **InstantGaming**: `POST scrapIds`, `scrapRange`, `scrapUpTo` (role `admin_gfp`); `GET checkGameOfferExists`, `getOfferId`.
 - **UserData**: `GET userData`, `PUT saveOrUpdate` (`[Authorize]`, user Id taken from the `sub` claim).
 
@@ -67,7 +67,10 @@ Each worker is a separate process: `npm run steam` / `npm run instantgaming` (in
 - `utils/config.ts` — env config, Redis and RabbitMQ connections (top-level await).
 - `utils/orchestratorListener.ts` — queue assertion and consumption.
 - `utils/taskParser.ts` + `utils/types/entities/tasks.ts` — task normalization; accepts both PascalCase (from .NET) and camelCase.
-- `utils/offerFetcher.ts` — `fetchJson` (returns `HttpStatusError` instead of throwing), `fetchHTML`, `parseHtmlToDocument` (jsdom).
+- `utils/offerFetcher.ts` — `fetchJson`, `fetchHTML` (node-fetch, proxy via `HttpsProxyAgent`, timeout via `AbortSignal`), `parseHtmlToDocument` (jsdom). Both fetchers throw:
+  - `HttpStatusError` — HTTP error status, or transport failure mapped by `FetchFailureStatus` (504 timeout, 503 network error). Retried by the workers (429 triggers the cooldown).
+  - `WrongDataError` — response received but its content is invalid (malformed JSON, blank HTML, wrong platform, game not resolved). Not retried.
+- `steam/gameFetcher.ts` also throws `SkippedError` when there is nothing to create or update.
 - `backendUtils.ts` — HTTP helpers for backend lookups.
 - `utils/types/` — TypeScript mirrors of domain entities and type guards (`isGame`, `isGameOffer`).
 
@@ -76,7 +79,7 @@ Each worker is a separate process: `npm run steam` / `npm run instantgaming` (in
 - `steamWorker.ts` — splits a task into batches of `maxRequests` (200); writes results to `<key>:games` and `<key>:offers`.
 - `processSteamWorkerTask.ts` — processes IDs, then retries failed ones once; on HTTP 429 waits `cooldownMs` (5 min) and retries.
 - `gameFetcher.ts` — `store.steampowered.com/api/appdetails`. Returns a `Game` (with a nested offer) when the game must be created or updated, otherwise only a `GameOffer`.
-- `gameMetadataFetcher.ts` — SteamSpy (tags, genres, reviews). **At most one request per second; proxies are blocked.**
+- `gameMetadataFetcher.ts` — SteamSpy (tags, genres, reviews). **At most one request per second; proxies are blocked.** A metadata failure fails the whole game fetch so games are stored with complete data; a SteamSpy 429 triggers the same cooldown as the Steam API (assumption: its cooldown is shorter than Steam's).
 - Steam Store API limit: 200 requests, then a 5-minute cooldown.
 
 ### InstantGaming (`instantGaming/`)

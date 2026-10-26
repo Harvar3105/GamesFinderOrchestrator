@@ -119,8 +119,6 @@ public abstract class Repository<T> : IRepository<T> where T : Entity
     return await _collection.CountDocumentsAsync(_ => true);
   }
   
-  // FIXME: Pages are 1-based here, but SteamController accepts page = 0, which produces a negative
-  // Skip and a MongoDB error. Align the contract (validate page >= 1 or switch to 0-based).
   public virtual async Task<ICollection<T>?> GetPagedAsync(int page, int pageSize)
   {
     return await _collection

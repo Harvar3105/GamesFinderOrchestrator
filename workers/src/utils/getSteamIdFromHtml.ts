@@ -1,6 +1,7 @@
 import { getFirstSteamIdFromMediaSourceIG } from "./instantGaminghHelpers.js";
 import { fetchJson, parseHtmlToDocument } from "./offerFetcher.js";
 import { config } from "./config.js";
+import logger from "./logger.js";
 
 export type SteamAndGameIds = {
   steamId: number;
@@ -30,15 +31,16 @@ async function getIdsFromBackend(gameName: string): Promise<SteamAndGameIds | nu
   return {steamId: data.steamId, gameId: data.gameId};
 }
 
-// FIXME: Contract mismatch with SteamController.checkGameExists. The backend expects `getGame`
-// (not `getId`) and returns `{ exists, game }` where `game` is the game Id (not `gameId`).
-// As a result this always returns undefined and every InstantGaming offer whose Steam ID
-// was found in the page media is dropped in fetchInstantGamingOffer.
 async function getGameId(steamId: number): Promise<string | null> {
-  const url = config.backendUrl! + config.backendCheckGame! + `?steamId=${encodeURIComponent(steamId)}&getId=true`;
-  const data = await fetchJson({url: url, method: 'GET', timeoutMS: config.backendTimeoutMs});
-  if (!data || !data.exists) return null;
-  return data.gameId;
+  const url = config.backendUrl! + config.backendGetGameId! + `?steamId=${encodeURIComponent(steamId)}`;
+  try {
+    const data = await fetchJson({url: url, method: 'GET', timeoutMS: config.backendTimeoutMs});
+    if (!data || !data.id) return null;
+    return data.id;
+  } catch (err) {
+    logger.error("Could not get gameId.", err);
+  }
+  return null;
 }
 
 export function getVendorsGameNameFromHtml(html: string): string | null {

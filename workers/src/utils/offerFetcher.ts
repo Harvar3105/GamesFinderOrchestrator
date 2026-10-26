@@ -2,6 +2,7 @@ import { HttpsProxyAgent } from "https-proxy-agent";
 import logger from "./logger.js";
 import { config } from "./config.js";
 import { JSDOM } from 'jsdom';
+import fetch, { AbortError, FetchError } from 'node-fetch';
 
 export class HttpStatusError extends Error {
   status: number;
@@ -13,81 +14,99 @@ export class HttpStatusError extends Error {
     this.body = body;
   }
 }
+
+export class WrongDataError extends Error {
+  body?: string;
+  constructor(message: string, body?: string){
+    super(message);
+    this.name = 'WrongDataError';
+    this.body = body;
+  }
+}
+
 export type FetchParams = {
   url: string;
   proxy?: string;
   method?: string;
   timeoutMS?: number;
 };
-// FIXME: Global (native) fetch ignores the `agent` option, so the proxy is never used.
-// Use undici's ProxyAgent via `dispatcher`, or import node-fetch (already a dependency).
-export async function fetchJson(params: FetchParams): Promise<any | HttpStatusError> {
-  const options = params.proxy ? {
-    method: params.method ?? 'GET',
-    agent: new HttpsProxyAgent(params.proxy),
-    signal: AbortSignal.timeout(params.timeoutMS ?? config.backendTimeoutMs),
-    redirect: 'follow' as const
-  }
-  : {
-    method: params.method ?? 'GET',
-    signal: AbortSignal.timeout(params.timeoutMS ?? config.backendTimeoutMs),
-    redirect: 'follow' as const
+
+export const FetchFailureStatus = {
+  Timeout: 504,
+  NetworkError: 503,
+} as const;
+
+const timeoutSystemErrorCodes = new Set(['ETIMEDOUT', 'ESOCKETTIMEDOUT', 'UND_ERR_CONNECT_TIMEOUT']);
+
+function buildRequestOptions(timeoutMS: number, method: string = 'GET', proxy?: string) {
+  return {
+    method,
+    redirect: 'follow' as const,
+    signal: AbortSignal.timeout(timeoutMS),
+    ...(proxy && { agent: new HttpsProxyAgent(proxy) }),
   };
-  try {
-    const res = await fetch(params.url, options);
-
-    if (!res.ok) {
-      const body = await res.text().catch(() => undefined);
-      const error = new HttpStatusError(res.status, `HTTP ${res.status} ${res.statusText}`, body);
-      logger.warn(`Received ${res.status} from ${params.url}`, error);
-      return error;
-    }
-
-    try {
-      return await res.json();
-    } catch (parseErr) {
-      const error = new HttpStatusError(-2, `Failed to read or parse JSON from ${params.url}`);
-      logger.error(`❌Error reading/parsing JSON from ${params.url}`, parseErr);
-      return error;
-    }
-  } catch (err) {
-    const error = new HttpStatusError(-1, `Failed to fetch JSON from ${params.url}`);
-    logger.error(`❌Error fetching JSON from ${params.url}`, err);
-    return error;
-  }
 }
 
-// FIXME: Native fetch ignores both `agent` and `timeout`: no proxy is applied and requests
-// can hang indefinitely. Use `signal: AbortSignal.timeout(...)` as in fetchJson.
-// FIXME: The HttpStatusError thrown below is caught by the same try/catch and turned into null,
-// so callers never see the status code. Rate limits (429) and server errors are silently
-// skipped instead of being retried in processInstantGamingTaskIds.
-export async function fetchHTML(url: string, proxy?: string): Promise<string | null> {
-  const options = proxy ? {
-    method: 'GET',
-    agent: new HttpsProxyAgent(proxy),
-    timeout: config.backendTimeoutMs,
-    redirect: 'follow' as const
-  }
-  : {
-    method: 'GET',
-    timeout: config.backendTimeoutMs,
-    redirect: 'follow' as const
-  };
+function toHttpStatusError(err: unknown, url: string, timeoutMS: number): HttpStatusError {
+  if (err instanceof HttpStatusError) return err;
 
+  const isTimeout =
+    err instanceof AbortError ||
+    (err instanceof FetchError && timeoutSystemErrorCodes.has(err.code ?? ''));
+  if (isTimeout) {
+    return new HttpStatusError(FetchFailureStatus.Timeout, `Request to ${url} timed out after ${timeoutMS}ms`);
+  }
+
+  const reason = err instanceof Error ? err.message : String(err);
+  return new HttpStatusError(FetchFailureStatus.NetworkError, `Request to ${url} failed: ${reason}`);
+}
+
+export async function fetchJson(params: FetchParams): Promise<any> {
+  const timeoutMS = params.timeoutMS ?? config.backendTimeoutMs;
+  var res = null;
+  var body = null;
   try {
-    const res = await fetch(url, options);
+    res = await fetch(params.url, buildRequestOptions(timeoutMS, params.method, params.proxy));
 
     if (!res.ok) {
       const body = await res.text().catch(() => undefined);
-      logger.warn(`Received ${res.status} from ${url}, throwing HttpStatusError`);
       throw new HttpStatusError(res.status, `HTTP ${res.status} ${res.statusText}`, body);
     }
-    return await res.text();
+    body = await res.text();
   } catch (err) {
-    logger.error(`❌Error fetching HTML from ${url}`, err);
-    return null;
+    const error = toHttpStatusError(err, params.url, timeoutMS);
+    logger.error(`❌Error fetching JSON from ${params.url}: ${error.status} ${error.message}`);
+    throw error;
   }
+
+  try {
+    return JSON.parse(body);
+  } catch (parseErr) {
+    logger.error(`❌Error parsing JSON from ${params.url}`, parseErr);
+    throw new WrongDataError(`Invalid JSON received from ${params.url}`, body);
+  }
+
+}
+
+export async function fetchHTML(url: string, proxy?: string): Promise<string> {
+  const timeoutMS = config.backendTimeoutMs;
+  let html: string;
+  try {
+    const res = await fetch(url, buildRequestOptions(timeoutMS, 'GET', proxy));
+
+    if (!res.ok) {
+      const body = await res.text().catch(() => undefined);
+      throw new HttpStatusError(res.status, `Could not fetch HTML from ${url}.`, body);
+    }
+    html = await res.text();
+  } catch (err) {
+    const error = toHttpStatusError(err, url, timeoutMS);
+    logger.error(`❌Error fetching HTML from ${url}: ${error.status} ${error.message}`);
+    throw error;
+  }
+
+  if (html.trim().length === 0) throw new WrongDataError("Recieved html is blank!");
+  return html;
 }
 
 export function parseHtmlToDocument(html: string): Document {
