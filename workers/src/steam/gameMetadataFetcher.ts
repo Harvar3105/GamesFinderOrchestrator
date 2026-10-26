@@ -15,7 +15,7 @@ export async function fetchGameStoreMetadata(id: number): Promise<null | HttpSta
 
   // FIXME: The request delay setting is used as the request timeout (1s by default), so slow
   // SteamSpy responses are aborted. Use a dedicated timeout setting (e.g. steamApiTimeoutMs).
-  const data = await fetchJson({url: url, timeoutMS: config.steamTagsAndGenresRequestDelayMs});
+  const data = await fetchJson({url: url, timeoutMS: config.steamTagsAndGenresTimeoutMS});
   if (data instanceof HttpStatusError) return data;
   if (!data.name) return null;
 
