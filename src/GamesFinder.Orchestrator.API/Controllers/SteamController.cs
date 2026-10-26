@@ -69,12 +69,12 @@ public class SteamController : ControllerBase
   }
 
   [HttpGet("checkGameExists")]
-  public async Task<IActionResult> CheckExistingSteamIdAsync(int steamId, bool getGame = false)
+  public async Task<IActionResult> CheckExistingSteamIdAsync(int steamId, bool getGameId = false)
   {
     try
     {
       var exists = await _gamesRepo.ExistsBySteamIdAsync(steamId);
-      if (getGame && exists)
+      if (getGameId && exists)
       {
         var game = await _gamesRepo.GetBySteamIdAsync(steamId);
         return Ok(new { Exists = true, Game = game!.Id });
