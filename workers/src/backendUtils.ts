@@ -2,26 +2,23 @@ import { config } from "./utils/config.js";
 import logger from "./utils/logger.js";
 import { Game } from "./utils/types/entities/game.js";
 
-export async function checkGameExists(gameId: number, getGame: boolean = false): Promise<boolean | null | Game> {
+export type CheckGameExistsPayload = {
+
+}
+
+export async function checkGameExists(gameId: number): Promise<boolean> {
   const url = new URL(config.backendUrl! + config.backendCheckGame!);
   url.searchParams.append('steamId', gameId.toString());
-  url.searchParams.append('getGame', getGame.toString());
 
   const response = await processBackendRequest(url, 'GET');
-  if (!response) return null;
+  if (!response) return false;
 
   try {
     const data = await response.json();
-    if (getGame) {
-      // FIXME: The backend returns the game Id (Guid string) in `game`, not a Game object.
-      // Either change the return type to string or make the endpoint return the full game.
-      return data.game as Game;
-    } else {
-      return data.exists as boolean;
-    }
+    return data.exists as boolean;
   } catch (err) {
     logger.error(`💥Error parsing JSON response when checking game existence for Steam ID ${gameId}:`, err);
-    return null;
+    return false;
   }
 }
 

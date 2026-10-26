@@ -69,21 +69,16 @@ public class SteamController : ControllerBase
   }
 
   [HttpGet("checkGameExists")]
-  public async Task<IActionResult> CheckExistingSteamIdAsync(int steamId, bool getGameId = false)
+  public async Task<IActionResult> CheckGameExists(string gameId)
   {
     try
     {
-      var exists = await _gamesRepo.ExistsBySteamIdAsync(steamId);
-      if (getGameId && exists)
-      {
-        var game = await _gamesRepo.GetBySteamIdAsync(steamId);
-        return Ok(new { Exists = true, Game = game!.Id });
-      }
+      var exists = await _gamesRepo.ExistsAsync(Guid.Parse(gameId));
       return Ok(new {Exists = exists});
     }
     catch (Exception ex)
     {
-      _logger.LogError(ex, $"Error checking existence of Steam ID: {steamId}");
+      _logger.LogError(ex, $"Error checking existence of Steam ID: {gameId}");
       return Problem("An error occurred while processing your request.");
     }
   }

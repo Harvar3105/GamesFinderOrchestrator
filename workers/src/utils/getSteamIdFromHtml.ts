@@ -31,9 +31,9 @@ async function getIdsFromBackend(gameName: string): Promise<SteamAndGameIds | nu
 }
 
 async function getGameId(steamId: number): Promise<string | null> {
-  const url = config.backendUrl! + config.backendCheckGame! + `?steamId=${encodeURIComponent(steamId)}&getGameId=true`;
+  const url = config.backendUrl! + config.backendGetGameId! + `?steamId=${encodeURIComponent(steamId)}`;
   const data = await fetchJson({url: url, method: 'GET', timeoutMS: config.backendTimeoutMs});
-  if (!data || !data.exists) return null;
+  if (!data || !data.Id) return null;
   return data.gameId;
 }
 
