@@ -5,12 +5,18 @@ import { eRegion } from "../utils/types/enums/eRegion.js";
 import { eVendor } from "../utils/types/enums/eVendor.js";
 import { GameOffer } from "../utils/types/entities/gameOffer.js";
 import logger from "../utils/logger.js";
-import { fetchJson, HttpStatusError } from "../utils/offerFetcher.js";
+import { fetchJson, HttpStatusError, WrongDataError } from "../utils/offerFetcher.js";
 import { checkGameExists, checkSteamOfferExists, getGameIdBySteamIdAsync, getSteamOfferId } from "../backendUtils.js";
 import { fetchGameStoreMetadata } from "./gameMetadataFetcher.js";
 import { config } from "../utils/config.js";
 
-export async function fetchSteamGame(id: number, updateGame: boolean, updateDeal: boolean, region: eRegion = eRegion.US ): Promise<Game | GameOffer | null | HttpStatusError> {
+export class SkippedError extends Error {
+  constructor(){
+    super("Skipped");
+  }
+}
+
+export async function fetchSteamGame(id: number, updateGame: boolean, updateDeal: boolean, region: eRegion = eRegion.US ): Promise<Game | GameOffer> {
   const url = `https://store.steampowered.com/api/appdetails?appids=${id}&cc=${region}&l=en`;
 
   let offerExists = await checkSteamOfferExists(id);
@@ -28,14 +34,10 @@ export async function fetchSteamGame(id: number, updateGame: boolean, updateDeal
   if (offerExists) offerId = await getSteamOfferId({gameId: gameId!})?? await getSteamOfferId({vendorId: id.toString()});
   else offerId = v4();
 
-  // FIXME: "Nothing to update" is reported as an error. processSteamWorkerIds adds such IDs to
-  // failedIds, retries them and logs warnings. Return a distinct "skipped" result instead.
-  if (gameExists && offerExists && !updateGame && !updateDeal) return new HttpStatusError(0, "");
+  if (gameExists && offerExists && !updateGame && !updateDeal) throw new SkippedError();
   
   const data = await fetchJson({url: url, timeoutMS: config.steamApiTimeoutMs});
-  if (data instanceof HttpStatusError) return data;
-
-  if (!data?.[id]?.success) return null;
+  if (!data?.[id]?.success) throw new WrongDataError(`No data were returned. ${data?.[id]}`);
 
   const game = data[id].data;
 
@@ -97,5 +99,6 @@ export async function fetchSteamGame(id: number, updateGame: boolean, updateDeal
     storeMetadata: storeMetadata
     };
   }
-  return offers ? offers[0] : null;
+  if (offers) return offers[0];
+  throw new SkippedError();
 }
