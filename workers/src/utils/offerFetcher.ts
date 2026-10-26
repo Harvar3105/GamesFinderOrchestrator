@@ -13,6 +13,16 @@ export class HttpStatusError extends Error {
     this.body = body;
   }
 }
+
+export class WrongDataError extends Error {
+  body?: string;
+  constructor(message: string, body?: string){
+    super(message);
+    this.name = 'WrongDataError';
+    this.body = body;
+  }
+}
+
 export type FetchParams = {
   url: string;
   proxy?: string;
@@ -59,10 +69,7 @@ export async function fetchJson(params: FetchParams): Promise<any | HttpStatusEr
 
 // FIXME: Native fetch ignores both `agent` and `timeout`: no proxy is applied and requests
 // can hang indefinitely. Use `signal: AbortSignal.timeout(...)` as in fetchJson.
-// FIXME: The HttpStatusError thrown below is caught by the same try/catch and turned into null,
-// so callers never see the status code. Rate limits (429) and server errors are silently
-// skipped instead of being retried in processInstantGamingTaskIds.
-export async function fetchHTML(url: string, proxy?: string): Promise<string | null> {
+export async function fetchHTML(url: string, proxy?: string): Promise<string> {
   const options = proxy ? {
     method: 'GET',
     agent: new HttpsProxyAgent(proxy),
@@ -75,19 +82,16 @@ export async function fetchHTML(url: string, proxy?: string): Promise<string | n
     redirect: 'follow' as const
   };
 
-  try {
-    const res = await fetch(url, options);
+  const res = await fetch(url, options);
 
-    if (!res.ok) {
-      const body = await res.text().catch(() => undefined);
-      logger.warn(`Received ${res.status} from ${url}, throwing HttpStatusError`);
-      throw new HttpStatusError(res.status, `HTTP ${res.status} ${res.statusText}`, body);
-    }
-    return await res.text();
-  } catch (err) {
-    logger.error(`❌Error fetching HTML from ${url}`, err);
-    return null;
+  if (!res.ok) {
+    const body = await res.text().catch(() => undefined);
+    logger.error(`❌Received ${res.status} from ${url}.`, body);
+    throw new HttpStatusError(res.status, `Could not fetch HTML from ${url}.`, body);
   }
+  const html = await res.text();
+  if (html.trim().length === 0) throw new WrongDataError("Recieved html is blank!");
+  return html;
 }
 
 export function parseHtmlToDocument(html: string): Document {

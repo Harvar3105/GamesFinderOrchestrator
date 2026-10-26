@@ -1,5 +1,5 @@
 import { v4 } from "uuid";
-import { fetchHTML, HttpStatusError, parseHtmlToDocument } from "../utils/offerFetcher.js";
+import { fetchHTML, HttpStatusError, parseHtmlToDocument, WrongDataError } from "../utils/offerFetcher.js";
 import { GameOffer } from "../utils/types/entities/gameOffer.js";
 import { eCurrency } from "../utils/types/enums/eCurrency.js";
 import { checkIfPCGameIG, getCanonicalIGurl } from "../utils/instantGaminghHelpers.js";
@@ -9,22 +9,20 @@ import logger from "../utils/logger.js";
 import { checkIgOfferExists, getIgOfferId } from "../backendUtils.js";
 import getSteamAndGameIdsFromHtml, { getVendorsGameNameFromHtml } from "../utils/getSteamIdFromHtml.js";
 
-export async function fetchInstantGamingOffer(id: number, currency?: eCurrency, proxy?: string): Promise<GameOffer | null | HttpStatusError> {
+export async function fetchInstantGamingOffer(id: number, currency?: eCurrency, proxy?: string): Promise<GameOffer> {
   const url = `https://www.instant-gaming.com/${encodeURIComponent(id)}-/?currency=${encodeURIComponent(currency?.toString().toUpperCase() || 'EUR')}`;
-  
   const data = await fetchHTML(url);
-  if (!data) return null;
   
   //TODO: Consider to use multiplatform?
   if (checkIfPCGameIG(data) === false) {
     logger.info(`⛔ Skipping offer ${url} because it is not a PC game`);
-    return null;
+    throw new WrongDataError("Wrong platform recieved.");
   }
   
   const steamAndGameIds = await getSteamAndGameIdsFromHtml(data);
   if (!steamAndGameIds || !steamAndGameIds.gameId) {
     logger.error(`❌Could not extract gameId from HTML of ${url}`);
-    return null;
+    throw new WrongDataError("Could not get gameId from html and backend.");
   }
 
   let offerExists = await checkIgOfferExists(id.toString());

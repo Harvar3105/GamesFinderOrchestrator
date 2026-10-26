@@ -1,6 +1,6 @@
 import { config } from "../utils/config.js";
 import logger from "../utils/logger.js";
-import { HttpStatusError } from "../utils/offerFetcher.js";
+import { HttpStatusError, WrongDataError } from "../utils/offerFetcher.js";
 import { GameOffer } from "../utils/types/entities/gameOffer.js";
 import { InstantGamingTask } from "../utils/types/entities/tasks.js";
 import { eCurrency } from "../utils/types/enums/eCurrency.js";
@@ -36,14 +36,14 @@ export async function processInstantGamingTaskIds(ids: number[], taskId: string,
   const unprocessed = [];
   const processed = [];
   for (const offerId of ids){
-    var offer = await fetchInstantGamingOffer(offerId, currency, proxy);
-    // FIXME: Never true — fetchHTML swallows HTTP errors and returns null (see offerFetcher.ts),
-    // so failed IDs are never collected and the retry pass in processInstantGamingTask never runs.
-    if (offer instanceof HttpStatusError) {
-      unprocessed.push({ id: offerId, reason: offer });
+    try {
+      processed.push(await fetchInstantGamingOffer(offerId, currency, proxy));
+    } catch (err) {
+      if (err instanceof HttpStatusError) {
+        unprocessed.push({ id: offerId, reason: err });
+      }
       continue;
     }
-    if (offer) processed.push(offer);
   }
 
   return { unprocessed, processed };
