@@ -34,7 +34,7 @@ async function getGameId(steamId: number): Promise<string | null> {
   const url = config.backendUrl! + config.backendGetGameId! + `?steamId=${encodeURIComponent(steamId)}`;
   const data = await fetchJson({url: url, method: 'GET', timeoutMS: config.backendTimeoutMs});
   if (!data || !data.Id) return null;
-  return data.gameId;
+  return data.Id;
 }
 
 export function getVendorsGameNameFromHtml(html: string): string | null {
