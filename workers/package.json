@@ -9,7 +9,9 @@
     "steam": "node dist/steam/steamWorker.js",
     "steam:watch": "nodemon -L --watch dist/steam --ext js --exec node dist/steam/steamWorker.js",
     "instantgaming": "node dist/instantGaming/instantGamingWorker.js",
-    "instantgaming:watch": "nodemon -L --watch dist/instantGaming --ext js --exec node dist/instantGaming/instantGamingWorker.js"
+    "instantgaming:watch": "nodemon -L --watch dist/instantGaming --ext js --exec node dist/instantGaming/instantGamingWorker.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "amqplib": "^0.10.9",
@@ -29,7 +31,8 @@
     "@types/winston": "^2.4.4",
     "nodemon": "^3.1.11",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.7"
   },
   "keywords": [],
   "author": "",

@@ -41,6 +41,7 @@ export function findPriceElementIG(root: Document | Element | null | undefined):
 
     const priceMatch = priceText.match(/\d+(?:\.\d+)?/);
     const value = priceMatch ? Number(priceMatch[0]) : null;
+    // FIXME: a zero price (free product) is treated as "no price" by this falsy check.
     if (!value) return null;
     
     return { currency: currency, price: value };
@@ -62,6 +63,7 @@ export function getCanonicalIGurl(root: Document | Element | null | undefined): 
 
 export function checkIfPCGameIG(html: string): boolean {
   var name = getVendorsGameNameFromHtml(html);
+  // FIXME: "pc" is matched as a substring, so non-PC titles such as "Upcycle ... - Xbox One" pass the check.
   if (name?.toLocaleLowerCase().includes("pc")) return true;
   return false;
 }

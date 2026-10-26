@@ -1,3 +1,4 @@
+import { Channel, ConsumeMessage } from "amqplib";
 import { rabbitConn } from "../utils/config.js";
 import { config, redis } from "../utils/config.js";
 import logger from "../utils/logger.js";
@@ -27,22 +28,32 @@ async function startInstantGamingWorker() {
         return;
       }
 
-      await redis.rpush(task.redisResultKey, ...data.map(r => JSON.stringify(r)));
-      logger.info(`ℹ️Just added ${data.length} gameOffers to redis from InstantGaming.}`);
+      try {
+        await redis.rpush(task.redisResultKey, ...data.map(r => JSON.stringify(r)));
+        logger.info(`ℹ️Just added ${data.length} gameOffers to redis from InstantGaming.}`);
 
-      await channel.sendToQueue(
-        config.instantGamingResults!,
-        Buffer.from(JSON.stringify({
-          taskId: task.taskId,
-          redisResultKey: task.redisResultKey,
-        })),
-        { persistent: true }
-      );
-    
-      channel.ack(msg);
-      logger.info(`✅InstantGaming task ${task.taskId} done, created ${data.length} offers.`);
+        await finishTask(channel, msg, task);
+        logger.info(`✅InstantGaming task ${task.taskId} done, created ${data.length} offers.`);
+      } catch (err) {
+        logger.crit("Could not write to redis. Check logs!", err);
+        channel.nack(msg);
+      }
     }
   )
 }
 
+async function finishTask(channel: Channel, msg: ConsumeMessage, task: InstantGamingTask){
+  await channel.sendToQueue(
+    config.instantGamingResults!,
+    Buffer.from(JSON.stringify({
+      taskId: task.taskId,
+      redisResultKey: task.redisResultKey,
+    })),
+    { persistent: true }
+  );
+
+  channel.ack(msg);
+}
+
+// FIXME: winston's default (npm) levels have no "crit", so logger.crit is undefined and startup errors are not logged.
 startInstantGamingWorker().catch(logger.crit);

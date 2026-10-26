@@ -95,7 +95,14 @@ Each worker is a separate process: `npm run steam` / `npm run instantgaming` (in
 - Dev: `docker-compose.Development.yml` starts rabbitmq, redis, steam-worker, instantgaming-worker (×5) and gamesfinder-api (`dotnet watch`, port 8081→8080). The `shared-network` network is external.
 - **MongoDB is not part of compose**; it is reached via `MongoDb:ConnectionString`.
 - RabbitMQ queues: `steam-requests`, `steam-results`, `instantGaming-requests`, `instantGaming-results` (`definitions.json`, not in git).
-- There are no tests in the repository.
+
+## Tests
+
+- Backend: no tests yet.
+- Workers: Vitest (`npm test`, `npm run test:watch` in `workers/`). Config in `workers/vitest.config.ts`; tests live in `workers/tests/` and are not compiled by `tsc`.
+  - `tests/setup.ts` replaces `utils/config.js` (it connects to RabbitMQ/Redis on import) with `tests/mocks/config.ts` and silences the logger via `tests/mocks/logger.ts`. No test touches the network.
+  - `tests/fixtures/instantGamingHtml.ts` builds InstantGaming product pages for jsdom.
+  - `tests/instantGaming/` covers the helpers, game linking, the offer fetcher, the retry logic (fake timers) and the queue message handler. Tests named "(current behavior)" pin known bugs that are marked with `FIXME` in the source.
 
 ## Conventions
 
