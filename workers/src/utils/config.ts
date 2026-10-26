@@ -29,9 +29,6 @@ export const config = {
 
   instantGamingRequests: process.env.RabbitMQ__InstantGamingRequestsQueue,
   instantGamingResults: process.env.RabbitMQ__InstantGamingResultsQueue,
-  // TODO: Unused setting (also typed string | number). Decide whether to implement skipping
-  // the first N InstantGaming IDs or remove it.
-  instantGamingSkipFirst: process.env.INSTANT_GAMING_SKIP_FIRST || 10,
 
   backendUrl: process.env.BACKEND_URL,
   backendCheckGame: process.env.BACKEND_CHECK_GAME,
