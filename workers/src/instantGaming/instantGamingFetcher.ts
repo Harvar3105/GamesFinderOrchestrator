@@ -11,7 +11,7 @@ import getSteamAndGameIdsFromHtml, { getVendorsGameNameFromHtml } from "../utils
 
 export async function fetchInstantGamingOffer(id: number, currency?: eCurrency, proxy?: string): Promise<GameOffer> {
   const url = `https://www.instant-gaming.com/${encodeURIComponent(id)}-/?currency=${encodeURIComponent(currency?.toString().toUpperCase() || 'EUR')}`;
-  const data = await fetchHTML(url);
+  const data = await fetchHTML(url, proxy);
   
   //TODO: Consider to use multiplatform?
   if (checkIfPCGameIG(data) === false) {

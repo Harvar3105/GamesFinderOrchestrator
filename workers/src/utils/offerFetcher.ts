@@ -61,30 +61,31 @@ function toHttpStatusError(err: unknown, url: string, timeoutMS: number): HttpSt
   return new HttpStatusError(FetchFailureStatus.NetworkError, `Request to ${url} failed: ${reason}`);
 }
 
-export async function fetchJson(params: FetchParams): Promise<any | HttpStatusError | WrongDataError> {
+export async function fetchJson(params: FetchParams): Promise<any> {
   const timeoutMS = params.timeoutMS ?? config.backendTimeoutMs;
+  var res = null;
+  var body = null;
   try {
-    const res = await fetch(params.url, buildRequestOptions(timeoutMS, params.method, params.proxy));
+    res = await fetch(params.url, buildRequestOptions(timeoutMS, params.method, params.proxy));
 
     if (!res.ok) {
       const body = await res.text().catch(() => undefined);
-      const error = new HttpStatusError(res.status, `HTTP ${res.status} ${res.statusText}`, body);
-      logger.warn(`Received ${res.status} from ${params.url}`, error);
-      return error;
+      throw new HttpStatusError(res.status, `HTTP ${res.status} ${res.statusText}`, body);
     }
-
-    const body = await res.text();
-    try {
-      return JSON.parse(body);
-    } catch (parseErr) {
-      logger.error(`❌Error parsing JSON from ${params.url}`, parseErr);
-      return new WrongDataError(`Invalid JSON received from ${params.url}`, body);
-    }
+    body = await res.text();
   } catch (err) {
     const error = toHttpStatusError(err, params.url, timeoutMS);
     logger.error(`❌Error fetching JSON from ${params.url}: ${error.status} ${error.message}`);
-    return error;
+    throw error;
   }
+
+  try {
+    return JSON.parse(body);
+  } catch (parseErr) {
+    logger.error(`❌Error parsing JSON from ${params.url}`, parseErr);
+    throw new WrongDataError(`Invalid JSON received from ${params.url}`, body);
+  }
+
 }
 
 export async function fetchHTML(url: string, proxy?: string): Promise<string> {

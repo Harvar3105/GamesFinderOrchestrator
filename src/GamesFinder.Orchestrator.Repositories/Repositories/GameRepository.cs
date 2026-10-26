@@ -148,7 +148,7 @@ public class GameRepository : Repository<Game>, IGameRepository
         filter = Builders<Game>.Filter.Regex(g => g.Name, new MongoDB.Bson.BsonRegularExpression(filterDto.Query, "i"));
       }
 
-      var skip = filterDto.Page * filterDto.PageSize;
+      var skip = (filterDto.Page - 1) * filterDto.PageSize;
       
       var query_builder = _collection.Find(filter).Skip(skip).Limit(filterDto.PageSize);
 

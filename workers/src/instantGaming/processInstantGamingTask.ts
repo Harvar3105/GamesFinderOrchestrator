@@ -8,13 +8,13 @@ import { FailedId } from "../utils/types/FailedId.js";
 import { fetchInstantGamingOffer } from "./instantGamingFetcher.js";
 
 export default async function processInstantGamingTask(task: InstantGamingTask, msg: any): Promise<GameOffer[]> {
-  const { unprocessed, processed } = await processInstantGamingTaskIds(task.vendorsIds, task.taskId, task.currency, task.proxy);
+  const { unprocessed, processed } = await processInstantGamingTaskIds(task.vendorsIds, task.currency, task.proxy);
   let totalProcessed = processed;
   let totalUnprocessed = unprocessed;
 
   if (unprocessed.length > 0) {
     await new Promise(res => setTimeout(res, config.cooldownMs));
-    const { unprocessed: unprocessed2, processed: processed2 } = await processInstantGamingTaskIds(unprocessed.map(un => un.id), task.taskId, task.currency, task.proxy);
+    const { unprocessed: unprocessed2, processed: processed2 } = await processInstantGamingTaskIds(unprocessed.map(un => un.id), task.currency, task.proxy);
     totalProcessed = [...totalProcessed, ...processed2];
     totalUnprocessed = unprocessed2;
   }
@@ -32,7 +32,7 @@ export type ProcessInstantGamingTaskResult = {
   processed: GameOffer[];
 };
 
-export async function processInstantGamingTaskIds(ids: number[], taskId: string, currency?: eCurrency, proxy?: string): Promise<ProcessInstantGamingTaskResult> {
+export async function processInstantGamingTaskIds(ids: number[], currency?: eCurrency, proxy?: string): Promise<ProcessInstantGamingTaskResult> {
   const unprocessed = [];
   const processed = [];
   for (const offerId of ids){

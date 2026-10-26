@@ -1,6 +1,7 @@
 import { getFirstSteamIdFromMediaSourceIG } from "./instantGaminghHelpers.js";
 import { fetchJson, parseHtmlToDocument } from "./offerFetcher.js";
 import { config } from "./config.js";
+import logger from "./logger.js";
 
 export type SteamAndGameIds = {
   steamId: number;
@@ -32,9 +33,14 @@ async function getIdsFromBackend(gameName: string): Promise<SteamAndGameIds | nu
 
 async function getGameId(steamId: number): Promise<string | null> {
   const url = config.backendUrl! + config.backendGetGameId! + `?steamId=${encodeURIComponent(steamId)}`;
-  const data = await fetchJson({url: url, method: 'GET', timeoutMS: config.backendTimeoutMs});
-  if (!data || !data.Id) return null;
-  return data.Id;
+  try {
+    const data = await fetchJson({url: url, method: 'GET', timeoutMS: config.backendTimeoutMs});
+    if (!data || !data.id) return null;
+    return data.id;
+  } catch (err) {
+    logger.error("Could not get gameId.", err);
+  }
+  return null;
 }
 
 export function getVendorsGameNameFromHtml(html: string): string | null {

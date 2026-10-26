@@ -51,7 +51,6 @@ export async function processSteamWorkerIds(ids: number[], updateExistingGames: 
     try {
       callsCounter++;
       fetchResult = await fetchSteamGame(id, updateExistingGames, updateExistingDeals);
-      await new Promise(res => setTimeout(res, config.steamTagsAndGenresRequestDelayMs));
     } catch (err) {
       if (err instanceof HttpStatusError && err.status === 429) {
         logger.info(`⌚Rate limited while fetching game ${id}. Waiting for ${config.cooldownMs}ms before retrying...`);
@@ -59,7 +58,6 @@ export async function processSteamWorkerIds(ids: number[], updateExistingGames: 
         callsCounter++;
         try {
           fetchResult = await fetchSteamGame(id, updateExistingGames, updateExistingDeals);
-          await new Promise(res => setTimeout(res, config.steamTagsAndGenresRequestDelayMs));
         } catch (err) {
           if (err instanceof HttpStatusError) {
             logger.error(err.message);
@@ -74,8 +72,12 @@ export async function processSteamWorkerIds(ids: number[], updateExistingGames: 
       } else if (err instanceof WrongDataError || err instanceof SkippedError) {
         logger.error(err.message);
         continue;
+      } else {
+        logger.error("Unexpected error occured!", err);
+        continue;
       }
     }
+    await new Promise(res => setTimeout(res, config.steamTagsAndGenresRequestDelayMs));
 
     if (isGame(fetchResult)) games.push(fetchResult);
     else if (isGameOffer(fetchResult)) offers.push(fetchResult);

@@ -6,7 +6,7 @@ import { eVendor } from "../utils/types/enums/eVendor.js";
 import { GameOffer } from "../utils/types/entities/gameOffer.js";
 import logger from "../utils/logger.js";
 import { fetchJson, HttpStatusError, WrongDataError } from "../utils/offerFetcher.js";
-import { checkGameExists, checkSteamOfferExists, getGameIdBySteamIdAsync, getSteamOfferId } from "../backendUtils.js";
+import { checkGameExistsBySteamId, checkSteamOfferExists, getGameIdBySteamIdAsync, getSteamOfferId } from "../backendUtils.js";
 import { fetchGameStoreMetadata } from "./gameMetadataFetcher.js";
 import { config } from "../utils/config.js";
 
@@ -20,7 +20,7 @@ export async function fetchSteamGame(id: number, updateGame: boolean, updateDeal
   const url = `https://store.steampowered.com/api/appdetails?appids=${id}&cc=${region}&l=en`;
 
   let offerExists = await checkSteamOfferExists(id);
-  let gameExists = await checkGameExists(id);
+  let gameExists = await checkGameExistsBySteamId(id);
 
   let gameId;
   if (gameExists) {
@@ -75,11 +75,7 @@ export async function fetchSteamGame(id: number, updateGame: boolean, updateDeal
   }
 
   if (!gameExists || (gameExists && updateGame)) {
-    let storeMetadata = await fetchGameStoreMetadata(id);
-    if (storeMetadata instanceof HttpStatusError) {
-      logger.error(`💥Error fetching metadata for game ID ${id}:`, storeMetadata);
-      storeMetadata = null;
-    }
+    const storeMetadata = await fetchGameStoreMetadata(id);
 
     return {
     id: gameId!,
