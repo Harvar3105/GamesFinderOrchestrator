@@ -76,7 +76,7 @@ public class InstantGamingController : ControllerBase
   {
     try
     {
-      var exists = await _offersRepo.ExistsByVendorsIdAsync(vendorId);
+      var exists = await _offersRepo.ExistsByVendorsIdAsync(vendorId, EVendor.InstantGaming);
       return Ok(new { Exists = exists });
     }
     catch (Exception ex)

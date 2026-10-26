@@ -8,9 +8,9 @@ public interface IGameOfferRepository : IRepository<GameOffer>
 	Task<ICollection<GameOffer>?> GetByGameIdAsync(Guid gameId);
 	Task<Dictionary<Guid, List<GameOffer>>?> GetByGameIdManyAsync(IEnumerable<Guid> gameIds);
 	Task<ICollection<GameOffer>?> GetByVendorAsync(EVendor vendor);
-	Task<GameOffer?> GetByVendorsIdAsync(string vendorsGameId);
-	Task<Guid?> GetOfferIdByVendorsIdAsync(string vendorsGameId);
-	Task<bool> ExistsByVendorsIdAsync(string vendorsId);
+	Task<GameOffer?> GetByVendorsIdAsync(string vendorsGameId, EVendor vendor);
+	Task<Guid?> GetOfferIdByVendorsIdAsync(string vendorsGameId, EVendor vendor);
+	Task<bool> ExistsByVendorsIdAsync(string vendorsGameId, EVendor vendor);
 	Task<long> DeleteByGameIdAsync(Guid gameId);
 	Task<Guid?> GetIdByGameIdAsync(Guid gameId, EVendor vendor);
 	Task<Guid?> GetIdByVendorsGameIdAsync(string vendorsGameId, EVendor vendor);

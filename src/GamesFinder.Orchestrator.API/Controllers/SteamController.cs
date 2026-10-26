@@ -109,7 +109,7 @@ public class SteamController : ControllerBase
   {
     try
     {
-      var exists = await _offersRepo.ExistsByVendorsIdAsync(steamId.ToString());
+      var exists = await _offersRepo.ExistsByVendorsIdAsync(steamId.ToString(), EVendor.Steam);
       return Ok(new { Exists = exists });
     }
     catch (Exception ex)

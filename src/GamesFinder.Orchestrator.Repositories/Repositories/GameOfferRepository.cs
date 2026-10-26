@@ -20,13 +20,10 @@ public class GameOfferRepository : Repository<GameOffer>, IGameOfferRepository
       .ContinueWith(task => task.Result.DeletedCount);
   }
 
-  // FIXME: Not filtered by vendor. A Steam app ID and an InstantGaming product ID with the same
-  // number collide, so an offer may be reported as existing when it belongs to another vendor.
-  // Add an EVendor parameter (used by SteamController and InstantGamingController).
-  public async Task<bool> ExistsByVendorsIdAsync(string vendorsId)
+  public async Task<bool> ExistsByVendorsIdAsync(string vendorsGameId, EVendor vendor)
   {
     return await _collection
-      .Find(offer => offer.VendorsGameId.Equals(vendorsId, StringComparison.OrdinalIgnoreCase))
+      .Find(offer => offer.VendorsGameId.Equals(vendorsGameId, StringComparison.OrdinalIgnoreCase) && offer.Vendor == vendor)
       .AnyAsync();
   }
 
@@ -58,10 +55,10 @@ public class GameOfferRepository : Repository<GameOffer>, IGameOfferRepository
     return grouped;
   }
 
-  public async Task<GameOffer?> GetByVendorsIdAsync(string vendorsGameId)
+  public async Task<GameOffer?> GetByVendorsIdAsync(string vendorsGameId, EVendor vendor)
   {
     return await _collection
-      .Find(g => g.VendorsGameId.Equals(vendorsGameId, StringComparison.OrdinalIgnoreCase))
+      .Find(offer => offer.VendorsGameId.Equals(vendorsGameId, StringComparison.OrdinalIgnoreCase) && offer.Vendor == vendor)
       .FirstOrDefaultAsync();
   }
 
@@ -88,10 +85,10 @@ public class GameOfferRepository : Repository<GameOffer>, IGameOfferRepository
       .FirstOrDefaultAsync();
   }
 
-  public async Task<Guid?> GetOfferIdByVendorsIdAsync(string vendorsGameId)
+  public async Task<Guid?> GetOfferIdByVendorsIdAsync(string vendorsGameId, EVendor vendor)
   {
     var id = await _collection
-      .Find(g => g.VendorsGameId.Equals(vendorsGameId, StringComparison.OrdinalIgnoreCase))
+      .Find(offer => offer.VendorsGameId.Equals(vendorsGameId, StringComparison.OrdinalIgnoreCase) && offer.Vendor == vendor)
       .Project(offer => offer.Id)
       .FirstOrDefaultAsync();
     return id == Guid.Empty ? null : id;
