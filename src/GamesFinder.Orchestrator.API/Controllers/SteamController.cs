@@ -189,7 +189,7 @@ public class SteamController : ControllerBase
 
   [HttpGet("getPaged")]
   public async Task<IActionResult> GetPaged(int page, int pageSize){
-    if (pageSize <= 0 || page < 0) return BadRequest("⚠️Invalid data provided");
+    if (pageSize <= 0 || page < 1) return BadRequest("⚠️Invalid data provided");
 
     var games = await _gamesRepo.GetPagedAsync(page, pageSize);
     var totalGamesCount = await _gamesRepo.GetTotalGamesCountAsync();
