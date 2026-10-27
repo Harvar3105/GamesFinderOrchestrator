@@ -2,7 +2,12 @@
 
 public enum ESort
 {
-	None,
-	Ascending,
-	Descending,
+	newest,
+	oldest,
+	newestUpdated,
+	oldestUpdated,
+	name,
+	nameReversed,
+	priceAsc,
+	priceDesc,
 }

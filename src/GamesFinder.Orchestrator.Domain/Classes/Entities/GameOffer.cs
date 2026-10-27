@@ -3,6 +3,7 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 namespace GamesFinder.Orchestrator.Domain.Classes.Entities;
 
+// TODO: Save new offers instead of updating? Will provide a history
 public class GameOffer : Entity
 {
   [BsonElement("game_id")]

@@ -15,6 +15,7 @@ public interface IGameOfferRepository : IRepository<GameOffer>
 	Task<Guid?> GetIdByGameIdAsync(Guid gameId, EVendor vendor);
 	Task<Guid?> GetIdByVendorsGameIdAsync(string vendorsGameId, EVendor vendor);
 	Task<decimal?> GetMinimalOfferPrice(Guid gameId, ECurrency currency);
+	Task<IEnumerable<(Guid, decimal?)>> GetMinimalOfferPriceManyAsync(IEnumerable<Guid> gameIds, ECurrency currency = ECurrency.USD, EVendor? vendor = null);
 	Task<IEnumerable<long>> GetAllVendorIds(EVendor vendor);
 	Task<IEnumerable<long>> GetExistingVendorIds(IEnumerable<long> vendorIdsToCheck, EVendor vendor);
 }

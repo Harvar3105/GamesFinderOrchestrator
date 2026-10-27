@@ -144,4 +144,39 @@ public class GameOfferRepository : Repository<GameOffer>, IGameOfferRepository
     return existingIds
       .Select(long.Parse);
   }
+
+  public async Task<IEnumerable<(Guid, decimal?)>> GetMinimalOfferPriceManyAsync(IEnumerable<Guid> gameIds, ECurrency currency = ECurrency.USD, EVendor? vendor = null)
+  {
+    var idList = gameIds?.Distinct().ToList() ?? [];
+    if (idList.Count == 0) return [];
+
+    try
+    {
+      var filter = Builders<GameOffer>.Filter.And(
+        Builders<GameOffer>.Filter.In(offer => offer.GameId, idList),
+        Builders<GameOffer>.Filter.Eq(offer => offer.Currency, currency),
+        Builders<GameOffer>.Filter.Ne(offer => offer.Amount, null)
+      );
+      if (vendor.HasValue)
+        filter &= Builders<GameOffer>.Filter.Eq(offer => offer.Vendor, vendor.Value);
+
+      var prices = await _collection
+        .Find(filter)
+        .Project(offer => new { offer.GameId, offer.Amount })
+        .ToListAsync();
+
+      var minimalByGame = prices
+        .GroupBy(p => p.GameId)
+        .ToDictionary(g => g.Key, g => g.Min(p => p.Amount));
+
+      return idList
+        .Select(id => (id, minimalByGame.GetValueOrDefault(id)))
+        .ToList();
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError(ex, "Error getting minimal offer prices for games");
+      return idList.Select(id => (id, (decimal?)null)).ToList();
+    }
+  }
 }

@@ -37,7 +37,7 @@ Project references: `API → all other projects`; `Services → Domain, Publishe
 | **Domain** | Entities (`Entity`, `Game`, `GameOffer`, `UserData`), tasks (`ScrapeTask`, `SteamScrapeTask`, `InstantGamingScrapeTask`), enums (`ECurrency`, `EVendor`, `ESort`, `EPriceCompare`), `PaginationFilterDto`, options (`SteamOptions`, `WorkersOptions`), all interfaces. |
 | **Publisher** | `PublisherFactory` (maps task type → queue), `WorkerPublisher<T>`, `RabbitMQ/` (config, publisher), `Redis/` (`RedisConfig`, `RedisCacheDB` — Newtonsoft.Json wrapper). |
 | **Consumers** | `Consumer<TResult>` base class: consumes a results queue, loads items from Redis, calls `SaveToDatabaseAsync`, deletes the key, acks (nack with requeue on error). `SteamWorkerConsumer` reads `<key>:games` and `<key>:offers`; `InstantGamingWorkersConsumer` reads `<key>` (list of `GameOffer`). |
-| **Repositories** | `Repository<T>` — generic CRUD over `IMongoCollection`. Collections: `games`, `game_offers`, `users_data`. `MongoDBSettings`. |
+| **Repositories** | `Repository<T>` — generic CRUD over `IMongoCollection`. Collections: `games`, `game_offers`, `users_data`. `FilteredRepository` — read-only queries across `games` and `game_offers` (filters, sorting and paging by offer prices). `MongoDBSettings`. |
 | **Services** | `ApplicationServices/` — `VendorsService<T>` (base), `SteamService`, `InstantGamingService`: task publishing. `DomainServices/` — `GamesWithOffersService` (games joined with offers, paging and filters), `Service<T,R>` (generic repository wrapper, currently unused). |
 | **Utils** | `Annotations/MinimumInstantGamingId` — validation attribute (currently checks only that the value is an int). |
 

@@ -132,6 +132,7 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 
 builder.Services.AddScoped<IGameRepository, GameRepository>();
 builder.Services.AddScoped<IGameOfferRepository, GameOfferRepository>();
+builder.Services.AddScoped<IFilteredRepository, FilteredRepository>();
 builder.Services.AddScoped<IUserDataRepository, UserDataRepository>();
 builder.Services.AddScoped<IGamesWithOffersService, GamesWithOffersService>();
 builder.Services.AddScoped<ISteamService, SteamService>();
