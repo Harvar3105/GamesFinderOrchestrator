@@ -39,6 +39,9 @@ export async function processInstantGamingTaskIds(ids: number[], currency?: eCur
     try {
       processed.push(await fetchInstantGamingOffer(offerId, currency, proxy));
     } catch (err) {
+      // FIXME: every HttpStatusError is retried after the full cooldown, including 404 for IDs missing from the catalog,
+      // so one missing id delays the whole task by cooldownMs. Errors other than HttpStatusError/WrongDataError
+      // (e.g. a TypeError from a bug) are dropped without being logged.
       if (err instanceof HttpStatusError) {
         unprocessed.push({ id: offerId, reason: err });
       }

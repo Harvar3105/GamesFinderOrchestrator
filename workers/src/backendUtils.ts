@@ -53,7 +53,14 @@ export async function checkIgOfferExists(vendorId: string): Promise<boolean | nu
   const url = new URL(config.backendUrl! + config.backendCheckIgOffer!);
   url.searchParams.append('vendorId', vendorId);
 
-  const response = await processBackendRequest(url, 'GET');
+  var response = null;
+  try {
+    response = await processBackendRequest(url, 'GET');
+  } catch (err) {
+    logger.error(err);
+    return null;
+  }
+  
   if (!response) return null;
 
   try {

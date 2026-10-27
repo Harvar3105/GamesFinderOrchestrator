@@ -1,5 +1,5 @@
 import { v4 } from "uuid";
-import { fetchHTML, HttpStatusError, parseHtmlToDocument, WrongDataError } from "../utils/offerFetcher.js";
+import { FetchFailureStatus, fetchHTML, HttpStatusError, parseHtmlToDocument, WrongDataError } from "../utils/offerFetcher.js";
 import { GameOffer } from "../utils/types/entities/gameOffer.js";
 import { eCurrency } from "../utils/types/enums/eCurrency.js";
 import { checkIfPCGameIG, getCanonicalIGurl } from "../utils/instantGaminghHelpers.js";
@@ -26,9 +26,15 @@ export async function fetchInstantGamingOffer(id: number, currency?: eCurrency, 
   }
 
   let offerExists = await checkIgOfferExists(id.toString());
+  if (offerExists === null) {
+    logger.error(`❌Could not check whether offer ${id} exists, backend did not respond correctly.`);
+    throw new HttpStatusError(FetchFailureStatus.NetworkError, `Could not check whether offer ${id} exists.`);
+  }
+
   let offerId;
   if (offerExists) {
     offerId = await getIgOfferId({gameId: steamAndGameIds.gameId!})?? await getIgOfferId({vendorId: id.toString()});
+    if (offerId === null) throw new HttpStatusError(500, "❌Could not get offer Id.");
   }
   else {
     offerId = v4();
