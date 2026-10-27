@@ -1,7 +1,4 @@
-﻿
-using GamesFinder.Orchestrator.Domain.Classes.DTOs;
-using GamesFinder.Orchestrator.Domain.Classes.Entities;
-using GamesFinder.Orchestrator.Domain.Enums;
+﻿using GamesFinder.Orchestrator.Domain.Classes.Entities;
 
 namespace GamesFinder.Orchestrator.Domain.Interfaces.Repositories;
 
@@ -15,6 +12,4 @@ public interface IGameRepository : IRepository<Game>
 	Task<bool> ExistsByAppNameAsync(string appName);
 	Task<IEnumerable<long>> GetAllSteamIdsAsync();
 	Task<int> GetTotalGamesCountAsync();
-	Task<IEnumerable<Game>> GetPagedWithFiltersAsync(PaginationFilterDto filterDto);
-	Task<int> GetTotalCountWithFiltersAsync(PaginationFilterDto filterDto);
 }
