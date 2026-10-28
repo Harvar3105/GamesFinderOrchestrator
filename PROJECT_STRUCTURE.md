@@ -33,8 +33,8 @@ Project references: `API → all other projects`; `Services → Domain, Publishe
 
 | Project | Contents |
 |---|---|
-| **API** | `Program.cs` — DI, JWT, CORS, Swagger, consumers registered as hosted services. Controllers plus request contracts in `Controllers/Contracts/{Steam,InstantGaming}`. |
-| **Domain** | Entities (`Entity`, `Game`, `GameOffer`, `UserData`), tasks (`ScrapeTask`, `SteamScrapeTask`, `InstantGamingScrapeTask`), enums (`ECurrency`, `EVendor`, `ESort`, `EPriceCompare`), `PaginationFilterDto`, options (`SteamOptions`, `WorkersOptions`), all interfaces. |
+| **API** | `Program.cs` — DI, JWT, CORS, Swagger, consumers registered as hosted services. Controllers plus request contracts in `Controllers/Contracts/{Steam,InstantGaming,UserData}`. |
+| **Domain** | Entities (`Entity`, `Game`, `GameOffer`, `UserData`), tasks (`ScrapeTask`, `SteamScrapeTask`, `InstantGamingScrapeTask`), enums (`ECurrency`, `EVendor`, `ESort`, `EPriceCompare`, `EWishlistSyncStatus`), `PaginationFilterDto`, options (`SteamOptions`, `WorkersOptions`), all interfaces. |
 | **Publisher** | `PublisherFactory` (maps task type → queue), `WorkerPublisher<T>`, `RabbitMQ/` (config, publisher), `Redis/` (`RedisConfig`, `RedisCacheDB` — Newtonsoft.Json wrapper). |
 | **Consumers** | `Consumer<TResult>` base class: consumes a results queue, loads items from Redis, calls `SaveToDatabaseAsync`, deletes the key, acks (nack with requeue on error). `SteamWorkerConsumer` reads `<key>:games` and `<key>:offers`; `InstantGamingWorkersConsumer` reads `<key>` (list of `GameOffer`). |
 | **Repositories** | `Repository<T>` — generic CRUD over `IMongoCollection`. Collections: `games`, `game_offers`, `users_data`. `FilteredRepository` — read-only queries across `games` and `game_offers` (filters, sorting and paging by offer prices). `MongoDBSettings`. |
@@ -45,7 +45,7 @@ Project references: `API → all other projects`; `Services → Domain, Publishe
 
 - **Steam**: `POST scrap` (role `admin_gfp`); `GET checkGameExistsByName`, `checkGameExists` (by game Id), `checkGameExistsBySteamId`, `getGameIdBySteamId`, `checkGameOfferExists`, `getOfferId`, `getPagedWithCurrency`, `getPaged`.
 - **InstantGaming**: `POST scrapIds`, `scrapRange`, `scrapUpTo` (role `admin_gfp`); `GET checkGameOfferExists`, `getOfferId`.
-- **UserData**: `GET userData`, `PUT saveOrUpdate` (`[Authorize]`, user Id taken from the `sub` claim).
+- **UserData** (whole controller `[Authorize]`, user Id taken from the `sub` claim, which JwtBearer maps to `ClaimTypes.NameIdentifier`): `GET userData` (returns defaults when no document exists), `PUT preferences`, `POST`/`DELETE hiddenGames/{steamAppId}`, `DELETE steamAccount` (unlink), `DELETE userData` (full removal). Steam linking and scheduled wishlist sync are not implemented yet.
 
 GET endpoints without `[Authorize]` are used by the workers. With `Security:RequireJWT=true` a fallback policy requires authentication for them too, and the workers do not send a token.
 
@@ -53,6 +53,7 @@ GET endpoints without `[Authorize]` are used by the workers. With `Security:Requ
 
 - `Game` — Steam-centric record (`steam_id`, SteamSpy metadata in `store_metadata`). `Offers` is `[BsonIgnore]` and is loaded from `game_offers` by `game_id`.
 - `GameOffer` — a single vendor's offer: `vendor`, `vendors_game_id`, `amount`, `currency`, `available`.
+- `UserData` — project-specific user data; `Id` is the `sub` from the Identity Server (identity, email and roles are not stored here). Holds the linked `steam_id64`, the synced Steam wishlist (`steam_wishlist`, overwritten on every sync), user-hidden games (`hidden_steam_ids`, survive a sync), sync status and preferences (currency, region). `UserDataRepository` changes it through partial upserts so a sync does not overwrite user edits; bulk operations are disabled in `IUserDataRepository`.
 - Ids are `Guid`s stored as strings in MongoDB; `ECurrency` and `EVendor` are stored as strings.
 - Workers generate Ids (uuid v4) or reuse existing ones obtained from the backend; consumers upsert by Id.
 
