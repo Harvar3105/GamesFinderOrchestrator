@@ -1,28 +1,17 @@
-using GamesFinder.Orchestrator.Domain.Classes;
-using GamesFinder.Orchestrator.Domain.Interfaces.Repositories;
+using GamesFinder.Orchestrator.Domain.Classes.Entities;
+using GamesFinder.Orchestrator.Domain.Enums;
 
 namespace GamesFinder.Orchestrator.Domain.Interfaces.Repositories;
 
 public interface IUserDataRepository : IRepository<UserData>
 {
-  new Task<bool> SaveManyAsync(IEnumerable<UserData> entities)
-  {
-    throw new NotSupportedException();
-  }
-  new Task<bool> SaveOrUpdateManyAsync(IEnumerable<UserData> entities)
-  {
-    throw new NotSupportedException();
-  }
-  new Task<long> DeleteManyAsync(IEnumerable<Guid> ids)
-  {
-    throw new NotSupportedException();
-  }
-  new Task<ICollection<UserData>> GetAllAsync()
-  {
-    throw new NotSupportedException();
-  }
-  new Task<ICollection<UserData>?> GetPagedAsync(int page, int pageSize)
-  {
-    throw new NotSupportedException();
-  }
+  Task<bool> LinkSteamAccountAsync(Guid userId, long steamId64);
+  Task<bool> UnlinkSteamAccountAsync(Guid userId);
+  Task<bool> ReplaceWishlistAsync(Guid userId, IEnumerable<WishlistItem> wishlist, EWishlistSyncStatus status);
+  Task<bool> SetWishlistSyncStatusAsync(Guid userId, EWishlistSyncStatus status);
+  Task<bool> HideGameAsync(Guid userId, long steamAppId);
+  Task<bool> UnhideGameAsync(Guid userId, long steamAppId);
+  Task<bool> UpdatePreferencesAsync(Guid userId, ECurrency preferredCurrency, string? region);
+  Task<ICollection<UserData>> GetStaleWishlistsAsync(DateTime syncedBefore, int limit);
+  Task<ICollection<long>> GetDistinctWishlistSteamAppIdsAsync();
 }
