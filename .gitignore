@@ -57,6 +57,7 @@ nunit-*.xml
 appsettings.Development.json
 appsettings.Production.json
 .env
+.env.local
 node_modules/
 dist/
 definitions.json

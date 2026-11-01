@@ -59,7 +59,7 @@ GET endpoints without `[Authorize]` are used by the workers. With `Security:Requ
 
 ### Configuration
 
-`appsettings.{Development,Production}.json` (not in git) and `.env` in the repository root (not in git; used by docker-compose, the workers and the Dockerfile). Sections: `MongoDb`, `Security` (JWT*, RequireJWT, CORS), `SteamApi`, `Workers`, `RabbitMQ`, `Redis`. In environment variables `__` maps to `:`.
+`appsettings.{Development,Production}.json` (not in git) and `.env` in the repository root (not in git; used by docker-compose, the workers and the Dockerfile). Sections: `MongoDb`, `Security` (JWT*, RequireJWT, CORS), `SteamApi`, `Workers`, `RabbitMQ`, `Redis`. In environment variables `__` maps to `:`. `.env.local` (not in git) holds overrides for running the workers outside Docker (see README).
 
 ## Workers (`workers/src`)
 
@@ -93,7 +93,7 @@ Each worker is a separate process: `npm run steam` / `npm run instantgaming` (in
 
 ## Infrastructure
 
-- Dev: `docker-compose.Development.yml` starts rabbitmq, redis, steam-worker, instantgaming-worker (×5) and gamesfinder-api (`dotnet watch`, port 8081→8080). The `shared-network` network is external.
+- Dev: `docker-compose.Development.yml` starts rabbitmq, redis, steam-worker, instantgaming-worker (×5) and gamesfinder-api (`dotnet watch`, port 8082→8080). The `shared-network` network is external.
 - **MongoDB is not part of compose**; it is reached via `MongoDb:ConnectionString`.
 - RabbitMQ queues: `steam-requests`, `steam-results`, `instantGaming-requests`, `instantGaming-results` (`definitions.json`, not in git).
 
