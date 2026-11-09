@@ -19,7 +19,7 @@ public class SteamController : ControllerBase
   }
 
   [HttpPost("scrap")]
-  [Authorize(Roles = "admin_gfp")]
+  [Authorize(Roles = "admin,manager")]
   public async Task<IActionResult> ScrapSteamIdsAsync([FromBody] SteamRequestModel model)
   {
     try

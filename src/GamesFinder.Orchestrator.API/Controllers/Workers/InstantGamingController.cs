@@ -19,7 +19,7 @@ public class InstantGamingController : ControllerBase
   }
 
   [HttpPost("scrapIds")]
-  [Authorize(Roles = "admin_gfp")]
+  [Authorize(Roles = "admin,manager")]
   public async Task<IActionResult> ScrapInstantGamingIdsAsync([FromBody] InstantGamingScrapIdsRequest model)
   {
     _logger.LogInformation("Received request to scrap Instant Gaming IDs: {Ids}", string.Join(", ", model.InstantGamingIds));
@@ -36,7 +36,7 @@ public class InstantGamingController : ControllerBase
   }
 
   [HttpPost("scrapRange")]
-  [Authorize(Roles = "admin_gfp")]
+  [Authorize(Roles = "admin,manager")]
   public async Task<IActionResult> ScrapInstantGamingRangeAsync([FromBody] InstantGamingScrapRangeRequest model)
   {
     try
@@ -52,7 +52,7 @@ public class InstantGamingController : ControllerBase
   }
 
   [HttpPost("scrapUpTo")]
-  [Authorize(Roles = "admin_gfp")]
+  [Authorize(Roles = "admin,manager")]
   public async Task<IActionResult> ScrapInstantGamingUpToAsync([FromBody] InstantGamingScrapUpToRequest model)
   {
     try
