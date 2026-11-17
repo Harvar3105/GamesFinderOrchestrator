@@ -33,7 +33,7 @@ Project references: `API → all other projects`; `Services → Domain, Publishe
 
 | Project | Contents |
 |---|---|
-| **API** | `Program.cs` — DI, JWT, CORS, Swagger, consumers registered as hosted services. Controllers plus request contracts in `Controllers/Contracts/{Steam,InstantGaming,UserData}`. |
+| **API** | `Program.cs` — DI, JWT, CORS, Swagger, consumers registered as hosted services. Controllers plus request/response contracts in `Controllers/Contracts/{Steam,InstantGaming,UserData,Games}`. |
 | **Domain** | Entities (`Entity`, `Game`, `GameOffer`, `UserData`), tasks (`ScrapeTask`, `SteamScrapeTask`, `InstantGamingScrapeTask`), enums (`ECurrency`, `EVendor`, `ESort`, `EPriceCompare`, `EWishlistSyncStatus`), `PaginationFilterDto`, options (`SteamOptions`, `WorkersOptions`), all interfaces. |
 | **Publisher** | `PublisherFactory` (maps task type → queue), `WorkerPublisher<T>`, `RabbitMQ/` (config, publisher), `Redis/` (`RedisConfig`, `RedisCacheDB` — Newtonsoft.Json wrapper). |
 | **Consumers** | `Consumer<TResult>` base class: consumes a results queue, loads items from Redis, calls `SaveToDatabaseAsync`, deletes the key, acks (nack with requeue on error). `SteamWorkerConsumer` reads `<key>:games` and `<key>:offers`; `InstantGamingWorkersConsumer` reads `<key>` (list of `GameOffer`). |
