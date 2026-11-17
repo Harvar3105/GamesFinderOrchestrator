@@ -105,6 +105,10 @@ Each worker is a separate process: `npm run steam` / `npm run instantgaming` (in
   - `tests/fixtures/instantGamingHtml.ts` builds InstantGaming product pages for jsdom.
   - `tests/instantGaming/` covers the helpers, game linking, the offer fetcher, the retry logic (fake timers) and the queue message handler. Tests named "(current behavior)" pin known bugs that are marked with `FIXME` in the source.
 
+## Known issues
+
+- `Game/searchByName` has no upper bound on `pageSize` and no minimum query length. The query is an unanchored case-insensitive regex (collection scan) executed twice (count + page). Limits have to be chosen after measuring response time and load on production-sized data.
+
 ## Conventions
 
 - C#: 2-space indentation (tabs in some files), file-scoped namespaces, emoji log prefixes (`💥`, `⚠️`, `✅`).

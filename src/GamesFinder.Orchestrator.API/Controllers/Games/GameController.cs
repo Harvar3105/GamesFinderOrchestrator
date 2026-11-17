@@ -105,6 +105,7 @@ public class GameController : ControllerBase
   }
 
   // Case-insensitive partial match by name. Only games, without offers.
+  // TODO: Measure performance on production-sized data and set limits (max pageSize, min name length).
   [HttpGet("searchByName")]
   public async Task<IActionResult> SearchByNameAsync(string name, int page, int pageSize)
   {
