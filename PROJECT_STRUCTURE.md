@@ -33,7 +33,7 @@ Project references: `API → all other projects`; `Services → Domain, Publishe
 
 | Project | Contents |
 |---|---|
-| **API** | `Program.cs` — DI, JWT, CORS, Swagger, consumers registered as hosted services. Controllers plus request contracts in `Controllers/Contracts/{Steam,InstantGaming,UserData}`. |
+| **API** | `Program.cs` — DI, JWT, CORS, Swagger, consumers registered as hosted services. Controllers plus request/response contracts in `Controllers/Contracts/{Steam,InstantGaming,UserData,Games}`. |
 | **Domain** | Entities (`Entity`, `Game`, `GameOffer`, `UserData`), tasks (`ScrapeTask`, `SteamScrapeTask`, `InstantGamingScrapeTask`), enums (`ECurrency`, `EVendor`, `ESort`, `EPriceCompare`, `EWishlistSyncStatus`), `PaginationFilterDto`, options (`SteamOptions`, `WorkersOptions`), all interfaces. |
 | **Publisher** | `PublisherFactory` (maps task type → queue), `WorkerPublisher<T>`, `RabbitMQ/` (config, publisher), `Redis/` (`RedisConfig`, `RedisCacheDB` — Newtonsoft.Json wrapper). |
 | **Consumers** | `Consumer<TResult>` base class: consumes a results queue, loads items from Redis, calls `SaveToDatabaseAsync`, deletes the key, acks (nack with requeue on error). `SteamWorkerConsumer` reads `<key>:games` and `<key>:offers`; `InstantGamingWorkersConsumer` reads `<key>` (list of `GameOffer`). |
@@ -43,7 +43,7 @@ Project references: `API → all other projects`; `Services → Domain, Publishe
 
 ### Endpoints (`api/[controller]`)
 
-- **Steam**: `POST scrap` (role `admin_gfp`); `GET checkGameExistsByName`, `checkGameExists` (by game Id), `checkGameExistsBySteamId`, `getGameIdBySteamId`, `checkGameOfferExists`, `getOfferId`, `getPagedWithCurrency`, `getPaged`.
+- **Steam**: `POST scrap` (role `admin_gfp`); `GET checkGameExistsByName`, `checkGameExists` (by game Id), `checkGameExistsBySteamId`, `getGameIdBySteamId`, `searchByName` (case-insensitive partial name match, paged, games without offers), `checkGameOfferExists`, `getOfferId`, `getPagedWithCurrency`, `getPaged`.
 - **InstantGaming**: `POST scrapIds`, `scrapRange`, `scrapUpTo` (role `admin_gfp`); `GET checkGameOfferExists`, `getOfferId`.
 - **UserData** (whole controller `[Authorize]`, user Id taken from the `sub` claim, which JwtBearer maps to `ClaimTypes.NameIdentifier`): `GET userData` (returns defaults when no document exists), `PUT preferences`, `POST`/`DELETE hiddenGames/{steamAppId}`, `DELETE steamAccount` (unlink), `DELETE userData` (full removal). Steam linking and scheduled wishlist sync are not implemented yet.
 
@@ -104,6 +104,10 @@ Each worker is a separate process: `npm run steam` / `npm run instantgaming` (in
   - `tests/setup.ts` replaces `utils/config.js` (it connects to RabbitMQ/Redis on import) with `tests/mocks/config.ts` and silences the logger via `tests/mocks/logger.ts`. No test touches the network.
   - `tests/fixtures/instantGamingHtml.ts` builds InstantGaming product pages for jsdom.
   - `tests/instantGaming/` covers the helpers, game linking, the offer fetcher, the retry logic (fake timers) and the queue message handler. Tests named "(current behavior)" pin known bugs that are marked with `FIXME` in the source.
+
+## Known issues
+
+- `Game/searchByName` has no upper bound on `pageSize` and no minimum query length. The query is an unanchored case-insensitive regex (collection scan) executed twice (count + page). Limits have to be chosen after measuring response time and load on production-sized data.
 
 ## Conventions
 

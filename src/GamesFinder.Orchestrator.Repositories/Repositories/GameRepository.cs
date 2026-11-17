@@ -1,7 +1,9 @@
 using GamesFinder.Orchestrator.Domain.Interfaces.Repositories;
 using GamesFinder.Orchestrator.Domain.Classes.Entities;
 using GamesFinder.Orchestrator.Domain.Enums;
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace GamesFinder.Orchestrator.Repositories.Repositories;
@@ -67,6 +69,29 @@ public class GameRepository : Repository<Game>, IGameRepository
       _logger.LogError(e.Message);
       return null;
     }
+  }
+
+  // TODO: Implement FuzzySearch so names with typos or different word order are matched too
+  // (e.g. MongoDB Atlas Search with `fuzzy` options or a trigram index).
+  public async Task<ICollection<Game>> SearchByNameAsync(string namePart, int page, int pageSize)
+  {
+    return await _collection
+      .Find(NameContainsFilter(namePart))
+      .SortBy(g => g.Name)
+      .Skip((page - 1) * pageSize)
+      .Limit(pageSize)
+      .ToListAsync();
+  }
+
+  public async Task<long> CountByNameAsync(string namePart)
+  {
+    return await _collection.CountDocumentsAsync(NameContainsFilter(namePart));
+  }
+
+  private static FilterDefinition<Game> NameContainsFilter(string namePart)
+  {
+    var pattern = new BsonRegularExpression(Regex.Escape(namePart), "i");
+    return Builders<Game>.Filter.Regex(g => g.Name, pattern);
   }
 
   public async Task<List<(long, bool)>> ExistBySteamIdMany(List<long> steamIds)

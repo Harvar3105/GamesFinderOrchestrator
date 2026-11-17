@@ -1,3 +1,4 @@
+using GamesFinder.Orchestrator.API.Controllers.Contracts.Games;
 using GamesFinder.Orchestrator.API.Controllers.Contracts.Steam;
 using GamesFinder.Orchestrator.Domain.Classes.Entities;
 using GamesFinder.Orchestrator.Domain.Enums;
@@ -104,7 +105,28 @@ public class GameController : ControllerBase
     }
   }
 
-  // Only games, without offers. 
+  // Case-insensitive partial match by name. Only games, without offers.
+  // TODO: Measure performance on production-sized data and set limits (max pageSize, min name length).
+  [HttpGet("searchByName")]
+  public async Task<ActionResult<SearchGamesByNameResponse>> SearchByNameAsync([FromQuery] SearchGamesByNameRequest request)
+  {
+    try
+    {
+      var namePart = request.Name.Trim();
+      var totalGamesCount = await _repo.CountByNameAsync(namePart);
+      if (totalGamesCount == 0) return NotFound("Not found");
+
+      var games = await _repo.SearchByNameAsync(namePart, request.Page, request.PageSize);
+      return Ok(new SearchGamesByNameResponse {Games = games, TotalGamesCount = totalGamesCount});
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError(ex, $"Error searching games by name: {request.Name}. Page: {request.Page}, PageSize: {request.PageSize}");
+      return Problem("An error occurred while processing your request.");
+    }
+  }
+
+  // Only games, without offers.
   [HttpGet("getPaged")]
   public async Task<IActionResult> GetPaged(int page, int pageSize){
     if (pageSize <= 0 || page < 1) return BadRequest("⚠️Invalid data provided");
