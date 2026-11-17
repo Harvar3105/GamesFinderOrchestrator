@@ -43,7 +43,7 @@ Project references: `API → all other projects`; `Services → Domain, Publishe
 
 ### Endpoints (`api/[controller]`)
 
-- **Steam**: `POST scrap` (role `admin_gfp`); `GET checkGameExistsByName`, `checkGameExists` (by game Id), `checkGameExistsBySteamId`, `getGameIdBySteamId`, `searchByName` (case-insensitive partial name match, games without offers), `checkGameOfferExists`, `getOfferId`, `getPagedWithCurrency`, `getPaged`.
+- **Steam**: `POST scrap` (role `admin_gfp`); `GET checkGameExistsByName`, `checkGameExists` (by game Id), `checkGameExistsBySteamId`, `getGameIdBySteamId`, `searchByName` (case-insensitive partial name match, paged, games without offers), `checkGameOfferExists`, `getOfferId`, `getPagedWithCurrency`, `getPaged`.
 - **InstantGaming**: `POST scrapIds`, `scrapRange`, `scrapUpTo` (role `admin_gfp`); `GET checkGameOfferExists`, `getOfferId`.
 - **UserData** (whole controller `[Authorize]`, user Id taken from the `sub` claim, which JwtBearer maps to `ClaimTypes.NameIdentifier`): `GET userData` (returns defaults when no document exists), `PUT preferences`, `POST`/`DELETE hiddenGames/{steamAppId}`, `DELETE steamAccount` (unlink), `DELETE userData` (full removal). Steam linking and scheduled wishlist sync are not implemented yet.
 

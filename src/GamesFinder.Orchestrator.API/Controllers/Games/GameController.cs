@@ -106,19 +106,23 @@ public class GameController : ControllerBase
 
   // Case-insensitive partial match by name. Only games, without offers.
   [HttpGet("searchByName")]
-  public async Task<IActionResult> SearchByNameAsync(string name)
+  public async Task<IActionResult> SearchByNameAsync(string name, int page, int pageSize)
   {
     if (string.IsNullOrWhiteSpace(name)) return BadRequest("name was not provided.");
+    if (pageSize <= 0 || page < 1) return BadRequest("⚠️Invalid data provided");
 
     try
     {
-      var games = await _repo.SearchByNameAsync(name.Trim());
-      if (games.Count == 0) return NotFound("Not found");
-      return Ok(new {Games = games});
+      var namePart = name.Trim();
+      var totalGamesCount = await _repo.CountByNameAsync(namePart);
+      if (totalGamesCount == 0) return NotFound("Not found");
+
+      var games = await _repo.SearchByNameAsync(namePart, page, pageSize);
+      return Ok(new {Games = games, TotalGamesCount = totalGamesCount});
     }
     catch (Exception ex)
     {
-      _logger.LogError(ex, $"Error searching games by name: {name}");
+      _logger.LogError(ex, $"Error searching games by name: {name}. Page: {page}, PageSize: {pageSize}");
       return Problem("An error occurred while processing your request.");
     }
   }
