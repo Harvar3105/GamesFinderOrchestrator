@@ -104,7 +104,26 @@ public class GameController : ControllerBase
     }
   }
 
-  // Only games, without offers. 
+  // Case-insensitive partial match by name. Only games, without offers.
+  [HttpGet("searchByName")]
+  public async Task<IActionResult> SearchByNameAsync(string name)
+  {
+    if (string.IsNullOrWhiteSpace(name)) return BadRequest("name was not provided.");
+
+    try
+    {
+      var games = await _repo.SearchByNameAsync(name.Trim());
+      if (games.Count == 0) return NotFound("Not found");
+      return Ok(new {Games = games});
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError(ex, $"Error searching games by name: {name}");
+      return Problem("An error occurred while processing your request.");
+    }
+  }
+
+  // Only games, without offers.
   [HttpGet("getPaged")]
   public async Task<IActionResult> GetPaged(int page, int pageSize){
     if (pageSize <= 0 || page < 1) return BadRequest("⚠️Invalid data provided");
