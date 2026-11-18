@@ -138,6 +138,11 @@ public class GamesWithOffersService : IGamesWithOffersService
     }
   }
 
+  public async Task<Dictionary<Guid, List<EVendor>>> GetAvailableVendorsManyAsync(IEnumerable<Guid> gameIds)
+  {
+    return await _offersRepo.GetAvailableVendorsByGameIdManyAsync(gameIds);
+  }
+
   public async Task<int> GetTotalCountFilteredAsync(GamesFilter filter, ECurrency currency = ECurrency.USD, string? namePart = null)
   {
     return await _filteredRepo.GetTotalCountWithFiltersAsync(filter, currency, namePart);

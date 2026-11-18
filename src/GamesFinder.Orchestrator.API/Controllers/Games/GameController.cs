@@ -169,11 +169,16 @@ public class GameController : ControllerBase
       var totalGamesCount = await _gamesWithOffersService.GetTotalCountFilteredAsync(filter, request.Currency, namePart);
       if (totalGamesCount == 0) return NotFound("Not found");
 
-      var games = await _gamesWithOffersService.GetPagedWithLowestFilteredAsync(
-        request.Page, request.PageSize, filter, request.Currency, namePart);
+      var games = (await _gamesWithOffersService.GetPagedWithLowestFilteredAsync(
+        request.Page, request.PageSize, filter, request.Currency, namePart)).ToList();
+      var vendorsByGame = await _gamesWithOffersService.GetAvailableVendorsManyAsync(games.Select(g => g.Item1.Id));
+
       return Ok(new GetCatalogPageResponse
       {
-        Games = ToLowestPriceResponse(games),
+        Games = [.. games.Select(g => new CatalogGame(
+          g.Item1,
+          g.Item2,
+          vendorsByGame.GetValueOrDefault(g.Item1.Id) ?? []))],
         TotalGamesCount = totalGamesCount,
       });
     }

@@ -111,6 +111,41 @@ public class GameOfferRepository : Repository<GameOffer>, IGameOfferRepository
     }
   }
 
+  public async Task<IEnumerable<EVendor>> GetAvailableVendorsByGameIdAsync(Guid gameId)
+  {
+    var filter = Builders<GameOffer>.Filter.And(
+      Builders<GameOffer>.Filter.Eq(offer => offer.GameId, gameId),
+      Builders<GameOffer>.Filter.Eq(offer => offer.Available, true)
+    );
+
+    var vendors = await _collection
+      .Distinct(offer => offer.Vendor, filter)
+      .ToListAsync();
+
+    return vendors.Order().ToList();
+  }
+
+  // Games without available offers are absent from the result.
+  public async Task<Dictionary<Guid, List<EVendor>>> GetAvailableVendorsByGameIdManyAsync(IEnumerable<Guid> gameIds)
+  {
+    var idList = gameIds?.Distinct().ToList() ?? [];
+    if (idList.Count == 0) return [];
+
+    var filter = Builders<GameOffer>.Filter.And(
+      Builders<GameOffer>.Filter.In(offer => offer.GameId, idList),
+      Builders<GameOffer>.Filter.Eq(offer => offer.Available, true)
+    );
+
+    var pairs = await _collection
+      .Find(filter)
+      .Project(offer => new { offer.GameId, offer.Vendor })
+      .ToListAsync();
+
+    return pairs
+      .GroupBy(p => p.GameId)
+      .ToDictionary(g => g.Key, g => g.Select(p => p.Vendor).Distinct().Order().ToList());
+  }
+
   public async Task<IEnumerable<long>> GetAllVendorIds(EVendor vendor)
   {
     var filter = Builders<GameOffer>.Filter.Eq(offer => offer.Vendor, vendor);

@@ -132,6 +132,24 @@ public class GameOfferController : ControllerBase
     }
   }
 
+  [HttpGet("getAvailableVendors")]
+  public async Task<IActionResult> GetAvailableVendors(string gameId)
+  {
+    if (string.IsNullOrEmpty(gameId)) return BadRequest("No gameId were provided");
+    var success = Guid.TryParse(gameId, out var parsedId);
+    if (!success) return BadRequest("⚠️Invalid gameId format. Must be a valid GUID.");
+
+    try
+    {
+      var vendors = await _repo.GetAvailableVendorsByGameIdAsync(parsedId);
+      return Ok(new { Vendors = vendors });
+    } catch (Exception ex)
+    {
+      _logger.LogError(ex, $"Error retrieving available vendors for game: {gameId}");
+      return Problem("An error occurred while processing your request.");
+    }
+  }
+
   [HttpGet("vendors")]
   public async Task<IActionResult> GetVendors()
   {
