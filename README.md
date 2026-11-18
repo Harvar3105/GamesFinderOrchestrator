@@ -82,7 +82,7 @@ The orchestrator coordinates with multiple workers to scrape and aggregate game 
 
 Configuration files are not stored in git and must be created manually:
 
-- `src/GamesFinder.Orchestrator.API/appsettings.Development.json` / `appsettings.Production.json`: backend settings (sections `MongoDb`, `Security`, `SteamApi`, `Workers`, `RabbitMQ`, `Redis`).
+- `src/GamesFinder.Orchestrator.API/appsettings.Development.json` / `appsettings.Production.json`: backend settings (sections `MongoDb`, `Security`, `SteamApi`, `Workers`, `RabbitMQ`, `Redis`, `Cache`).
 - `.env` in the repository root: used by docker-compose, the workers and the backend container. In environment variables `__` maps to `:`, so `Redis__Host` overrides `Redis:Host` from `appsettings`.
 
 `.env` template (host names match the compose service/container names):

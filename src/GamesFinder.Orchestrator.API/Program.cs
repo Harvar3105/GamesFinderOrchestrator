@@ -130,6 +130,11 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 	return ConnectionMultiplexer.Connect(configurationOptions);
 });
 
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton(new CacheOptions(
+	tagsMinutes: builder.Configuration.GetValue("Cache:TagsMinutes", 60)
+));
+
 builder.Services.AddScoped<IGameRepository, GameRepository>();
 builder.Services.AddScoped<IGameOfferRepository, GameOfferRepository>();
 builder.Services.AddScoped<IFilteredRepository, FilteredRepository>();

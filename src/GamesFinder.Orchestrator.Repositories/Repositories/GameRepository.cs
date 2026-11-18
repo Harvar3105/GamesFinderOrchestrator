@@ -147,6 +147,20 @@ public class GameRepository : Repository<Game>, IGameRepository
     else return null;
   }
 
+  // Distinct over an array field returns its individual elements. Games without metadata are skipped.
+  // Exceptions are not swallowed so that callers do not cache an empty list on a database error.
+  public async Task<List<string>> GetDistinctTagsAsync()
+  {
+    var tags = await (await _collection
+      .DistinctAsync<string>("store_metadata.tags", FilterDefinition<Game>.Empty))
+      .ToListAsync();
+
+    return tags
+      .Where(tag => !string.IsNullOrWhiteSpace(tag))
+      .Order(StringComparer.OrdinalIgnoreCase)
+      .ToList();
+  }
+
   public async Task<int> GetTotalGamesCountAsync()
   {
     try

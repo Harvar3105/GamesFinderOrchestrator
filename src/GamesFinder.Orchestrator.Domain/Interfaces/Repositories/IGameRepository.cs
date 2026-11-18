@@ -14,4 +14,5 @@ public interface IGameRepository : IRepository<Game>
 	Task<bool> ExistsByAppNameAsync(string appName);
 	Task<IEnumerable<long>> GetAllSteamIdsAsync();
 	Task<int> GetTotalGamesCountAsync();
+	Task<List<string>> GetDistinctTagsAsync();
 }

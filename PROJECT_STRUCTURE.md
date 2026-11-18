@@ -34,7 +34,7 @@ Project references: `API → all other projects`; `Services → Domain, Publishe
 | Project | Contents |
 |---|---|
 | **API** | `Program.cs` — DI, JWT, CORS, Swagger, consumers registered as hosted services. Controllers plus request/response contracts in `Controllers/Contracts/{Steam,InstantGaming,UserData,Games}`. |
-| **Domain** | Entities (`Entity`, `Game`, `GameOffer`, `UserData`), tasks (`ScrapeTask`, `SteamScrapeTask`, `InstantGamingScrapeTask`), enums (`ECurrency`, `EVendor`, `ESort`, `EPriceCompare`, `EWishlistSyncStatus`), `PaginationFilterDto`, options (`SteamOptions`, `WorkersOptions`), all interfaces. |
+| **Domain** | Entities (`Entity`, `Game`, `GameOffer`, `UserData`), tasks (`ScrapeTask`, `SteamScrapeTask`, `InstantGamingScrapeTask`), enums (`ECurrency`, `EVendor`, `ESort`, `EPriceCompare`, `EWishlistSyncStatus`), `PaginationFilterDto`, options (`SteamOptions`, `WorkersOptions`, `CacheOptions`), all interfaces. |
 | **Publisher** | `PublisherFactory` (maps task type → queue), `WorkerPublisher<T>`, `RabbitMQ/` (config, publisher), `Redis/` (`RedisConfig`, `RedisCacheDB` — Newtonsoft.Json wrapper). |
 | **Consumers** | `Consumer<TResult>` base class: consumes a results queue, loads items from Redis, calls `SaveToDatabaseAsync`, deletes the key, acks (nack with requeue on error). `SteamWorkerConsumer` reads `<key>:games` and `<key>:offers`; `InstantGamingWorkersConsumer` reads `<key>` (list of `GameOffer`). |
 | **Repositories** | `Repository<T>` — generic CRUD over `IMongoCollection`. Collections: `games`, `game_offers`, `users_data`. `FilteredRepository` — read-only queries across `games` and `game_offers` (filters, sorting and paging by offer prices). `MongoDBSettings`. |
@@ -44,6 +44,7 @@ Project references: `API → all other projects`; `Services → Domain, Publishe
 ### Endpoints (`api/[controller]`)
 
 - **Steam**: `POST scrap` (role `admin_gfp`); `GET checkGameExistsByName`, `checkGameExists` (by game Id), `checkGameExistsBySteamId`, `getGameIdBySteamId`, `searchByName` (case-insensitive partial name match, paged, games without offers), `checkGameOfferExists`, `getOfferId`, `getPagedWithCurrency`, `getPaged`.
+- **Game**: `GET tags` — all distinct tags of stored games (`distinct` over `store_metadata.tags`), sorted, cached in `IMemoryCache` for `Cache:TagsMinutes` (default 60).
 - **InstantGaming**: `POST scrapIds`, `scrapRange`, `scrapUpTo` (role `admin_gfp`); `GET checkGameOfferExists`, `getOfferId`.
 - **UserData** (whole controller `[Authorize]`, user Id taken from the `sub` claim, which JwtBearer maps to `ClaimTypes.NameIdentifier`): `GET userData` (returns defaults when no document exists), `PUT preferences`, `POST`/`DELETE hiddenGames/{steamAppId}`, `DELETE steamAccount` (unlink), `DELETE userData` (full removal). Steam linking and scheduled wishlist sync are not implemented yet.
 
@@ -59,7 +60,7 @@ GET endpoints without `[Authorize]` are used by the workers. With `Security:Requ
 
 ### Configuration
 
-`appsettings.{Development,Production}.json` (not in git) and `.env` in the repository root (not in git; used by docker-compose, the workers and the Dockerfile). Sections: `MongoDb`, `Security` (JWT*, RequireJWT, CORS), `SteamApi`, `Workers`, `RabbitMQ`, `Redis`. In environment variables `__` maps to `:`. `.env.local` (not in git) holds overrides for running the workers outside Docker (see README).
+`appsettings.{Development,Production}.json` (not in git) and `.env` in the repository root (not in git; used by docker-compose, the workers and the Dockerfile). Sections: `MongoDb`, `Security` (JWT*, RequireJWT, CORS), `SteamApi`, `Workers`, `RabbitMQ`, `Redis`, `Cache` (`TagsMinutes`). In environment variables `__` maps to `:`. `.env.local` (not in git) holds overrides for running the workers outside Docker (see README).
 
 ## Workers (`workers/src`)
 

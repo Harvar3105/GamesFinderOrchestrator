@@ -1,10 +1,12 @@
 using GamesFinder.Orchestrator.API.Controllers.Contracts.Games;
 using GamesFinder.Orchestrator.API.Controllers.Contracts.Steam;
+using GamesFinder.Orchestrator.Domain.Classes;
 using GamesFinder.Orchestrator.Domain.Classes.Entities;
 using GamesFinder.Orchestrator.Domain.Enums;
 using GamesFinder.Orchestrator.Domain.Interfaces.DomainServices;
 using GamesFinder.Orchestrator.Domain.Interfaces.Repositories;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace GamesFinder.Orchestrator.API.Controllers.Games;
 
@@ -15,12 +17,44 @@ public class GameController : ControllerBase
   private readonly ILogger<GameController> _logger;
   private readonly IGameRepository _repo;
   private readonly IGamesWithOffersService _gamesWithOffersService;
+  private readonly IMemoryCache _cache;
+  private readonly CacheOptions _cacheOptions;
 
-  public GameController(ILogger<GameController> logger, IGameRepository repo, IGamesWithOffersService gamesWithOffers)
+  // Tags change only when the Steam worker stores new games, so a stale list for a while is acceptable.
+  private const string TagsCacheKey = "games:tags";
+
+  public GameController(
+    ILogger<GameController> logger,
+    IGameRepository repo,
+    IGamesWithOffersService gamesWithOffers,
+    IMemoryCache cache,
+    CacheOptions cacheOptions)
   {
     this._logger = logger;
     this._repo = repo;
     this._gamesWithOffersService = gamesWithOffers;
+    this._cache = cache;
+    this._cacheOptions = cacheOptions;
+  }
+
+  // All tags present on stored games, sorted alphabetically. Used by the frontend to build the tags filter.
+  [HttpGet("tags")]
+  public async Task<IActionResult> GetTagsAsync()
+  {
+    try
+    {
+      var tags = await _cache.GetOrCreateAsync(TagsCacheKey, entry =>
+      {
+        entry.AbsoluteExpirationRelativeToNow = _cacheOptions.TagsDuration;
+        return _repo.GetDistinctTagsAsync();
+      });
+      return Ok(new {Tags = tags});
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError(ex, "Error retrieving distinct game tags");
+      return Problem("An error occurred while processing your request.");
+    }
   }
 
   [HttpGet("checkGameExistsByName")]
