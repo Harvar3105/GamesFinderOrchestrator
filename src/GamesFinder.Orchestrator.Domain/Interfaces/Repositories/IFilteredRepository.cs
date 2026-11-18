@@ -7,6 +7,6 @@ namespace GamesFinder.Orchestrator.Domain.Interfaces.Repositories;
 // Read-only queries that filter games by data from several collections (games and their offers).
 public interface IFilteredRepository
 {
-	Task<IEnumerable<Game>> GetPagedWithFiltersAsync(int page, int pageSize, GamesFilter filterDto, ECurrency currency = ECurrency.USD);
-	Task<int> GetTotalCountWithFiltersAsync(GamesFilter filterDto, ECurrency currency = ECurrency.USD);
+	Task<IEnumerable<Game>> GetPagedWithFiltersAsync(int page, int pageSize, GamesFilter filterDto, ECurrency currency = ECurrency.USD, string? namePart = null);
+	Task<int> GetTotalCountWithFiltersAsync(GamesFilter filterDto, ECurrency currency = ECurrency.USD, string? namePart = null);
 }

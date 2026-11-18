@@ -139,23 +139,47 @@ public class GameController : ControllerBase
     }
   }
 
-  // Case-insensitive partial match by name. Only games, without offers.
-  // TODO: Measure performance on production-sized data and set limits (max pageSize, min name length).
+  // Only games, without offers.
   [HttpGet("searchByName")]
   public async Task<ActionResult<SearchGamesByNameResponse>> SearchByNameAsync([FromQuery] SearchGamesByNameRequest request)
   {
     try
     {
-      var namePart = request.Name.Trim();
-      var totalGamesCount = await _repo.CountByNameAsync(namePart);
-      if (totalGamesCount == 0) return NotFound("Not found");
-
-      var games = await _repo.SearchByNameAsync(namePart, request.Page, request.PageSize);
-      return Ok(new SearchGamesByNameResponse {Games = games, TotalGamesCount = totalGamesCount});
+      var games = await _repo.SearchByNameAsync(request.Name.Trim(), request.Limit);
+      return Ok(new SearchGamesByNameResponse {Games = games});
     }
     catch (Exception ex)
     {
-      _logger.LogError(ex, $"Error searching games by name: {request.Name}. Page: {request.Page}, PageSize: {request.PageSize}");
+      _logger.LogError(ex, $"Error searching games by name: {request.Name}. Limit: {request.Limit}");
+      return Problem("An error occurred while processing your request.");
+    }
+  }
+
+  // TODO: Measure performance on production-sized data and set limits (max pageSize, min name length).
+  [HttpGet("getCatalogPage")]
+  public async Task<ActionResult<GetCatalogPageResponse>> GetCatalogPageAsync(
+    [FromQuery] GetCatalogPageRequest request,
+    [FromQuery] GamesFilter filter)
+  {
+    if (filter.Min < 0 || filter.Max < 0 || filter.Min > filter.Max) return BadRequest("Provided invalid boundries.");
+
+    try
+    {
+      var namePart = request.Name.Trim();
+      var totalGamesCount = await _gamesWithOffersService.GetTotalCountFilteredAsync(filter, request.Currency, namePart);
+      if (totalGamesCount == 0) return NotFound("Not found");
+
+      var games = await _gamesWithOffersService.GetPagedWithLowestFilteredAsync(
+        request.Page, request.PageSize, filter, request.Currency, namePart);
+      return Ok(new GetCatalogPageResponse
+      {
+        Games = ToLowestPriceResponse(games),
+        TotalGamesCount = totalGamesCount,
+      });
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError(ex, $"Error retrieving catalog page. Name: {request.Name}. Page: {request.Page}, PageSize: {request.PageSize}");
       return Problem("An error occurred while processing your request.");
     }
   }
@@ -215,8 +239,8 @@ public class GameController : ControllerBase
   }
 
   // System.Text.Json ignores tuple fields (Item1, Item2), so tuples are mapped to named objects.
-  private static IEnumerable<object> ToLowestPriceResponse(IEnumerable<(Game Game, decimal? LowestPrice)> games)
+  private static List<GameWithLowestPrice> ToLowestPriceResponse(IEnumerable<(Game Game, decimal? LowestPrice)> games)
   {
-    return games.Select(g => new {g.Game, g.LowestPrice});
+    return [.. games.Select(g => new GameWithLowestPrice(g.Game, g.LowestPrice))];
   }
 }

@@ -6,8 +6,7 @@ public interface IGameRepository : IRepository<Game>
 {
 	Task<Game?> GetBySteamIdAsync(long steamId);
 	Task<Game?> GetByAppNameAsync(string appName);
-	Task<ICollection<Game>> SearchByNameAsync(string namePart, int page, int pageSize);
-	Task<long> CountByNameAsync(string namePart);
+	Task<ICollection<Game>> SearchByNameAsync(string namePart, int limit);
 	Task<Guid?> GetIdBySteamIdAsync(long steamId);
 	Task<List<(long, bool)>> ExistBySteamIdMany(List<long> steamIds);
 	Task<bool> ExistsBySteamIdAsync(long steamId);

@@ -3,6 +3,7 @@ using GamesFinder.Orchestrator.Domain.Contracts;
 using GamesFinder.Orchestrator.Domain.Enums;
 using GamesFinder.Orchestrator.Domain.Interfaces.Repositories;
 using Microsoft.Extensions.Logging;
+using System.Text.RegularExpressions;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
@@ -26,11 +27,11 @@ public class FilteredRepository : IFilteredRepository
     _logger = logger;
   }
 
-  public async Task<IEnumerable<Game>> GetPagedWithFiltersAsync(int page, int pageSize, GamesFilter filterDto, ECurrency currency = ECurrency.USD)
+  public async Task<IEnumerable<Game>> GetPagedWithFiltersAsync(int page, int pageSize, GamesFilter filterDto, ECurrency currency = ECurrency.USD, string? namePart = null)
   {
     try
     {
-      var stages = BuildFilterStages(filterDto, currency);
+      var stages = BuildFilterStages(filterDto, currency, namePart);
 
       stages.Add(new BsonDocument("$sort", BuildSort(filterDto.Sort)));
       stages.Add(new BsonDocument("$skip", (page - 1) * pageSize));
@@ -48,11 +49,11 @@ public class FilteredRepository : IFilteredRepository
     }
   }
 
-  public async Task<int> GetTotalCountWithFiltersAsync(GamesFilter filterDto, ECurrency currency = ECurrency.USD)
+  public async Task<int> GetTotalCountWithFiltersAsync(GamesFilter filterDto, ECurrency currency = ECurrency.USD, string? namePart = null)
   {
     try
     {
-      var stages = BuildFilterStages(filterDto, currency);
+      var stages = BuildFilterStages(filterDto, currency, namePart);
       stages.Add(new BsonDocument("$count", "count"));
 
       var result = await _gamesCollection
@@ -68,11 +69,16 @@ public class FilteredRepository : IFilteredRepository
     }
   }
 
-  private static List<BsonDocument> BuildFilterStages(GamesFilter filterDto, ECurrency currency)
+  // `namePart` is a case-insensitive partial match by game name.
+  // TODO: Implement FuzzySearch so names with typos or different word order are matched too
+  // (e.g. MongoDB Atlas Search with `fuzzy` options or a trigram index).
+  private static List<BsonDocument> BuildFilterStages(GamesFilter filterDto, ECurrency currency, string? namePart)
   {
     var stages = new List<BsonDocument>();
 
     var gameMatch = new BsonDocument();
+    if (!string.IsNullOrWhiteSpace(namePart))
+      gameMatch.Add("name", new BsonRegularExpression(Regex.Escape(namePart), "i"));
     if (filterDto.Tags.Count > 0)
       gameMatch.Add("store_metadata.tags", new BsonDocument("$all", new BsonArray(filterDto.Tags)));
     if (filterDto.Genres.Count > 0)

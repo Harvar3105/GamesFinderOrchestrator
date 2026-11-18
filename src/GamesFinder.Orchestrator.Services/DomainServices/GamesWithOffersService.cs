@@ -119,11 +119,11 @@ public class GamesWithOffersService : IGamesWithOffersService
   }
 
   // Does not provide offers
-  public async Task<IEnumerable<(Game, decimal?)>> GetPagedWithLowestFilteredAsync(int page, int pageSize, GamesFilter filter, ECurrency currency = ECurrency.USD)
+  public async Task<IEnumerable<(Game, decimal?)>> GetPagedWithLowestFilteredAsync(int page, int pageSize, GamesFilter filter, ECurrency currency = ECurrency.USD, string? namePart = null)
   {
     try
     {
-      var games = (await _filteredRepo.GetPagedWithFiltersAsync(page, pageSize, filter, currency)).ToList();
+      var games = (await _filteredRepo.GetPagedWithFiltersAsync(page, pageSize, filter, currency, namePart)).ToList();
       if (games.Count == 0) return [];
 
       var lowestPrices = (await _offersRepo.GetMinimalOfferPriceManyAsync(games.Select(g => g.Id), currency, filter.Vendor))
@@ -138,9 +138,9 @@ public class GamesWithOffersService : IGamesWithOffersService
     }
   }
 
-  public async Task<int> GetTotalCountFilteredAsync(GamesFilter filter, ECurrency currency = ECurrency.USD)
+  public async Task<int> GetTotalCountFilteredAsync(GamesFilter filter, ECurrency currency = ECurrency.USD, string? namePart = null)
   {
-    return await _filteredRepo.GetTotalCountWithFiltersAsync(filter, currency);
+    return await _filteredRepo.GetTotalCountWithFiltersAsync(filter, currency, namePart);
   }
 
   private async Task AttachOffersAsync(IEnumerable<Game> games, ECurrency currency = ECurrency.USD, EVendor? vendor = null)

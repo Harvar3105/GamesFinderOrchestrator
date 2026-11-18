@@ -73,25 +73,14 @@ public class GameRepository : Repository<Game>, IGameRepository
 
   // TODO: Implement FuzzySearch so names with typos or different word order are matched too
   // (e.g. MongoDB Atlas Search with `fuzzy` options or a trigram index).
-  public async Task<ICollection<Game>> SearchByNameAsync(string namePart, int page, int pageSize)
-  {
-    return await _collection
-      .Find(NameContainsFilter(namePart))
-      .SortBy(g => g.Name)
-      .Skip((page - 1) * pageSize)
-      .Limit(pageSize)
-      .ToListAsync();
-  }
-
-  public async Task<long> CountByNameAsync(string namePart)
-  {
-    return await _collection.CountDocumentsAsync(NameContainsFilter(namePart));
-  }
-
-  private static FilterDefinition<Game> NameContainsFilter(string namePart)
+  public async Task<ICollection<Game>> SearchByNameAsync(string namePart, int limit)
   {
     var pattern = new BsonRegularExpression(Regex.Escape(namePart), "i");
-    return Builders<Game>.Filter.Regex(g => g.Name, pattern);
+    return await _collection
+      .Find(Builders<Game>.Filter.Regex(g => g.Name, pattern))
+      .SortBy(g => g.Name)
+      .Limit(limit)
+      .ToListAsync();
   }
 
   public async Task<List<(long, bool)>> ExistBySteamIdMany(List<long> steamIds)

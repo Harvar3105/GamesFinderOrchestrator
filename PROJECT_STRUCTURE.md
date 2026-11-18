@@ -43,8 +43,8 @@ Project references: `API → all other projects`; `Services → Domain, Publishe
 
 ### Endpoints (`api/[controller]`)
 
-- **Steam**: `POST scrap` (role `admin_gfp`); `GET checkGameExistsByName`, `checkGameExists` (by game Id), `checkGameExistsBySteamId`, `getGameIdBySteamId`, `searchByName` (case-insensitive partial name match, paged, games without offers), `checkGameOfferExists`, `getOfferId`, `getPagedWithCurrency`, `getPaged`.
-- **Game**: `GET tags` — all distinct tags of stored games (`distinct` over `store_metadata.tags`), sorted, cached in `IMemoryCache` for `Cache:TagsMinutes` (default 60).
+- **Steam**: `POST scrap` (role `admin_gfp`); `GET checkGameExistsByName`, `checkGameExists` (by game Id), `checkGameExistsBySteamId`, `getGameIdBySteamId`, `checkGameOfferExists`, `getOfferId`, `getPagedWithCurrency`, `getPaged`.
+- **Game**: `GET tags` — all distinct tags of stored games (`distinct` over `store_metadata.tags`), sorted, cached in `IMemoryCache` for `Cache:TagsMinutes` (default 60); `searchByName` — quick search for name suggestions (case-insensitive partial name match, `limit` up to 50, default 10, no filters or paging, games without offers); `getCatalogPage` — catalog page (partial name match combined with `GamesFilter` and `currency`, paged, games with lowest prices, without offers).
 - **InstantGaming**: `POST scrapIds`, `scrapRange`, `scrapUpTo` (role `admin_gfp`); `GET checkGameOfferExists`, `getOfferId`.
 - **UserData** (whole controller `[Authorize]`, user Id taken from the `sub` claim, which JwtBearer maps to `ClaimTypes.NameIdentifier`): `GET userData` (returns defaults when no document exists), `PUT preferences`, `POST`/`DELETE hiddenGames/{steamAppId}`, `DELETE steamAccount` (unlink), `DELETE userData` (full removal). Steam linking and scheduled wishlist sync are not implemented yet.
 
@@ -108,7 +108,7 @@ Each worker is a separate process: `npm run steam` / `npm run instantgaming` (in
 
 ## Known issues
 
-- `Game/searchByName` has no upper bound on `pageSize` and no minimum query length. The query is an unanchored case-insensitive regex (collection scan) executed twice (count + page). Limits have to be chosen after measuring response time and load on production-sized data.
+- `Game/getCatalogPage` has no upper bound on `pageSize`, and neither it nor `Game/searchByName` has a minimum query length. Both use an unanchored case-insensitive regex (collection scan); `getCatalogPage` runs it twice (count + page) inside the `FilteredRepository` aggregation. Limits have to be chosen after measuring response time and load on production-sized data.
 
 ## Conventions
 

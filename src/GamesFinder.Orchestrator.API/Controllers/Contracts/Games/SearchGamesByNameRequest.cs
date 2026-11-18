@@ -7,9 +7,7 @@ public sealed record SearchGamesByNameRequest
   [Required]
   public string Name { get; init; } = string.Empty;
 
-  [Range(1, int.MaxValue)]
-  public int Page { get; init; } = 1;
-
-  [Range(1, int.MaxValue)]
-  public int PageSize { get; init; } = 20;
+  // TODO: Adjust the upper bound after measuring response time on production-sized data.
+  [Range(1, 50)]
+  public int Limit { get; init; } = 10;
 }

@@ -17,6 +17,6 @@ public interface IGamesWithOffersService
   Task<IEnumerable<Game>> GetPagedAsync(int page, int pageSize, ECurrency currency = ECurrency.USD);
   Task<IEnumerable<Game>> GetPagedFilteredAsync(int page, int pageSize, GamesFilter filter, ECurrency currency = ECurrency.USD);
   Task<IEnumerable<(Game, decimal?)>> GetPagedWithLowestAsync(int page, int pageSize, ECurrency currency = ECurrency.USD);
-  Task<IEnumerable<(Game, decimal?)>> GetPagedWithLowestFilteredAsync(int page, int pageSize, GamesFilter filter, ECurrency currency = ECurrency.USD);
-  Task<int> GetTotalCountFilteredAsync(GamesFilter filter, ECurrency currency = ECurrency.USD);
+  Task<IEnumerable<(Game, decimal?)>> GetPagedWithLowestFilteredAsync(int page, int pageSize, GamesFilter filter, ECurrency currency = ECurrency.USD, string? namePart = null);
+  Task<int> GetTotalCountFilteredAsync(GamesFilter filter, ECurrency currency = ECurrency.USD, string? namePart = null);
 }
