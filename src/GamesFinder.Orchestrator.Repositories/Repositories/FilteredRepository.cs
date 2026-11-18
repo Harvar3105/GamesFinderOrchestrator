@@ -1,5 +1,5 @@
-using GamesFinder.Orchestrator.API.Controllers.Contracts.Steam;
 using GamesFinder.Orchestrator.Domain.Classes.Entities;
+using GamesFinder.Orchestrator.Domain.Contracts;
 using GamesFinder.Orchestrator.Domain.Enums;
 using GamesFinder.Orchestrator.Domain.Interfaces.Repositories;
 using Microsoft.Extensions.Logging;
