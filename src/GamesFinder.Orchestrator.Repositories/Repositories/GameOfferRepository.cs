@@ -111,6 +111,20 @@ public class GameOfferRepository : Repository<GameOffer>, IGameOfferRepository
     }
   }
 
+  public async Task<IEnumerable<EVendor>> GetAvailableVendorsByGameIdAsync(Guid gameId)
+  {
+    var filter = Builders<GameOffer>.Filter.And(
+      Builders<GameOffer>.Filter.Eq(offer => offer.GameId, gameId),
+      Builders<GameOffer>.Filter.Eq(offer => offer.Available, true)
+    );
+
+    var vendors = await _collection
+      .Distinct(offer => offer.Vendor, filter)
+      .ToListAsync();
+
+    return vendors.Order().ToList();
+  }
+
   public async Task<IEnumerable<long>> GetAllVendorIds(EVendor vendor)
   {
     var filter = Builders<GameOffer>.Filter.Eq(offer => offer.Vendor, vendor);
