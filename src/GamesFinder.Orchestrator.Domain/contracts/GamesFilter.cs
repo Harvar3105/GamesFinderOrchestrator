@@ -2,7 +2,6 @@ using GamesFinder.Orchestrator.Domain.Enums;
 
 namespace GamesFinder.Orchestrator.Domain.Contracts;
 
-// TODO: Make tags and genres as entity with strict rules
 public sealed record GamesFilter
 {
   public decimal? Min { get; init; } = null;
