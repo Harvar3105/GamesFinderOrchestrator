@@ -14,9 +14,6 @@ public interface IGamesWithOffersService
   Task<bool> SaveManyAsync(IEnumerable<Game> games);
   Task<bool> SaveOrUpdateAsync(Game game);
   Task<bool> SaveOrUpdateManyAsync(IEnumerable<Game> games);
-  Task<IEnumerable<Game>> GetPagedAsync(int page, int pageSize, ECurrency currency = ECurrency.USD);
-  Task<IEnumerable<Game>> GetPagedFilteredAsync(int page, int pageSize, GamesFilter filter, ECurrency currency = ECurrency.USD);
-  Task<IEnumerable<(Game, decimal?)>> GetPagedWithLowestAsync(int page, int pageSize, ECurrency currency = ECurrency.USD);
   Task<IEnumerable<(Game, decimal?)>> GetPagedWithLowestFilteredAsync(int page, int pageSize, GamesFilter filter, ECurrency currency = ECurrency.USD, string? namePart = null);
   Task<Dictionary<Guid, List<EVendor>>> GetAvailableVendorsManyAsync(IEnumerable<Guid> gameIds);
   Task<int> GetTotalCountFilteredAsync(GamesFilter filter, ECurrency currency = ECurrency.USD, string? namePart = null);

@@ -1,8 +1,6 @@
 using GamesFinder.Orchestrator.API.Controllers.Contracts.Games;
 using GamesFinder.Orchestrator.Domain.Classes;
-using GamesFinder.Orchestrator.Domain.Classes.Entities;
 using GamesFinder.Orchestrator.Domain.Contracts;
-using GamesFinder.Orchestrator.Domain.Enums;
 using GamesFinder.Orchestrator.Domain.Interfaces.DomainServices;
 using GamesFinder.Orchestrator.Domain.Interfaces.Repositories;
 using Microsoft.AspNetCore.Mvc;
@@ -179,65 +177,5 @@ public class GameController : ControllerBase
       _logger.LogError(ex, $"Error retrieving catalog page. Name: {request.Name}. Page: {request.Page}, PageSize: {request.PageSize}");
       return Problem("An error occurred while processing your request.");
     }
-  }
-
-  // Only games, without offers.
-  [HttpGet("getPaged")]
-  public async Task<IActionResult> GetPaged(int page, int pageSize){
-    if (pageSize <= 0 || page < 1) return BadRequest("⚠️Invalid data provided");
-
-    var games = await _repo.GetPagedAsync(page, pageSize);
-    var totalGamesCount = await _repo.GetTotalGamesCountAsync();
-    return Ok(new {Games = games, TotalGamesCount = totalGamesCount});
-  }
-
-  // Games with lowest prices. No offers
-  [HttpGet("getPagedWithLowest")]
-  public async Task<IActionResult> GetPagedWithLowest(int page, int pageSize, ECurrency currency = ECurrency.USD)
-  {
-    if (pageSize <= 0 || page < 1) return BadRequest("⚠️Invalid data provided");
-
-    try
-    {
-      var games = await _gamesWithOffersService.GetPagedWithLowestAsync(page, pageSize, currency);
-      var totalGamesCount = await _repo.GetTotalGamesCountAsync();
-      return Ok(new {Games = ToLowestPriceResponse(games), TotalGamesCount = totalGamesCount});
-    }
-    catch (Exception ex)
-    {
-      _logger.LogError(ex, $"Error retrieving paged games with lowest prices. Page: {page}, PageSize: {pageSize}");
-      return Problem("An error occurred while processing your request.");
-    }
-  }
-
-  // Filtered games with lowest prices. No offers
-  [HttpGet("GetPagedWithLowestFiltered")]
-  public async Task<IActionResult> GetPagedWithLowestFiltered(
-    int page,
-    int pageSize,
-    [FromQuery] GamesFilter filter,
-    ECurrency currency = ECurrency.USD
-    )
-  {
-    if (pageSize <= 0 || page < 1) return BadRequest("⚠️Invalid data provided");
-    if (filter.Min < 0 || filter.Max < 1 || filter.Min >= filter.Max) return BadRequest("Provided invalid boundries.");
-
-    try
-    {
-      var games = await _gamesWithOffersService.GetPagedWithLowestFilteredAsync(page, pageSize, filter, currency);
-      var totalGamesCount = await _gamesWithOffersService.GetTotalCountFilteredAsync(filter, currency);
-      return Ok(new {Games = ToLowestPriceResponse(games), TotalGamesCount = totalGamesCount});
-    }
-    catch (Exception ex)
-    {
-      _logger.LogError(ex, $"Error retrieving paged filtered games with lowest prices. Page: {page}, PageSize: {pageSize}");
-      return Problem("An error occurred while processing your request.");
-    }
-  }
-
-  // System.Text.Json ignores tuple fields (Item1, Item2), so tuples are mapped to named objects.
-  private static List<GameWithLowestPrice> ToLowestPriceResponse(IEnumerable<(Game Game, decimal? LowestPrice)> games)
-  {
-    return [.. games.Select(g => new GameWithLowestPrice(g.Game, g.LowestPrice))];
   }
 }

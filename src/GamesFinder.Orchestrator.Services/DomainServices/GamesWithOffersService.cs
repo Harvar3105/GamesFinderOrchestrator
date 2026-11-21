@@ -64,60 +64,6 @@ public class GamesWithOffersService : IGamesWithOffersService
     return game;
   }
 
-  public async Task<IEnumerable<Game>> GetPagedAsync(int page, int pageSize, ECurrency currency = ECurrency.USD)
-  {
-    try
-    {
-      var games = await _gamesRepo.GetPagedAsync(page, pageSize);
-      if (games == null || games.Count == 0) return [];
-
-      await AttachOffersAsync(games, currency);
-      return games;
-    }
-    catch (Exception ex)
-    {
-      _logger.LogError(ex, "Error getting paged games");
-      return [];
-    }
-  }
-
-  public async Task<IEnumerable<Game>> GetPagedFilteredAsync(int page, int pageSize, GamesFilter filter, ECurrency currency = ECurrency.USD)
-  {
-    try
-    {
-      var games = (await _filteredRepo.GetPagedWithFiltersAsync(page, pageSize, filter, currency)).ToList();
-      if (games.Count == 0) return [];
-
-      await AttachOffersAsync(games, currency, filter.Vendor);
-      return games;
-    }
-    catch (Exception ex)
-    {
-      _logger.LogError(ex, "Error getting paged filtered games");
-      return [];
-    }
-  }
-
-  // Does not provide offers
-  public async Task<IEnumerable<(Game, decimal?)>> GetPagedWithLowestAsync(int page, int pageSize, ECurrency currency = ECurrency.USD)
-  {
-    try
-    {
-      var games = await _gamesRepo.GetPagedAsync(page, pageSize);
-      if (games == null || games.Count == 0) return [];
-
-      var lowestPrices = (await _offersRepo.GetMinimalOfferPriceManyAsync(games.Select(g => g.Id), currency))
-        .ToDictionary(p => p.Item1, p => p.Item2);
-
-      return games.Select(game => (game, lowestPrices.GetValueOrDefault(game.Id))).ToList();
-    }
-    catch (Exception ex)
-    {
-      _logger.LogError(ex, "Error getting paged games with lowest prices");
-      return [];
-    }
-  }
-
   // Does not provide offers
   public async Task<IEnumerable<(Game, decimal?)>> GetPagedWithLowestFilteredAsync(int page, int pageSize, GamesFilter filter, ECurrency currency = ECurrency.USD, string? namePart = null)
   {
