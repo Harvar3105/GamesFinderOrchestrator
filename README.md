@@ -105,8 +105,7 @@ Redis__Password=<password>
 
 BACKEND_URL=http://backend:8080/api
 BACKEND_CHECK_GAME=/Game
-BACKEND_CHECK_STEAM_OFFER=/Steam/checkGameOfferExists
-BACKEND_CHECK_IG_OFFER=/InstantGaming/checkGameOfferExists
+BACKEND_CHECK_GAME_OFFER=/GameOffer/exists
 BACKEND_GET_GAME_IDS=/Game/getGameIds
 BACKEND_GET_IG_OFFER_ID=/InstantGaming/getOfferId
 BACKEND_GET_STEAM_OFFER_ID=/Steam/getOfferId

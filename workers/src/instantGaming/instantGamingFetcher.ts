@@ -6,11 +6,12 @@ import { checkIfPCGameIG, getCanonicalIGurl } from "../utils/instantGaminghHelpe
 import { eVendor } from "../utils/types/enums/eVendor.js";
 import { findNoStockElementIG, findPriceElementIG } from "../utils/instantGaminghHelpers.js";
 import logger from "../utils/logger.js";
-import { checkIgOfferExists, getIgOfferId } from "../backendUtils.js";
+import { checkGameOfferExists, getIgOfferId } from "../backendUtils.js";
 import getSteamAndGameIdsFromHtml, { getVendorsGameNameFromHtml } from "../utils/getSteamIdFromHtml.js";
 
-export async function fetchInstantGamingOffer(id: number, currency?: eCurrency, proxy?: string): Promise<GameOffer> {
-  const url = `https://www.instant-gaming.com/${encodeURIComponent(id)}-/?currency=${encodeURIComponent(currency?.toString().toUpperCase() || 'EUR')}`;
+// vendorId is the id of the offer (product) in the InstantGaming system.
+export async function fetchInstantGamingOffer(vendorId: number, currency?: eCurrency, proxy?: string): Promise<GameOffer> {
+  const url = `https://www.instant-gaming.com/${encodeURIComponent(vendorId)}-/?currency=${encodeURIComponent(currency?.toString().toUpperCase() || 'EUR')}`;
   const data = await fetchHTML(url, proxy);
   
   //TODO: Consider to use multiplatform?
@@ -25,15 +26,15 @@ export async function fetchInstantGamingOffer(id: number, currency?: eCurrency, 
     throw new WrongDataError("Could not get gameId from html and backend.");
   }
 
-  let offerExists = await checkIgOfferExists(id.toString());
+  let offerExists = await checkGameOfferExists({vendorId: vendorId.toString()}, eVendor.InstatnGaming);
   if (offerExists === null) {
-    logger.error(`❌Could not check whether offer ${id} exists, backend did not respond correctly.`);
-    throw new HttpStatusError(FetchFailureStatus.NetworkError, `Could not check whether offer ${id} exists.`);
+    logger.error(`❌Could not check whether offer ${vendorId} exists, backend did not respond correctly.`);
+    throw new HttpStatusError(FetchFailureStatus.NetworkError, `Could not check whether offer ${vendorId} exists.`);
   }
 
   let offerId;
   if (offerExists) {
-    offerId = await getIgOfferId({gameId: steamAndGameIds.gameId!})?? await getIgOfferId({vendorId: id.toString()});
+    offerId = await getIgOfferId({gameId: steamAndGameIds.gameId!})?? await getIgOfferId({vendorId: vendorId.toString()});
     if (offerId === null) throw new HttpStatusError(500, "❌Could not get offer Id.");
   }
   else {
@@ -49,13 +50,13 @@ export async function fetchInstantGamingOffer(id: number, currency?: eCurrency, 
     createdAt: new Date().toUTCString(),
     updatedAt: new Date().toUTCString(),
     gameId: steamAndGameIds.gameId,
-    vendorsGameId: id.toString(),
+    vendorsGameId: vendorId.toString(),
     vendor: eVendor.InstatnGaming,
     vendorsUrl: canonicalUrl,
     available: findNoStockElementIG(doc) ? false : true,
     amount: priceElement?.price ?? null,
     currency: priceElement?.currency ?? null,
-    offerName: getVendorsGameNameFromHtml(data) ?? `UNKNOWN NAME - ${id}`
+    offerName: getVendorsGameNameFromHtml(data) ?? `UNKNOWN NAME - ${vendorId}`
   }
 
   return gameOffer;

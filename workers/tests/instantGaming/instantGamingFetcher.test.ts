@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { validate as isUuid, version as uuidVersion } from "uuid";
 import { fetchInstantGamingOffer } from "../../src/instantGaming/instantGamingFetcher.js";
 import { FetchFailureStatus, fetchHTML, HttpStatusError, WrongDataError } from "../../src/utils/fetch.js";
-import { checkIgOfferExists, getIgOfferId } from "../../src/backendUtils.js";
+import { checkGameOfferExists, getIgOfferId } from "../../src/backendUtils.js";
 import getSteamAndGameIdsFromHtml from "../../src/utils/getSteamIdFromHtml.js";
 import { eCurrency } from "../../src/utils/types/enums/eCurrency.js";
 import { eVendor } from "../../src/utils/types/enums/eVendor.js";
@@ -15,7 +15,7 @@ vi.mock("../../src/utils/fetch.js", async importOriginal => ({
 }));
 
 vi.mock("../../src/backendUtils.js", () => ({
-  checkIgOfferExists: vi.fn(),
+  checkGameOfferExists: vi.fn(),
   getIgOfferId: vi.fn(),
 }));
 
@@ -25,7 +25,7 @@ vi.mock("../../src/utils/getSteamIdFromHtml.js", async importOriginal => ({
 }));
 
 const fetchHTMLMock = vi.mocked(fetchHTML);
-const checkIgOfferExistsMock = vi.mocked(checkIgOfferExists);
+const checkGameOfferExistsMock = vi.mocked(checkGameOfferExists);
 const getIgOfferIdMock = vi.mocked(getIgOfferId);
 const getSteamAndGameIdsMock = vi.mocked(getSteamAndGameIdsFromHtml);
 
@@ -38,7 +38,7 @@ describe("fetchInstantGamingOffer", () => {
   beforeEach(() => {
     fetchHTMLMock.mockReset().mockResolvedValue(buildInstantGamingPage({ canonicalUrl: CANONICAL_URL }));
     getSteamAndGameIdsMock.mockReset().mockResolvedValue({ steamId: 1091500, gameId: GAME_ID });
-    checkIgOfferExistsMock.mockReset().mockResolvedValue(false);
+    checkGameOfferExistsMock.mockReset().mockResolvedValue(false);
     getIgOfferIdMock.mockReset().mockResolvedValue(null);
   });
 
@@ -69,14 +69,14 @@ describe("fetchInstantGamingOffer", () => {
 
       await expect(fetchInstantGamingOffer(VENDOR_ID)).rejects.toBeInstanceOf(WrongDataError);
       expect(getSteamAndGameIdsMock).not.toHaveBeenCalled();
-      expect(checkIgOfferExistsMock).not.toHaveBeenCalled();
+      expect(checkGameOfferExistsMock).not.toHaveBeenCalled();
     });
 
     it("rejects offers that cannot be linked to a game", async () => {
       getSteamAndGameIdsMock.mockResolvedValue(null);
 
       await expect(fetchInstantGamingOffer(VENDOR_ID)).rejects.toBeInstanceOf(WrongDataError);
-      expect(checkIgOfferExistsMock).not.toHaveBeenCalled();
+      expect(checkGameOfferExistsMock).not.toHaveBeenCalled();
     });
 
     it("rejects offers whose Steam id is unknown to the backend", async () => {
@@ -91,12 +91,12 @@ describe("fetchInstantGamingOffer", () => {
       const offer = await fetchInstantGamingOffer(VENDOR_ID);
 
       expect(isUuid(offer.id) && uuidVersion(offer.id)).toBe(4);
-      expect(checkIgOfferExistsMock).toHaveBeenCalledWith("7741");
+      expect(checkGameOfferExistsMock).toHaveBeenCalledWith({ vendorId: "7741" }, eVendor.InstatnGaming);
       expect(getIgOfferIdMock).not.toHaveBeenCalled();
     });
 
     it("reuses the existing offer id found by game id", async () => {
-      checkIgOfferExistsMock.mockResolvedValue(true);
+      checkGameOfferExistsMock.mockResolvedValue(true);
       getIgOfferIdMock.mockResolvedValue(EXISTING_OFFER_ID);
 
       const offer = await fetchInstantGamingOffer(VENDOR_ID);
@@ -107,7 +107,7 @@ describe("fetchInstantGamingOffer", () => {
     });
 
     it("falls back to the vendor id lookup when the game id lookup finds nothing", async () => {
-      checkIgOfferExistsMock.mockResolvedValue(true);
+      checkGameOfferExistsMock.mockResolvedValue(true);
       getIgOfferIdMock.mockResolvedValueOnce(null).mockResolvedValueOnce(EXISTING_OFFER_ID);
 
       const offer = await fetchInstantGamingOffer(VENDOR_ID);
@@ -118,7 +118,7 @@ describe("fetchInstantGamingOffer", () => {
 
     // FIXME: when the offer exists but both id lookups fail, the offer is returned with a null id.
     it("returns an offer with a null id when both lookups fail (current behavior)", async () => {
-      checkIgOfferExistsMock.mockResolvedValue(true);
+      checkGameOfferExistsMock.mockResolvedValue(true);
 
       const offer = await fetchInstantGamingOffer(VENDOR_ID);
 
@@ -126,7 +126,7 @@ describe("fetchInstantGamingOffer", () => {
     });
 
     it("throws a retryable error instead of generating a new id when the existence check fails", async () => {
-      checkIgOfferExistsMock.mockResolvedValue(null);
+      checkGameOfferExistsMock.mockResolvedValue(null);
 
       await expect(fetchInstantGamingOffer(VENDOR_ID)).rejects.toMatchObject({
         name: "HttpStatusError",

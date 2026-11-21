@@ -1,3 +1,4 @@
+using GamesFinder.Orchestrator.API.Controllers.Contracts.GameOffers;
 using GamesFinder.Orchestrator.Domain.Enums;
 using GamesFinder.Orchestrator.Domain.Interfaces.Repositories;
 using Microsoft.AspNetCore.Mvc;
@@ -17,17 +18,24 @@ public class GameOfferController : ControllerBase
     this._repo = repo;
   }
 
-  [HttpGet("checkGameOfferExists")]
-  public async Task<IActionResult> CheckExistingGameOfferAsync(int steamId, EVendor vendor)
+  // 200 — the game has an offer of the vendor, 404 — it has not, 400 — invalid query. HEAD responses carry no body.
+  [HttpHead("exists")]
+  [ProducesResponseType(StatusCodes.Status200OK)]
+  [ProducesResponseType(StatusCodes.Status400BadRequest)]
+  [ProducesResponseType(StatusCodes.Status404NotFound)]
+  public async Task<IActionResult> ExistsAsync([FromQuery] CheckGameOfferExistsRequest request)
   {
     try
     {
-      var exists = await _repo.ExistsByVendorsIdAsync(steamId.ToString(), vendor);
-      return Ok(new { Exists = exists });
+      var vendor = request.Vendor!.Value;
+      var exists = request.GameId is { } gameId
+        ? await _repo.ExistsByGameIdAsync(gameId, vendor)
+        : await _repo.ExistsByVendorsIdAsync(request.VendorId!.Trim(), vendor);
+      return exists ? Ok() : NotFound();
     }
     catch (Exception ex)
     {
-      _logger.LogError(ex, $"Error checking existence of game offer for Steam ID: {steamId}");
+      _logger.LogError(ex, $"Error checking existence of game offer. GameId: {request.GameId}, VendorId: {request.VendorId}, Vendor: {request.Vendor}");
       return Problem("An error occurred while processing your request.");
     }
   }

@@ -27,6 +27,13 @@ public class GameOfferRepository : Repository<GameOffer>, IGameOfferRepository
       .AnyAsync();
   }
 
+  public async Task<bool> ExistsByGameIdAsync(Guid gameId, EVendor vendor)
+  {
+    return await _collection
+      .Find(offer => offer.GameId == gameId && offer.Vendor == vendor)
+      .AnyAsync();
+  }
+
   public async Task<ICollection<GameOffer>?> GetByGameIdAsync(Guid gameId)
   {
     return await _collection

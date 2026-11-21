@@ -17,8 +17,7 @@ export const config = {
 
   backendUrl: "http://backend.test",
   backendCheckGame: "/api/Game",
-  backendCheckSteamOffer: "/api/Steam/checkGameOfferExists",
-  backendCheckIgOffer: "/api/InstantGaming/checkGameOfferExists",
+  backendCheckGameOffer: "/api/GameOffer/exists",
   backendGetIgOfferId: "/api/InstantGaming/getOfferId",
   backendGetSteamOfferId: "/api/Steam/getOfferId",
   backendGetGameIds: "/api/Game/getGameIds",
