@@ -32,13 +32,9 @@ export const config = {
 
   backendUrl: process.env.BACKEND_URL,
   backendCheckGame: process.env.BACKEND_CHECK_GAME,
-  backendCheckGameExistsByName: process.env.BACKEND_CHECK_GAME_EXISTS_BY_NAME,
-  backendCheckGameExistsBySteamId: process.env.BACKEND_CHECK_GAME_EXISTS_BY_STEAM_ID,
-  backendCheckSteamOffer: process.env.BACKEND_CHECK_STEAM_OFFER,
-  backendCheckIgOffer: process.env.BACKEND_CHECK_IG_OFFER,
-  backendGetIgOfferId: process.env.BACKEND_GET_IG_OFFER_ID,
-  backendGetSteamOfferId: process.env.BACKEND_GET_STEAM_OFFER_ID,
-  backendGetGameId: process.env.BACKEND_GET_GAME_ID,
+  backendCheckGameOffer: process.env.BACKEND_CHECK_GAME_OFFER,
+  backendGetOfferId: process.env.BACKEND_GET_OFFER_ID,
+  backendGetGameIds: process.env.BACKEND_GET_GAME_IDS,
   backendTimeoutMs: Number(process.env.BACKEND_TIMEOUT_MS) || 5000,
 };
 

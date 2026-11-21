@@ -33,7 +33,7 @@ Project references: `API → all other projects`; `Services → Domain, Publishe
 
 | Project | Contents |
 |---|---|
-| **API** | `Program.cs` — DI, JWT, CORS, Swagger, consumers registered as hosted services. Controllers plus request/response contracts in `Controllers/Contracts/{Steam,InstantGaming,UserData,Games}`. |
+| **API** | `Program.cs` — DI, JWT, CORS, Swagger, consumers registered as hosted services. Controllers plus request/response contracts in `Controllers/Contracts/{Steam,InstantGaming,UserData,Games,GameOffers}`. |
 | **Domain** | Entities (`Entity`, `Game`, `GameOffer`, `UserData`), tasks (`ScrapeTask`, `SteamScrapeTask`, `InstantGamingScrapeTask`), enums (`ECurrency`, `EVendor`, `ESort`, `EPriceCompare`, `EWishlistSyncStatus`), `PaginationFilterDto`, options (`SteamOptions`, `WorkersOptions`, `CacheOptions`), all interfaces. |
 | **Publisher** | `PublisherFactory` (maps task type → queue), `WorkerPublisher<T>`, `RabbitMQ/` (config, publisher), `Redis/` (`RedisConfig`, `RedisCacheDB` — Newtonsoft.Json wrapper). |
 | **Consumers** | `Consumer<TResult>` base class: consumes a results queue, loads items from Redis, calls `SaveToDatabaseAsync`, deletes the key, acks (nack with requeue on error). `SteamWorkerConsumer` reads `<key>:games` and `<key>:offers`; `InstantGamingWorkersConsumer` reads `<key>` (list of `GameOffer`). |
@@ -43,10 +43,10 @@ Project references: `API → all other projects`; `Services → Domain, Publishe
 
 ### Endpoints (`api/[controller]`)
 
-- **Steam**: `POST scrap` (role `admin_gfp`); `GET checkGameExistsByName`, `checkGameExists` (by game Id), `checkGameExistsBySteamId`, `getGameIdBySteamId`, `checkGameOfferExists`, `getOfferId`, `getPagedWithCurrency`, `getPaged`.
-- **Game**: `GET tags` — all distinct tags of stored games (`distinct` over `store_metadata.tags`), sorted, cached in `IMemoryCache` for `Cache:TagsMinutes` (default 60); `searchByName` — quick search for name suggestions (case-insensitive partial name match, `limit` up to 50, default 10, no filters or paging, games without offers); `getCatalogPage` — catalog page (partial name match combined with `GamesFilter` and `currency`, paged; each item is a `CatalogGame`: game, lowest price and `AvailableVendors` — vendors with an available offer, fetched for the whole page in one query; without offers).
-- **GameOffer**: `GET checkGameOfferExists`, `getOfferIdByGameId`, `getOfferIdByVendorId`, `getGameOffer`, `getGameOffers`, `getLowestPrice`; `getAvailableVendors` — distinct vendors of the game's offers with `available = true` (by game Id, not Steam Id; empty list when there are none); `vendors` — all supported vendors (hardcoded).
-- **InstantGaming**: `POST scrapIds`, `scrapRange`, `scrapUpTo` (role `admin_gfp`); `GET checkGameOfferExists`, `getOfferId`.
+- **Steam**: `POST scrap` (role `admin_gfp`).
+- **Game**: `HEAD /` — game existence check by exactly one of `id`, `steamId`, `name` (`CheckGameExistsRequest`; 200 exists, 404 not found, 400 invalid query; no body); `GET getGameIds` — `{id, steamId}` of a stored game by exactly one of `steamId`, `name` (`GetGameIdsRequest`; by name: the stored game whose name is contained in the given name, shortest stored name wins, loads the whole collection; 404 when not found); `GET tags` — all distinct tags of stored games (`distinct` over `store_metadata.tags`), sorted, cached in `IMemoryCache` for `Cache:TagsMinutes` (default 60); `searchByName` — quick search for name suggestions (case-insensitive partial name match, `limit` up to 50, default 10, no filters or paging, games without offers); `getCatalogPage` — catalog page (partial name match combined with `GamesFilter` and `currency`, paged; each item is a `CatalogGame`: game, lowest price and `AvailableVendors` — vendors with an available offer, fetched for the whole page in one query; without offers).
+- **GameOffer**: `HEAD exists` — whether an offer of the vendor exists, by `vendor` (required) plus exactly one of `gameId`, `vendorId` (the id of the offer in the vendor system) (`GameOfferLookupRequest`; 200 exists, 404 not found, 400 invalid query; no body); `GET getOfferId` — `{id}` of the offer, same query as `exists` (`GameOfferLookupRequest`; 404 when not found); `getGameOffer`, `getGameOffers`, `getLowestPrice`; `getAvailableVendors` — distinct vendors of the game's offers with `available = true` (by game Id, not Steam Id; empty list when there are none); `vendors` — all supported vendors (hardcoded).
+- **InstantGaming**: `POST scrapIds`, `scrapRange`, `scrapUpTo` (role `admin_gfp`).
 - **UserData** (whole controller `[Authorize]`, user Id taken from the `sub` claim, which JwtBearer maps to `ClaimTypes.NameIdentifier`): `GET userData` (returns defaults when no document exists), `PUT preferences`, `POST`/`DELETE hiddenGames/{steamAppId}`, `DELETE steamAccount` (unlink), `DELETE userData` (full removal). Steam linking and scheduled wishlist sync are not implemented yet.
 
 GET endpoints without `[Authorize]` are used by the workers. With `Security:RequireJWT=true` a fallback policy requires authentication for them too, and the workers do not send a token.
@@ -89,7 +89,7 @@ Each worker is a separate process: `npm run steam` / `npm run instantgaming` (in
 
 - No public API: HTML pages `instant-gaming.com/<id>-/?currency=…` are scraped (allowed by robots.txt). The catalog is about 200k IDs.
 - Products whose title does not contain "pc" are skipped (`checkIfPCGameIG`).
-- Linking an offer to a game: first a Steam ID is extracted from media URLs (`apps/<id>/extras`); otherwise the game is looked up **by title** (text before `-`) via `checkGameExistsByName`. Title matching is unreliable.
+- Linking an offer to a game: first a Steam ID is extracted from media URLs (`apps/<id>/extras`); otherwise the game is looked up **by title** (text before `-`) via `Game/getGameIds?name=` (404 means not found and the offer is not retried). Title matching is unreliable.
 - Price comes from `.total`, currency from the price symbol, out-of-stock from `.noStock`.
 - docker-compose runs 5 replicas. Batch size is `ceil(count / Workers:InstantGamingWorkerCount)` or `Workers:InstantGamingOverrideBatchSize`.
 

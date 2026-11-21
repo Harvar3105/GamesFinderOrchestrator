@@ -8,7 +8,7 @@ import {
   getSteamIdsFromMediaSourcesIG,
   splitIntoBatches,
 } from "../../src/utils/instantGaminghHelpers.js";
-import { parseHtmlToDocument } from "../../src/utils/offerFetcher.js";
+import { parseHtmlToDocument } from "../../src/utils/fetch.js";
 import { eCurrency } from "../../src/utils/types/enums/eCurrency.js";
 import { buildInstantGamingPage, InstantGamingPageOptions } from "../fixtures/instantGamingHtml.js";
 

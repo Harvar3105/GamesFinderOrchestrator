@@ -6,7 +6,7 @@ import { eVendor } from "../utils/types/enums/eVendor.js";
 import { GameOffer } from "../utils/types/entities/gameOffer.js";
 import logger from "../utils/logger.js";
 import { fetchJson, HttpStatusError, WrongDataError } from "../utils/fetch.js";
-import { checkGameExistsBySteamId, checkSteamOfferExists, getGameIdBySteamIdAsync, getSteamOfferId } from "../backendUtils.js";
+import { checkGameExists, checkGameOfferExists, getGameIdBySteamIdAsync, getOfferId } from "../backendUtils.js";
 import { fetchGameStoreMetadata } from "./gameMetadataFetcher.js";
 import { config } from "../utils/config.js";
 
@@ -19,8 +19,7 @@ export class SkippedError extends Error {
 export async function fetchSteamGame(id: number, updateGame: boolean, updateDeal: boolean, region: eRegion = eRegion.US ): Promise<Game | GameOffer> {
   const url = `https://store.steampowered.com/api/appdetails?appids=${id}&cc=${region}&l=en`;
 
-  let offerExists = await checkSteamOfferExists(id);
-  let gameExists = await checkGameExistsBySteamId(id);
+  let gameExists = await checkGameExists({steamId: id});
 
   let gameId;
   if (gameExists) {
@@ -30,8 +29,11 @@ export async function fetchSteamGame(id: number, updateGame: boolean, updateDeal
     gameId = v4();
   }
 
+  // An offer can exist only for a stored game. A failed check (null) is treated as "no offer", as before.
+  let offerExists = gameExists && gameId ? await checkGameOfferExists({gameId: gameId}, eVendor.Steam) : false;
+
   let offerId;
-  if (offerExists) offerId = await getSteamOfferId({gameId: gameId!})?? await getSteamOfferId({vendorId: id.toString()});
+  if (offerExists) offerId = await getOfferId({gameId: gameId!}, eVendor.Steam) ?? await getOfferId({vendorId: id.toString()}, eVendor.Steam);
   else offerId = v4();
 
   if (gameExists && offerExists && !updateGame && !updateDeal) throw new SkippedError();

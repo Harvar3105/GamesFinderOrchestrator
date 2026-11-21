@@ -1,8 +1,6 @@
 using GamesFinder.Orchestrator.API.Controllers.Contracts.Games;
 using GamesFinder.Orchestrator.Domain.Classes;
-using GamesFinder.Orchestrator.Domain.Classes.Entities;
 using GamesFinder.Orchestrator.Domain.Contracts;
-using GamesFinder.Orchestrator.Domain.Enums;
 using GamesFinder.Orchestrator.Domain.Interfaces.DomainServices;
 using GamesFinder.Orchestrator.Domain.Interfaces.Repositories;
 using Microsoft.AspNetCore.Mvc;
@@ -57,65 +55,57 @@ public class GameController : ControllerBase
     }
   }
 
-  [HttpGet("checkGameExistsByName")]
-  public async Task<IActionResult> CheckExistingGameByNameAsync(string gameName)
+  // 200 — exists, 404 — not found, 400 — not exactly one key provided. HEAD responses carry no body.
+  [HttpHead("exists")]
+  [ProducesResponseType(StatusCodes.Status200OK)]
+  [ProducesResponseType(StatusCodes.Status400BadRequest)]
+  [ProducesResponseType(StatusCodes.Status404NotFound)]
+  public async Task<IActionResult> CheckGameExistsAsync([FromQuery] CheckGameExistsRequest request)
   {
     try
     {
-      var exists = await _repo.ExistsByAppNameAsync(gameName);
-      return Ok(new {Exists = exists});
+      var exists = request switch
+      {
+        { Id: { } id } => await _repo.ExistsAsync(id),
+        { SteamId: { } steamId } => await _repo.ExistsBySteamIdAsync(steamId),
+        _ => await _repo.ExistsByAppNameAsync(request.Name!.Trim()),
+      };
+      return exists ? Ok() : NotFound();
     }
     catch (Exception ex)
     {
-      _logger.LogError(ex, $"Error checking existence of game by name: {gameName}");
+      _logger.LogError(ex, $"Error checking existence of game. Id: {request.Id}, SteamId: {request.SteamId}, Name: {request.Name}");
       return Problem("An error occurred while processing your request.");
     }
   }
 
-  [HttpGet("checkGameExists")]
-  public async Task<IActionResult> CheckGameExists(string gameId)
+  // Used by the workers to reuse the Id of a stored game. The name lookup links InstantGaming offers
+  // whose product page has no Steam ID.
+  [HttpGet("getGameIds")]
+  [ProducesResponseType(StatusCodes.Status400BadRequest)]
+  [ProducesResponseType(StatusCodes.Status404NotFound)]
+  public async Task<ActionResult<GetGameIdsResponse>> GetGameIdsAsync([FromQuery] GetGameIdsRequest request)
   {
-    var success = Guid.TryParse(gameId, out var parsedId);
-    if (!success) return BadRequest("Invalid id requested.");
-
     try
     {
-      var exists = await _repo.ExistsAsync(parsedId);
-      return Ok(new {Exists = exists});
+      GetGameIdsResponse? response;
+      if (request.SteamId is { } steamId)
+      {
+        var gameId = await _repo.GetIdBySteamIdAsync(steamId);
+        response = gameId is null ? null : new GetGameIdsResponse {Id = gameId.Value, SteamId = steamId};
+      }
+      else
+      {
+        var game = await _repo.GetByAppNameAsync(request.Name!.Trim());
+        response = game is null ? null : new GetGameIdsResponse {Id = game.Id, SteamId = game.SteamID};
+      }
+
+      if (response is null) return NotFound("Game not found.");
+      return Ok(response);
     }
     catch (Exception ex)
     {
-      _logger.LogError(ex, $"Error checking existence of game: {gameId}");
-      return Problem("An error occurred while processing your request.");
-    }
-  }
-
-  [HttpGet("checkGameExistsBySteamId")]
-  public async Task<IActionResult> CheckGameExistsBySteamId(int steamId)
-  {
-    try
-    {
-      var exists = await _repo.ExistsBySteamIdAsync(steamId);
-      return Ok(new {Exists = exists});
-    } catch (Exception ex)
-    {
-      _logger.LogError(ex, $"Error checking existence of game by steam id: {steamId}");
-      return Problem("An error occurred while processing your request.");
-    }
-  }
-
-  [HttpGet("getGameIdBySteamId")]
-  public async Task<IActionResult> GetGameIdBySteamIdAsync(int steamId)
-  {
-    try
-    {
-      var gameId = await _repo.GetIdBySteamIdAsync(steamId);
-      if (gameId is null) return NotFound($"Game not found.");
-      return Ok(new {Id = gameId});
-    }
-    catch (Exception ex)
-    {
-      _logger.LogError(ex, $"Error checking existence of Steam ID: {steamId}");
+      _logger.LogError(ex, $"Error retrieving game ids. SteamId: {request.SteamId}, Name: {request.Name}");
       return Problem("An error occurred while processing your request.");
     }
   }
@@ -187,65 +177,5 @@ public class GameController : ControllerBase
       _logger.LogError(ex, $"Error retrieving catalog page. Name: {request.Name}. Page: {request.Page}, PageSize: {request.PageSize}");
       return Problem("An error occurred while processing your request.");
     }
-  }
-
-  // Only games, without offers.
-  [HttpGet("getPaged")]
-  public async Task<IActionResult> GetPaged(int page, int pageSize){
-    if (pageSize <= 0 || page < 1) return BadRequest("⚠️Invalid data provided");
-
-    var games = await _repo.GetPagedAsync(page, pageSize);
-    var totalGamesCount = await _repo.GetTotalGamesCountAsync();
-    return Ok(new {Games = games, TotalGamesCount = totalGamesCount});
-  }
-
-  // Games with lowest prices. No offers
-  [HttpGet("getPagedWithLowest")]
-  public async Task<IActionResult> GetPagedWithLowest(int page, int pageSize, ECurrency currency = ECurrency.USD)
-  {
-    if (pageSize <= 0 || page < 1) return BadRequest("⚠️Invalid data provided");
-
-    try
-    {
-      var games = await _gamesWithOffersService.GetPagedWithLowestAsync(page, pageSize, currency);
-      var totalGamesCount = await _repo.GetTotalGamesCountAsync();
-      return Ok(new {Games = ToLowestPriceResponse(games), TotalGamesCount = totalGamesCount});
-    }
-    catch (Exception ex)
-    {
-      _logger.LogError(ex, $"Error retrieving paged games with lowest prices. Page: {page}, PageSize: {pageSize}");
-      return Problem("An error occurred while processing your request.");
-    }
-  }
-
-  // Filtered games with lowest prices. No offers
-  [HttpGet("GetPagedWithLowestFiltered")]
-  public async Task<IActionResult> GetPagedWithLowestFiltered(
-    int page,
-    int pageSize,
-    [FromQuery] GamesFilter filter,
-    ECurrency currency = ECurrency.USD
-    )
-  {
-    if (pageSize <= 0 || page < 1) return BadRequest("⚠️Invalid data provided");
-    if (filter.Min < 0 || filter.Max < 1 || filter.Min >= filter.Max) return BadRequest("Provided invalid boundries.");
-
-    try
-    {
-      var games = await _gamesWithOffersService.GetPagedWithLowestFilteredAsync(page, pageSize, filter, currency);
-      var totalGamesCount = await _gamesWithOffersService.GetTotalCountFilteredAsync(filter, currency);
-      return Ok(new {Games = ToLowestPriceResponse(games), TotalGamesCount = totalGamesCount});
-    }
-    catch (Exception ex)
-    {
-      _logger.LogError(ex, $"Error retrieving paged filtered games with lowest prices. Page: {page}, PageSize: {pageSize}");
-      return Problem("An error occurred while processing your request.");
-    }
-  }
-
-  // System.Text.Json ignores tuple fields (Item1, Item2), so tuples are mapped to named objects.
-  private static List<GameWithLowestPrice> ToLowestPriceResponse(IEnumerable<(Game Game, decimal? LowestPrice)> games)
-  {
-    return [.. games.Select(g => new GameWithLowestPrice(g.Game, g.LowestPrice))];
   }
 }

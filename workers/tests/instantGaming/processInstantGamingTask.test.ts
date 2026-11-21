@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import processInstantGamingTask, { processInstantGamingTaskIds } from "../../src/instantGaming/processInstantGamingTask.js";
 import { fetchInstantGamingOffer } from "../../src/instantGaming/instantGamingFetcher.js";
-import { HttpStatusError, WrongDataError } from "../../src/utils/offerFetcher.js";
+import { HttpStatusError, WrongDataError } from "../../src/utils/fetch.js";
 import { config } from "../../src/utils/config.js";
 import logger from "../../src/utils/logger.js";
 import { GameOffer } from "../../src/utils/types/entities/gameOffer.js";

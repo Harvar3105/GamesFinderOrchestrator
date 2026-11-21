@@ -1,7 +1,6 @@
 import { getFirstSteamIdFromMediaSourceIG } from "./instantGaminghHelpers.js";
-import { fetchJson, parseHtmlToDocument } from "./fetch.js";
+import { fetchJson, HttpStatusError, parseHtmlToDocument } from "./fetch.js";
 import { config } from "./config.js";
-import logger from "./logger.js";
 
 export type SteamAndGameIds = {
   steamId: number;
@@ -11,38 +10,32 @@ export type SteamAndGameIds = {
 export default async function getSteamAndGameIdsFromHtml(html: string): Promise<SteamAndGameIds | null> {
   var steamId = getFirstSteamIdFromMediaSourceIG(html);
 
-  if (steamId) {
-    var gameId = await getGameId(steamId);
-    return {steamId: steamId, gameId: gameId!};
-  } else {
-    var vendorsGameName = getVendorsGameNameFromHtml(html);
-    //TODO: Find more solutions to name comparison
-    var parsedName = vendorsGameName?.split('-')[0].trim();
-    
-    if (!parsedName && !vendorsGameName) return null;
-    return await getIdsFromBackend(parsedName ?? vendorsGameName!);
-  }
+  if (steamId) return await getGameIdsFromBackend({steamId: steamId});
+
+  var vendorsGameName = getVendorsGameNameFromHtml(html);
+  //TODO: Find more solutions to name comparison
+  var parsedName = vendorsGameName?.split('-')[0].trim();
+
+  if (!parsedName && !vendorsGameName) return null;
+  return await getGameIdsFromBackend({name: parsedName ?? vendorsGameName!});
 }
 
-async function getIdsFromBackend(gameName: string): Promise<SteamAndGameIds | null> {
-  const url = config.backendUrl! + config.backendCheckGameExistsByName + `?gameName=${encodeURIComponent(gameName)}&getSteamId=true`;
-  const data = await fetchJson({url: url, method: 'GET', timeoutMS: config.backendTimeoutMs});
-  if (!data?.exists) return null;
-  return {steamId: data.steamId, gameId: data.gameId};
-}
+type GetGameIdsParams = | { steamId: number; name?: never } | { name: string; steamId?: never };
 
-async function getGameId(steamId: number): Promise<string | null> {
-  const url = config.backendUrl! + config.backendGetGameId! + `?steamId=${encodeURIComponent(steamId)}`;
+// 404 means the game is not stored; other backend errors propagate so the offer can be retried.
+async function getGameIdsFromBackend(params: GetGameIdsParams): Promise<SteamAndGameIds | null> {
+  const url = new URL(config.backendUrl! + config.backendGetGameIds!);
+  if (params.steamId) url.searchParams.append('steamId', params.steamId.toString());
+  if (params.name) url.searchParams.append('name', params.name);
+
   try {
-    const data = await fetchJson({url: url, method: 'GET', timeoutMS: config.backendTimeoutMs});
-    if (!data || !data.id) return null;
-    return data.id;
+    const data = await fetchJson({url: url.toString(), method: 'GET', timeoutMS: config.backendTimeoutMs});
+    if (!data?.id) return null;
+    return {steamId: data.steamId, gameId: data.id};
   } catch (err) {
-    // FIXME: transient backend errors (HttpStatusError) are swallowed here, so the fetcher sees a missing gameId
-    // and throws WrongDataError, which is never retried. The title lookup path lets the same error propagate.
-    logger.error("Could not get gameId.", err);
+    if (err instanceof HttpStatusError && err.status === 404) return null;
+    throw err;
   }
-  return null;
 }
 
 export function getVendorsGameNameFromHtml(html: string): string | null {
