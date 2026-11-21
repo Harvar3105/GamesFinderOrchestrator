@@ -1,5 +1,5 @@
 import { getFirstSteamIdFromMediaSourceIG } from "./instantGaminghHelpers.js";
-import { fetchJson, parseHtmlToDocument } from "./offerFetcher.js";
+import { fetchJson, parseHtmlToDocument } from "./fetch.js";
 import { config } from "./config.js";
 import logger from "./logger.js";
 

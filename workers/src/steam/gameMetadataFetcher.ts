@@ -1,5 +1,5 @@
 import { config } from "../utils/config.js";
-import { fetchJson, HttpStatusError } from "../utils/offerFetcher.js";
+import { fetchJson, HttpStatusError } from "../utils/fetch.js";
 
 export type GameStoreMetaData = {
   tags: string[];

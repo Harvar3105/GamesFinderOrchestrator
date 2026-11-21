@@ -1,5 +1,5 @@
 import { v4 } from "uuid";
-import { FetchFailureStatus, fetchHTML, HttpStatusError, parseHtmlToDocument, WrongDataError } from "../utils/offerFetcher.js";
+import { FetchFailureStatus, fetchHTML, HttpStatusError, parseHtmlToDocument, WrongDataError } from "../utils/fetch.js";
 import { GameOffer } from "../utils/types/entities/gameOffer.js";
 import { eCurrency } from "../utils/types/enums/eCurrency.js";
 import { checkIfPCGameIG, getCanonicalIGurl } from "../utils/instantGaminghHelpers.js";

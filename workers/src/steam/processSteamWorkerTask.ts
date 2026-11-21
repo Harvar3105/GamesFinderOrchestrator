@@ -1,6 +1,6 @@
 import { config } from "../utils/config.js";
 import logger from "../utils/logger.js";
-import { HttpStatusError, WrongDataError } from "../utils/offerFetcher.js";
+import { HttpStatusError, WrongDataError } from "../utils/fetch.js";
 import { Game, isGame } from "../utils/types/entities/game.js";
 import { GameOffer, isGameOffer } from "../utils/types/entities/gameOffer.js";
 import { FailedId } from "../utils/types/FailedId.js";

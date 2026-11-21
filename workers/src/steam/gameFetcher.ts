@@ -5,7 +5,7 @@ import { eRegion } from "../utils/types/enums/eRegion.js";
 import { eVendor } from "../utils/types/enums/eVendor.js";
 import { GameOffer } from "../utils/types/entities/gameOffer.js";
 import logger from "../utils/logger.js";
-import { fetchJson, HttpStatusError, WrongDataError } from "../utils/offerFetcher.js";
+import { fetchJson, HttpStatusError, WrongDataError } from "../utils/fetch.js";
 import { checkGameExistsBySteamId, checkSteamOfferExists, getGameIdBySteamIdAsync, getSteamOfferId } from "../backendUtils.js";
 import { fetchGameStoreMetadata } from "./gameMetadataFetcher.js";
 import { config } from "../utils/config.js";

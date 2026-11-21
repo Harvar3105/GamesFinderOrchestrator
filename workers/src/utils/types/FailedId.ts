@@ -1,4 +1,4 @@
-import { HttpStatusError } from "../offerFetcher.js";
+import { HttpStatusError } from "../fetch.js";
 
 export type FailedId = {
   id: number;

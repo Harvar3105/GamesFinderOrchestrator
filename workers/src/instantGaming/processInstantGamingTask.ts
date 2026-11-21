@@ -1,6 +1,6 @@
 import { config } from "../utils/config.js";
 import logger from "../utils/logger.js";
-import { HttpStatusError, WrongDataError } from "../utils/offerFetcher.js";
+import { HttpStatusError, WrongDataError } from "../utils/fetch.js";
 import { GameOffer } from "../utils/types/entities/gameOffer.js";
 import { InstantGamingTask } from "../utils/types/entities/tasks.js";
 import { eCurrency } from "../utils/types/enums/eCurrency.js";

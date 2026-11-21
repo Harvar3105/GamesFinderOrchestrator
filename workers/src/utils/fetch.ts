@@ -88,9 +88,7 @@ export async function fetchJson(params: FetchParams): Promise<any> {
 
 }
 
-export async function fetchHTML(url: string, proxy?: string): Promise<string> {
-  // FIXME: vendor pages are fetched with the backend timeout; they likely need their own setting.
-  const timeoutMS = config.backendTimeoutMs;
+export async function fetchHTML(url: string, proxy?: string, timeoutMS: number = 10000): Promise<string> {
   let html: string;
   try {
     const res = await fetch(url, buildRequestOptions(timeoutMS, 'GET', proxy));
