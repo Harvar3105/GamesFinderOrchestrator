@@ -47,7 +47,6 @@ async function getGameId(steamId: number): Promise<string | null> {
 
 export function getVendorsGameNameFromHtml(html: string): string | null {
   var doc = parseHtmlToDocument(html);
-  // FIXME: innerHTML keeps HTML entities ("&" becomes "&amp;"), which breaks the title lookup; textContent returns plain text.
-  var vendorsGameName = (doc.documentElement.querySelector('.game-title') as Element | null)?.innerHTML;
+  var vendorsGameName = (doc.documentElement.querySelector('.game-title') as Element | null)?.textContent;
   return vendorsGameName ?? null;
 }
