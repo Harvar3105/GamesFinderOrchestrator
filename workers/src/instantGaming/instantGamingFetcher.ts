@@ -6,7 +6,7 @@ import { checkIfPCGameIG, getCanonicalIGurl } from "../utils/instantGaminghHelpe
 import { eVendor } from "../utils/types/enums/eVendor.js";
 import { findNoStockElementIG, findPriceElementIG } from "../utils/instantGaminghHelpers.js";
 import logger from "../utils/logger.js";
-import { checkGameOfferExists, getIgOfferId } from "../backendUtils.js";
+import { checkGameOfferExists, getOfferId } from "../backendUtils.js";
 import getSteamAndGameIdsFromHtml, { getVendorsGameNameFromHtml } from "../utils/getSteamIdFromHtml.js";
 
 // vendorId is the id of the offer (product) in the InstantGaming system.
@@ -34,7 +34,7 @@ export async function fetchInstantGamingOffer(vendorId: number, currency?: eCurr
 
   let offerId;
   if (offerExists) {
-    offerId = await getIgOfferId({gameId: steamAndGameIds.gameId!})?? await getIgOfferId({vendorId: vendorId.toString()});
+    offerId = await getOfferId({gameId: steamAndGameIds.gameId!}, eVendor.InstatnGaming) ?? await getOfferId({vendorId: vendorId.toString()}, eVendor.InstatnGaming);
     if (offerId === null) throw new HttpStatusError(500, "❌Could not get offer Id.");
   }
   else {

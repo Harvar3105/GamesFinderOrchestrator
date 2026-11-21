@@ -3,9 +3,9 @@ using GamesFinder.Orchestrator.Domain.Enums;
 
 namespace GamesFinder.Orchestrator.API.Controllers.Contracts.GameOffers;
 
-// Vendor is always required, plus exactly one of GameId or VendorId.
+// Identifies an offer of a vendor. Vendor is always required, plus exactly one of GameId or VendorId.
 // Nullable so that a missing parameter fails validation instead of binding to Guid.Empty or the first enum value.
-public sealed record CheckGameOfferExistsRequest : IValidatableObject
+public sealed record GameOfferLookupRequest : IValidatableObject
 {
   public Guid? GameId { get; init; }
 

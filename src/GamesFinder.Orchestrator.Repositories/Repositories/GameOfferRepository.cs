@@ -76,20 +76,14 @@ public class GameOfferRepository : Repository<GameOffer>, IGameOfferRepository
       .ToListAsync();
   }
 
+  // The projection yields Guid.Empty (not null) when nothing matches.
   public async Task<Guid?> GetIdByGameIdAsync(Guid gameId, EVendor vendor)
   {
-    return await _collection
+    var id = await _collection
       .Find(o => o.GameId.Equals(gameId) && o.Vendor == vendor)
       .Project(offer => offer.Id)
       .FirstOrDefaultAsync();
-  }
-
-  public async Task<Guid?> GetIdByVendorsGameIdAsync(string vendorsGameId, EVendor vendor)
-  {
-    return await _collection
-      .Find(o => o.VendorsGameId.Equals(vendorsGameId, StringComparison.OrdinalIgnoreCase) && o.Vendor == vendor)
-      .Project(offer => offer.Id)
-      .FirstOrDefaultAsync();
+    return id == Guid.Empty ? null : id;
   }
 
   public async Task<Guid?> GetOfferIdByVendorsIdAsync(string vendorsGameId, EVendor vendor)

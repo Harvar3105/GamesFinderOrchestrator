@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { validate as isUuid, version as uuidVersion } from "uuid";
 import { fetchInstantGamingOffer } from "../../src/instantGaming/instantGamingFetcher.js";
 import { FetchFailureStatus, fetchHTML, HttpStatusError, WrongDataError } from "../../src/utils/fetch.js";
-import { checkGameOfferExists, getIgOfferId } from "../../src/backendUtils.js";
+import { checkGameOfferExists, getOfferId } from "../../src/backendUtils.js";
 import getSteamAndGameIdsFromHtml from "../../src/utils/getSteamIdFromHtml.js";
 import { eCurrency } from "../../src/utils/types/enums/eCurrency.js";
 import { eVendor } from "../../src/utils/types/enums/eVendor.js";
@@ -16,7 +16,7 @@ vi.mock("../../src/utils/fetch.js", async importOriginal => ({
 
 vi.mock("../../src/backendUtils.js", () => ({
   checkGameOfferExists: vi.fn(),
-  getIgOfferId: vi.fn(),
+  getOfferId: vi.fn(),
 }));
 
 vi.mock("../../src/utils/getSteamIdFromHtml.js", async importOriginal => ({
@@ -26,7 +26,7 @@ vi.mock("../../src/utils/getSteamIdFromHtml.js", async importOriginal => ({
 
 const fetchHTMLMock = vi.mocked(fetchHTML);
 const checkGameOfferExistsMock = vi.mocked(checkGameOfferExists);
-const getIgOfferIdMock = vi.mocked(getIgOfferId);
+const getOfferIdMock = vi.mocked(getOfferId);
 const getSteamAndGameIdsMock = vi.mocked(getSteamAndGameIdsFromHtml);
 
 const VENDOR_ID = 7741;
@@ -39,7 +39,7 @@ describe("fetchInstantGamingOffer", () => {
     fetchHTMLMock.mockReset().mockResolvedValue(buildInstantGamingPage({ canonicalUrl: CANONICAL_URL }));
     getSteamAndGameIdsMock.mockReset().mockResolvedValue({ steamId: 1091500, gameId: GAME_ID });
     checkGameOfferExistsMock.mockReset().mockResolvedValue(false);
-    getIgOfferIdMock.mockReset().mockResolvedValue(null);
+    getOfferIdMock.mockReset().mockResolvedValue(null);
   });
 
   describe("request", () => {
@@ -92,28 +92,28 @@ describe("fetchInstantGamingOffer", () => {
 
       expect(isUuid(offer.id) && uuidVersion(offer.id)).toBe(4);
       expect(checkGameOfferExistsMock).toHaveBeenCalledWith({ vendorId: "7741" }, eVendor.InstatnGaming);
-      expect(getIgOfferIdMock).not.toHaveBeenCalled();
+      expect(getOfferIdMock).not.toHaveBeenCalled();
     });
 
     it("reuses the existing offer id found by game id", async () => {
       checkGameOfferExistsMock.mockResolvedValue(true);
-      getIgOfferIdMock.mockResolvedValue(EXISTING_OFFER_ID);
+      getOfferIdMock.mockResolvedValue(EXISTING_OFFER_ID);
 
       const offer = await fetchInstantGamingOffer(VENDOR_ID);
 
       expect(offer.id).toBe(EXISTING_OFFER_ID);
-      expect(getIgOfferIdMock).toHaveBeenCalledTimes(1);
-      expect(getIgOfferIdMock).toHaveBeenCalledWith({ gameId: GAME_ID });
+      expect(getOfferIdMock).toHaveBeenCalledTimes(1);
+      expect(getOfferIdMock).toHaveBeenCalledWith({ gameId: GAME_ID }, eVendor.InstatnGaming);
     });
 
     it("falls back to the vendor id lookup when the game id lookup finds nothing", async () => {
       checkGameOfferExistsMock.mockResolvedValue(true);
-      getIgOfferIdMock.mockResolvedValueOnce(null).mockResolvedValueOnce(EXISTING_OFFER_ID);
+      getOfferIdMock.mockResolvedValueOnce(null).mockResolvedValueOnce(EXISTING_OFFER_ID);
 
       const offer = await fetchInstantGamingOffer(VENDOR_ID);
 
       expect(offer.id).toBe(EXISTING_OFFER_ID);
-      expect(getIgOfferIdMock).toHaveBeenNthCalledWith(2, { vendorId: "7741" });
+      expect(getOfferIdMock).toHaveBeenNthCalledWith(2, { vendorId: "7741" }, eVendor.InstatnGaming);
     });
 
     // FIXME: when the offer exists but both id lookups fail, the offer is returned with a null id.
@@ -132,7 +132,7 @@ describe("fetchInstantGamingOffer", () => {
         name: "HttpStatusError",
         status: FetchFailureStatus.NetworkError,
       });
-      expect(getIgOfferIdMock).not.toHaveBeenCalled();
+      expect(getOfferIdMock).not.toHaveBeenCalled();
     });
   });
 

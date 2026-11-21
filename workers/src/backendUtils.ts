@@ -66,52 +66,24 @@ export async function getGameIdBySteamIdAsync(steamId: number): Promise<string |
 
 export type GetOfferRequestParams = | { gameId: string; vendorId?: never } | { vendorId: string; gameId?: never }
 
-export async function getIgOfferId({gameId, vendorId}: GetOfferRequestParams): Promise<string | null> {
-  if ((!gameId && !vendorId) || (gameId && vendorId)) {
-    logger.error(`💥Invalid parameters for getIgOfferId: gameId and vendorId must be provided together.`);
-    return null;
-  }
-
-  const url = new URL(config.backendUrl! + config.backendGetIgOfferId!);
+// GET <backendGetOfferId>: { id } of the vendor's offer, looked up either by our game id
+// or by the id of the offer in the vendor system. Returns null when not found or on error.
+export async function getOfferId({gameId, vendorId}: GetOfferRequestParams, vendor: eVendor): Promise<string | null> {
+  const url = new URL(config.backendUrl! + config.backendGetOfferId!);
   if (gameId) url.searchParams.append('gameId', gameId);
   if (vendorId) url.searchParams.append('vendorId', vendorId);
+  url.searchParams.append('vendor', vendor);
 
   const response = await processBackendRequest(url, 'GET');
   if (!response) return null;
 
   try {
     const data = await response.json();
-    return data.offerId as string;
+    return data.id as string;
   } catch (err) {
-    logger.error(`💥Error parsing JSON response when getting Instant Gaming offer ID for gameId ${gameId} and vendorId ${vendorId}:`, err)
-    return null
-  };
-}
-
-export async function getSteamOfferId({gameId, vendorId}: GetOfferRequestParams): Promise<string | null> {
-  if ((!gameId && !vendorId) || (gameId && vendorId)) {
-    logger.error(`💥Invalid parameters for getIgOfferId: gameId and steamId must be provided together.`);
+    logger.error(`💥Error parsing JSON response when getting offer ID (${url.search}):`, err);
     return null;
   }
-  if (vendorId && isNaN(Number(vendorId))){
-    logger.error(`💥Invalid vendorId for getSteamOfferId: ${vendorId} is not a valid number.`)
-    return null;
-  }
-
-  const url = new URL(config.backendUrl! + config.backendGetSteamOfferId!);
-  if (gameId) url.searchParams.append('gameId', gameId);
-  if (vendorId) url.searchParams.append('steamId', vendorId);
-
-  const response = await processBackendRequest(url, 'GET');
-  if (!response) return null;
-
-  try {
-    const data = await response.json();
-    return data.offerId as string;
-  } catch (err) {
-    logger.error(`💥Error parsing JSON response when getting Instant Gaming offer ID for gameId ${gameId} and vendorId ${vendorId}:`, err)
-    return null
-  };
 }
 
 async function processBackendRequest(url: URL, method: string): Promise<Response | null>{

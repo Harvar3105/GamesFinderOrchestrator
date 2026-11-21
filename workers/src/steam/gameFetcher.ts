@@ -6,7 +6,7 @@ import { eVendor } from "../utils/types/enums/eVendor.js";
 import { GameOffer } from "../utils/types/entities/gameOffer.js";
 import logger from "../utils/logger.js";
 import { fetchJson, HttpStatusError, WrongDataError } from "../utils/fetch.js";
-import { checkGameExists, checkGameOfferExists, getGameIdBySteamIdAsync, getSteamOfferId } from "../backendUtils.js";
+import { checkGameExists, checkGameOfferExists, getGameIdBySteamIdAsync, getOfferId } from "../backendUtils.js";
 import { fetchGameStoreMetadata } from "./gameMetadataFetcher.js";
 import { config } from "../utils/config.js";
 
@@ -33,7 +33,7 @@ export async function fetchSteamGame(id: number, updateGame: boolean, updateDeal
   let offerExists = gameExists && gameId ? await checkGameOfferExists({gameId: gameId}, eVendor.Steam) : false;
 
   let offerId;
-  if (offerExists) offerId = await getSteamOfferId({gameId: gameId!})?? await getSteamOfferId({vendorId: id.toString()});
+  if (offerExists) offerId = await getOfferId({gameId: gameId!}, eVendor.Steam) ?? await getOfferId({vendorId: id.toString()}, eVendor.Steam);
   else offerId = v4();
 
   if (gameExists && offerExists && !updateGame && !updateDeal) throw new SkippedError();

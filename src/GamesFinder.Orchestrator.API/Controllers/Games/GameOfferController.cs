@@ -23,7 +23,7 @@ public class GameOfferController : ControllerBase
   [ProducesResponseType(StatusCodes.Status200OK)]
   [ProducesResponseType(StatusCodes.Status400BadRequest)]
   [ProducesResponseType(StatusCodes.Status404NotFound)]
-  public async Task<IActionResult> ExistsAsync([FromQuery] CheckGameOfferExistsRequest request)
+  public async Task<IActionResult> ExistsAsync([FromQuery] GameOfferLookupRequest request)
   {
     try
     {
@@ -40,45 +40,22 @@ public class GameOfferController : ControllerBase
     }
   }
 
-  [HttpGet("getOfferIdByGameId")]
-  public async Task<IActionResult> GetOfferIdByGameIdAsync(string? gameId, EVendor vendor)
+  [HttpGet("getOfferId")]
+  [ProducesResponseType(StatusCodes.Status400BadRequest)]
+  [ProducesResponseType(StatusCodes.Status404NotFound)]
+  public async Task<ActionResult<GetOfferIdResponse>> GetOfferIdAsync([FromQuery] GameOfferLookupRequest request)
   {
-    if (string.IsNullOrEmpty(gameId))
-    {
-      return BadRequest("⚠️Provide gameId and VendorId");
-    }
-
-    var success = Guid.TryParse(gameId, out Guid parsedId);
-    if (!success) return BadRequest("⚠️Invalid gameId format. Must be a valid GUID.");
-
     try
     {
-      var id = await _repo.GetIdByGameIdAsync(parsedId, vendor);
+      var vendor = request.Vendor!.Value;
+      var id = request.GameId is { } gameId
+        ? await _repo.GetIdByGameIdAsync(gameId, vendor)
+        : await _repo.GetOfferIdByVendorsIdAsync(request.VendorId!.Trim(), vendor);
       if (id is null) return NotFound("Not found.");
-      return Ok(new { Id = id });
+      return Ok(new GetOfferIdResponse {Id = id.Value});
     } catch (Exception ex)
     {
-      _logger.LogError(ex, $"Error retrieving offer ID for gameId: {gameId} of vendor: {vendor}");
-      return Problem("An error occurred while processing your request.");
-    }
-  }
-
-  [HttpGet("getOfferIdByVendorId")]
-  public async Task<IActionResult> GetOfferIdByVendorId(string vendorId, EVendor vendor)
-  {
-    if (string.IsNullOrEmpty(vendorId))
-    {
-      return BadRequest("⚠️Provide gameId and VendorId");
-    }
-
-    try
-    {
-      var id = await _repo.GetIdByVendorsGameIdAsync(vendorId, EVendor.InstantGaming);
-      if (id is null) return NotFound("Not found.");
-      return Ok(new { Id = id });
-    } catch (Exception ex)
-    {
-      _logger.LogError(ex, $"Error retrieving offer ID for vendorIf: {vendorId} of: {vendor}");
+      _logger.LogError(ex, $"Error retrieving offer ID. GameId: {request.GameId}, VendorId: {request.VendorId}, Vendor: {request.Vendor}");
       return Problem("An error occurred while processing your request.");
     }
   }
