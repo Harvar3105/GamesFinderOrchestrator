@@ -1,36 +1,27 @@
 import { config } from "./utils/config.js";
 import logger from "./utils/logger.js";
 
-export async function checkGameExists(gameId: string): Promise<boolean> {
+export type CheckGameExistsParams =
+  | { id: string; steamId?: never; name?: never }
+  | { steamId: number; id?: never; name?: never }
+  | { name: string; id?: never; steamId?: never };
+
+// HEAD <backendCheckGame>: 200 — exists, 404 — not found. Any other outcome is logged and treated as "not found".
+export async function checkGameExists(params: CheckGameExistsParams): Promise<boolean> {
   const url = new URL(config.backendUrl! + config.backendCheckGame!);
-  url.searchParams.append('gameId', gameId);
-
-  const response = await processBackendRequest(url, 'GET');
-  if (!response) return false;
+  for (const [key, value] of Object.entries(params)) url.searchParams.append(key, String(value));
 
   try {
-    const data = await response.json();
-    return data.exists as boolean;
+    const response = await fetch(url.toString(), {
+      method: 'HEAD',
+      signal: AbortSignal.timeout(config.backendTimeoutMs),
+    });
+    if (response.ok) return true;
+    if (response.status !== 404) logger.error(`💥Error checking game existence (${url.search}): ${response.status} ${response.statusText}`);
   } catch (err) {
-    logger.error(`💥Error parsing JSON response when checking game existence for game ID ${gameId}:`, err);
-    return false;
+    logger.error(`💥Error checking game existence (${url.search}):`, err);
   }
-}
-
-export async function checkGameExistsBySteamId(steamId: number): Promise<boolean>{
-  const url = new URL(config.backendUrl! + config.backendCheckGameExistsBySteamId!);
-  url.searchParams.append('steamId', steamId.toString());
-
-  const response = await processBackendRequest(url, 'GET');
-  if (!response) return false;
-
-  try {
-    const data = await response.json();
-    return data.exists as boolean;
-  } catch (err) {
-    logger.error(`💥Error parsing JSON response when checking game existence for Steam ID ${steamId}:`, err);
-    return false;
-  }
+  return false;
 }
 
 export async function checkSteamOfferExists(steamId: number): Promise<boolean | null> {
@@ -73,7 +64,7 @@ export async function checkIgOfferExists(vendorId: string): Promise<boolean | nu
 }
 
 export async function getGameIdBySteamIdAsync(steamId: number): Promise<string | null> {
-  const url = new URL(config.backendUrl! + config.backendGetGameId!);
+  const url = new URL(config.backendUrl! + config.backendGetGameIds!);
   url.searchParams.append('steamId', steamId.toString());
 
   const response = await processBackendRequest(url, 'GET');

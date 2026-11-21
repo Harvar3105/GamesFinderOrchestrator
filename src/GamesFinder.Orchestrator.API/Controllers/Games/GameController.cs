@@ -57,65 +57,57 @@ public class GameController : ControllerBase
     }
   }
 
-  [HttpGet("checkGameExistsByName")]
-  public async Task<IActionResult> CheckExistingGameByNameAsync(string gameName)
+  // 200 — exists, 404 — not found, 400 — not exactly one key provided. HEAD responses carry no body.
+  [HttpHead("exists")]
+  [ProducesResponseType(StatusCodes.Status200OK)]
+  [ProducesResponseType(StatusCodes.Status400BadRequest)]
+  [ProducesResponseType(StatusCodes.Status404NotFound)]
+  public async Task<IActionResult> CheckGameExistsAsync([FromQuery] CheckGameExistsRequest request)
   {
     try
     {
-      var exists = await _repo.ExistsByAppNameAsync(gameName);
-      return Ok(new {Exists = exists});
+      var exists = request switch
+      {
+        { Id: { } id } => await _repo.ExistsAsync(id),
+        { SteamId: { } steamId } => await _repo.ExistsBySteamIdAsync(steamId),
+        _ => await _repo.ExistsByAppNameAsync(request.Name!.Trim()),
+      };
+      return exists ? Ok() : NotFound();
     }
     catch (Exception ex)
     {
-      _logger.LogError(ex, $"Error checking existence of game by name: {gameName}");
+      _logger.LogError(ex, $"Error checking existence of game. Id: {request.Id}, SteamId: {request.SteamId}, Name: {request.Name}");
       return Problem("An error occurred while processing your request.");
     }
   }
 
-  [HttpGet("checkGameExists")]
-  public async Task<IActionResult> CheckGameExists(string gameId)
+  // Used by the workers to reuse the Id of a stored game. The name lookup links InstantGaming offers
+  // whose product page has no Steam ID.
+  [HttpGet("getGameIds")]
+  [ProducesResponseType(StatusCodes.Status400BadRequest)]
+  [ProducesResponseType(StatusCodes.Status404NotFound)]
+  public async Task<ActionResult<GetGameIdsResponse>> GetGameIdsAsync([FromQuery] GetGameIdsRequest request)
   {
-    var success = Guid.TryParse(gameId, out var parsedId);
-    if (!success) return BadRequest("Invalid id requested.");
-
     try
     {
-      var exists = await _repo.ExistsAsync(parsedId);
-      return Ok(new {Exists = exists});
+      GetGameIdsResponse? response;
+      if (request.SteamId is { } steamId)
+      {
+        var gameId = await _repo.GetIdBySteamIdAsync(steamId);
+        response = gameId is null ? null : new GetGameIdsResponse {Id = gameId.Value, SteamId = steamId};
+      }
+      else
+      {
+        var game = await _repo.GetByAppNameAsync(request.Name!.Trim());
+        response = game is null ? null : new GetGameIdsResponse {Id = game.Id, SteamId = game.SteamID};
+      }
+
+      if (response is null) return NotFound("Game not found.");
+      return Ok(response);
     }
     catch (Exception ex)
     {
-      _logger.LogError(ex, $"Error checking existence of game: {gameId}");
-      return Problem("An error occurred while processing your request.");
-    }
-  }
-
-  [HttpGet("checkGameExistsBySteamId")]
-  public async Task<IActionResult> CheckGameExistsBySteamId(int steamId)
-  {
-    try
-    {
-      var exists = await _repo.ExistsBySteamIdAsync(steamId);
-      return Ok(new {Exists = exists});
-    } catch (Exception ex)
-    {
-      _logger.LogError(ex, $"Error checking existence of game by steam id: {steamId}");
-      return Problem("An error occurred while processing your request.");
-    }
-  }
-
-  [HttpGet("getGameIdBySteamId")]
-  public async Task<IActionResult> GetGameIdBySteamIdAsync(int steamId)
-  {
-    try
-    {
-      var gameId = await _repo.GetIdBySteamIdAsync(steamId);
-      if (gameId is null) return NotFound($"Game not found.");
-      return Ok(new {Id = gameId});
-    }
-    catch (Exception ex)
-    {
-      _logger.LogError(ex, $"Error checking existence of Steam ID: {steamId}");
+      _logger.LogError(ex, $"Error retrieving game ids. SteamId: {request.SteamId}, Name: {request.Name}");
       return Problem("An error occurred while processing your request.");
     }
   }

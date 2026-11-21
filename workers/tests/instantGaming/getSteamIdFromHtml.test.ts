@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import getSteamAndGameIdsFromHtml, { getVendorsGameNameFromHtml } from "../../src/utils/getSteamIdFromHtml.js";
-import { fetchJson, HttpStatusError } from "../../src/utils/offerFetcher.js";
+import { fetchJson, HttpStatusError } from "../../src/utils/fetch.js";
 import { config } from "../../src/utils/config.js";
 import { buildInstantGamingPage } from "../fixtures/instantGamingHtml.js";
 
-vi.mock("../../src/utils/offerFetcher.js", async importOriginal => ({
-  ...(await importOriginal<typeof import("../../src/utils/offerFetcher.js")>()),
+vi.mock("../../src/utils/fetch.js", async importOriginal => ({
+  ...(await importOriginal<typeof import("../../src/utils/fetch.js")>()),
   fetchJson: vi.fn(),
 }));
 
@@ -34,42 +34,38 @@ describe("getSteamAndGameIdsFromHtml", () => {
 
   describe("when the page contains a Steam id", () => {
     it("resolves the game id by Steam id", async () => {
-      fetchJsonMock.mockResolvedValue({ id: GAME_ID });
+      fetchJsonMock.mockResolvedValue({ id: GAME_ID, steamId: 1091500 });
 
       const result = await getSteamAndGameIdsFromHtml(buildInstantGamingPage({ steamMediaIds: [1091500] }));
 
       expect(result).toEqual({ steamId: 1091500, gameId: GAME_ID });
       expect(fetchJsonMock).toHaveBeenCalledTimes(1);
       expect(fetchJsonMock).toHaveBeenCalledWith({
-        url: `${config.backendUrl}${config.backendGetGameId}?steamId=1091500`,
+        url: `${config.backendUrl}${config.backendGetGameIds}?steamId=1091500`,
         method: "GET",
         timeoutMS: config.backendTimeoutMs,
       });
     });
 
     it("does not fall back to the title lookup when the backend does not know the game", async () => {
-      fetchJsonMock.mockResolvedValue({ id: null });
+      fetchJsonMock.mockRejectedValue(new HttpStatusError(404, "Not Found"));
 
       const result = await getSteamAndGameIdsFromHtml(buildInstantGamingPage({ steamMediaIds: [1091500] }));
 
-      expect(result).toEqual({ steamId: 1091500, gameId: null });
+      expect(result).toBeNull();
       expect(fetchJsonMock).toHaveBeenCalledTimes(1);
     });
 
-    // FIXME: getGameId swallows transient backend errors (HttpStatusError), so the caller sees a missing gameId
-    // and throws WrongDataError, which is not retried. The title lookup path lets the same error propagate.
-    it("swallows backend errors and returns a null game id (current behavior)", async () => {
+    it("propagates backend errors so the offer can be retried", async () => {
       fetchJsonMock.mockRejectedValue(new HttpStatusError(503, "Backend unavailable"));
 
-      const result = await getSteamAndGameIdsFromHtml(buildInstantGamingPage({ steamMediaIds: [1091500] }));
-
-      expect(result).toEqual({ steamId: 1091500, gameId: null });
+      await expect(getSteamAndGameIdsFromHtml(buildInstantGamingPage({ steamMediaIds: [1091500] }))).rejects.toBeInstanceOf(HttpStatusError);
     });
   });
 
   describe("when the page has no Steam id", () => {
     it("looks the game up by the title part before the first '-'", async () => {
-      fetchJsonMock.mockResolvedValue({ exists: true, steamId: 1245620, gameId: GAME_ID });
+      fetchJsonMock.mockResolvedValue({ id: GAME_ID, steamId: 1245620 });
 
       const result = await getSteamAndGameIdsFromHtml(
         buildInstantGamingPage({ title: "Elden Ring - PC - Steam", steamMediaIds: [] }),
@@ -77,14 +73,14 @@ describe("getSteamAndGameIdsFromHtml", () => {
 
       expect(result).toEqual({ steamId: 1245620, gameId: GAME_ID });
       expect(fetchJsonMock).toHaveBeenCalledWith({
-        url: `${config.backendUrl}${config.backendCheckGameExistsByName}?gameName=Elden%20Ring&getSteamId=true`,
+        url: `${config.backendUrl}${config.backendGetGameIds}?name=Elden+Ring`,
         method: "GET",
         timeoutMS: config.backendTimeoutMs,
       });
     });
 
     it("returns null when the backend does not find the game", async () => {
-      fetchJsonMock.mockResolvedValue({ exists: false });
+      fetchJsonMock.mockRejectedValue(new HttpStatusError(404, "Not Found"));
 
       const result = await getSteamAndGameIdsFromHtml(buildInstantGamingPage({ steamMediaIds: [] }));
 
@@ -106,11 +102,11 @@ describe("getSteamAndGameIdsFromHtml", () => {
 
     // FIXME: titles that contain '-' are cut at the first hyphen (see the TODO in getSteamIdFromHtml.ts).
     it("cuts hyphenated titles at the first '-' (current behavior)", async () => {
-      fetchJsonMock.mockResolvedValue({ exists: false });
+      fetchJsonMock.mockRejectedValue(new HttpStatusError(404, "Not Found"));
 
       await getSteamAndGameIdsFromHtml(buildInstantGamingPage({ title: "Spider-Man Remastered - PC - Steam", steamMediaIds: [] }));
 
-      expect(fetchJsonMock.mock.calls[0][0].url).toContain("gameName=Spider&");
+      expect(fetchJsonMock.mock.calls[0][0].url).toMatch(/[?&]name=Spider$/);
     });
   });
 });

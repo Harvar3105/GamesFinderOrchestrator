@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { validate as isUuid, version as uuidVersion } from "uuid";
 import { fetchInstantGamingOffer } from "../../src/instantGaming/instantGamingFetcher.js";
-import { FetchFailureStatus, fetchHTML, HttpStatusError, WrongDataError } from "../../src/utils/offerFetcher.js";
+import { FetchFailureStatus, fetchHTML, HttpStatusError, WrongDataError } from "../../src/utils/fetch.js";
 import { checkIgOfferExists, getIgOfferId } from "../../src/backendUtils.js";
 import getSteamAndGameIdsFromHtml from "../../src/utils/getSteamIdFromHtml.js";
 import { eCurrency } from "../../src/utils/types/enums/eCurrency.js";
@@ -9,8 +9,8 @@ import { eVendor } from "../../src/utils/types/enums/eVendor.js";
 import { isGameOffer } from "../../src/utils/types/entities/gameOffer.js";
 import { buildInstantGamingPage } from "../fixtures/instantGamingHtml.js";
 
-vi.mock("../../src/utils/offerFetcher.js", async importOriginal => ({
-  ...(await importOriginal<typeof import("../../src/utils/offerFetcher.js")>()),
+vi.mock("../../src/utils/fetch.js", async importOriginal => ({
+  ...(await importOriginal<typeof import("../../src/utils/fetch.js")>()),
   fetchHTML: vi.fn(),
 }));
 

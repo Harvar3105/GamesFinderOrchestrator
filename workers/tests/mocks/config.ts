@@ -16,14 +16,12 @@ export const config = {
   instantGamingResults: "instantGaming-results",
 
   backendUrl: "http://backend.test",
-  backendCheckGame: "/api/Steam/checkGameExists",
-  backendCheckGameExistsByName: "/api/Steam/checkGameExistsByName",
-  backendCheckGameExistsBySteamId: "/api/Steam/checkGameExistsBySteamId",
+  backendCheckGame: "/api/Game",
   backendCheckSteamOffer: "/api/Steam/checkGameOfferExists",
   backendCheckIgOffer: "/api/InstantGaming/checkGameOfferExists",
   backendGetIgOfferId: "/api/InstantGaming/getOfferId",
   backendGetSteamOfferId: "/api/Steam/getOfferId",
-  backendGetGameId: "/api/Steam/getGameIdBySteamId",
+  backendGetGameIds: "/api/Game/getGameIds",
   backendTimeoutMs: 1000,
 };
 
