@@ -156,11 +156,11 @@ public class GameController : ControllerBase
     try
     {
       var namePart = request.Name?.Trim();
-      var totalGamesCount = await _gamesWithOffersService.GetTotalCountFilteredAsync(filter, request.Currency, namePart);
+      var totalGamesCount = await _gamesWithOffersService.GetTotalCountFilteredAsync(filter, request.Currency!.Value, namePart);
       if (totalGamesCount == 0) return NotFound("Not found");
 
       var games = (await _gamesWithOffersService.GetPagedWithLowestFilteredAsync(
-        request.Page, request.PageSize, filter, request.Currency, namePart)).ToList();
+        request.Page, request.PageSize, filter, request.Currency!.Value, namePart)).ToList();
       var vendorsByGame = await _gamesWithOffersService.GetAvailableVendorsManyAsync(games.Select(g => g.Item1.Id));
 
       return Ok(new GetCatalogPageResponse

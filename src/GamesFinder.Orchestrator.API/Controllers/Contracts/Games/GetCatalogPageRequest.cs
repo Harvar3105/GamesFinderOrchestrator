@@ -14,5 +14,8 @@ public sealed record GetCatalogPageRequest
   [Range(1, int.MaxValue)]
   public int PageSize { get; init; } = 20;
 
-  public ECurrency Currency { get; init; } = ECurrency.USD;
+  // Prices are compared and filtered only among offers in this currency; there is no conversion by design.
+  // Required (nullable so a missing value fails validation) so that prices are never silently shown in a default currency.
+  [Required]
+  public ECurrency? Currency { get; init; }
 }

@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using GamesFinder.Orchestrator.API.Controllers.Contracts.GameOffers;
 using GamesFinder.Orchestrator.Domain.Enums;
 using GamesFinder.Orchestrator.Domain.Interfaces.Repositories;
@@ -98,8 +99,10 @@ public class GameOfferController : ControllerBase
     }
   }
 
+  // Prices are compared only among offers in the requested currency; there is no conversion by design.
+  // The currency is required so that a client never silently gets prices in a default currency.
   [HttpGet("getLowestPrice")]
-  public async Task<IActionResult> GetLowestPrice(string gameId, ECurrency currency = ECurrency.USD)
+  public async Task<IActionResult> GetLowestPrice(string gameId, [Required] ECurrency? currency)
   {
     if (string.IsNullOrEmpty(gameId)) return BadRequest("No gameId were provided");
     var success = Guid.TryParse(gameId, out var parsedId);
@@ -107,7 +110,7 @@ public class GameOfferController : ControllerBase
 
     try
     {
-      var lowest = await _repo.GetMinimalOfferPrice(parsedId, currency);
+      var lowest = await _repo.GetMinimalOfferPrice(parsedId, currency!.Value);
       if (lowest is null) return NotFound("Could not find lowest price for this game. Try changing currency.");
       return Ok(new { Price = lowest });
     } catch (Exception ex)

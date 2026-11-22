@@ -95,6 +95,8 @@ public class GameOfferRepository : Repository<GameOffer>, IGameOfferRepository
     return id == Guid.Empty ? null : id;
   }
 
+  // FIXME: offers without a price (amount = null) are not excluded, and MongoDB sorts null first, so the result is
+  // null whenever the game has such an offer in this currency. GetMinimalOfferPriceManyAsync filters them out.
   public async Task<decimal?> GetMinimalOfferPrice(Guid gameId, ECurrency currency)
   {
     try
