@@ -155,7 +155,7 @@ public class GameController : ControllerBase
 
     try
     {
-      var namePart = request.Name.Trim();
+      var namePart = request.Name?.Trim();
       var totalGamesCount = await _gamesWithOffersService.GetTotalCountFilteredAsync(filter, request.Currency, namePart);
       if (totalGamesCount == 0) return NotFound("Not found");
 

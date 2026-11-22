@@ -5,8 +5,8 @@ namespace GamesFinder.Orchestrator.API.Controllers.Contracts.Games;
 
 public sealed record GetCatalogPageRequest
 {
-  [Required]
-  public string Name { get; init; } = string.Empty;
+  // Partial name match. Omitted or blank — no name filter (the catalog start page).
+  public string? Name { get; init; }
 
   [Range(1, int.MaxValue)]
   public int Page { get; init; } = 1;
