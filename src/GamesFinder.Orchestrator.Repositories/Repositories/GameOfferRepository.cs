@@ -34,13 +34,15 @@ public class GameOfferRepository : Repository<GameOffer>, IGameOfferRepository
       .AnyAsync();
   }
 
-  // Without `currency` all offers of the game are returned.
-  public async Task<ICollection<GameOffer>?> GetByGameIdAsync(Guid gameId, ECurrency? currency = null)
+  // Optional filters are applied only when provided; without them all offers of the game are returned.
+  public async Task<ICollection<GameOffer>?> GetByGameIdAsync(Guid gameId, ECurrency? currency = null, bool? isAvailable = null)
   {
     var filterBuilder = Builders<GameOffer>.Filter;
     var filter = filterBuilder.Eq(offer => offer.GameId, gameId);
     if (currency is { } requiredCurrency)
       filter &= filterBuilder.Eq(offer => offer.Currency, requiredCurrency);
+    if (isAvailable is { } requiredAvailability)
+      filter &= filterBuilder.Eq(offer => offer.Available, requiredAvailability);
 
     return await _collection
       .Find(filter)
