@@ -4,6 +4,8 @@ using MongoDB.Bson.Serialization.Attributes;
 namespace GamesFinder.Orchestrator.Domain.Classes.Entities;
 
 // TODO: Save new offers instead of updating? Will provide a history
+// TODO: [Crit] Specify the region of the offer (key activation region, e.g. Global/EU/RU). Offers for the same game
+// from different regions are not comparable by price and may not be activatable for the user.
 public class GameOffer : Entity
 {
   [BsonElement("game_id")]

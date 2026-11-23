@@ -14,7 +14,7 @@ export async function fetchInstantGamingOffer(vendorId: number, currency?: eCurr
   const url = `https://www.instant-gaming.com/${encodeURIComponent(vendorId)}-/?currency=${encodeURIComponent(currency?.toString().toUpperCase() || 'EUR')}`;
   const data = await fetchHTML(url, proxy);
   
-  //TODO: Consider to use multiplatform?
+  //TODO: [Crit] Consider to use multiplatform?
   if (checkIfPCGameIG(data) === false) {
     logger.info(`⛔ Skipping offer ${url} because it is not a PC game`);
     throw new WrongDataError("Wrong platform recieved.");
