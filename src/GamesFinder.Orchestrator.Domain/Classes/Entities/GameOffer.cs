@@ -19,6 +19,8 @@ public class GameOffer : Entity
   public string VendorsUrl { get; set; }
   [BsonElement("available")]
   public bool Available { get; set; }
+  // TODO: Create a price update history (amount, currency, availability and timestamp per update),
+  // e.g. a separate `game_offer_price_history` collection written on every offer update.
   [BsonElement("amount")]
   public decimal? Amount {get; set;}
   [BsonElement("currency")]
