@@ -81,7 +81,7 @@ public class GameOfferController : ControllerBase
   }
 
   [HttpGet("getGameOffers")]
-  public async Task<IActionResult> GetGameOffers(string gameId)
+  public async Task<IActionResult> GetGameOffers(string gameId, ECurrency? currency = null)
   {
     if (string.IsNullOrEmpty(gameId)) return BadRequest("No gameId were provided");
     var success = Guid.TryParse(gameId, out var parsedId);
@@ -89,7 +89,7 @@ public class GameOfferController : ControllerBase
 
     try
     {
-      var offers = await _repo.GetByGameIdAsync(parsedId);
+      var offers = await _repo.GetByGameIdAsync(parsedId, currency);
       if (offers is null) return NotFound("No offers found");
       return Ok(new { Offers = offers });
     } catch (Exception ex)

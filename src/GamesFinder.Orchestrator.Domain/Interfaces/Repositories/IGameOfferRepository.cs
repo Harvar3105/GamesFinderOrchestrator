@@ -5,7 +5,7 @@ namespace GamesFinder.Orchestrator.Domain.Interfaces.Repositories;
 
 public interface IGameOfferRepository : IRepository<GameOffer>
 {
-	Task<ICollection<GameOffer>?> GetByGameIdAsync(Guid gameId);
+	Task<ICollection<GameOffer>?> GetByGameIdAsync(Guid gameId, ECurrency? currency = null);
 	Task<Dictionary<Guid, List<GameOffer>>?> GetByGameIdManyAsync(IEnumerable<Guid> gameIds);
 	Task<ICollection<GameOffer>?> GetByVendorAsync(EVendor vendor);
 	Task<GameOffer?> GetByVendorsIdAsync(string vendorsGameId, EVendor vendor);
