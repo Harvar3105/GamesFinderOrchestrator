@@ -34,6 +34,7 @@ public class Game(
   [BsonElement("is_released")]
   public bool IsReleased { get; set; }
   [BsonElement("initial_price")]
+  // TODO: InitialPrice and currency should not be hardcoded.
   public decimal? InitialPrice {get; set;}
   [BsonElement("initial_currency")]
   public ECurrency? InitialCurrency {get; set;}
